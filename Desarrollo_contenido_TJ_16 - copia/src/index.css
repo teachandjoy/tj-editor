@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+    --tj-primary: #1b4b85;
+    --tj-secondary: #8b2f3a;
+    --tj-gold: #c5aa6f;
+    --tj-bg: #f4f5f7;
+    --tj-text: #2a2a32;
+    --tj-border: #d4cfc8;
+    --tj-sidebar: #162340;
+  }
+}
+
+/* ── Brand Typography ── */
+.font-brand { font-family: 'Montserrat', sans-serif; }
+body { font-family: 'Open Sans', sans-serif; }
+
+/* ── Page transition animations ── */
+@keyframes fadeSlideIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.page-enter { animation: fadeSlideIn 0.22s ease both; }
+.modal-enter { animation: scaleIn 0.18s ease both; }
+.sidebar-enter { animation: slideInLeft 0.18s ease both; }
+
+/* Stagger children */
+.stagger-children > * { animation: fadeSlideIn 0.2s ease both; }
+.stagger-children > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.09s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.15s; }
+
+/* ── Sidebar ── */
+.tj-sidebar { background: var(--tj-sidebar); transition: width 0.22s cubic-bezier(.4,0,.2,1); }
+.tj-nav-item {
+  @apply flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 cursor-pointer transition-all w-full text-left;
+}
+.tj-nav-item:hover { @apply bg-white/5 text-white; }
+.tj-nav-item.active { @apply text-white font-semibold; background: #1b4b85; }
+
+/* Sidebar collapsed */
+.sidebar-collapsed .nav-label { display: none; }
+.sidebar-collapsed .logo-text-block { display: none; }
+
+/* ── Hover card lift ── */
+.card-hover {
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.card-hover:hover {
+  box-shadow: 0 6px 24px rgba(27,75,133,0.10);
+  transform: translateY(-1px);
+}
+
+/* ── TipTap Editor ── */
+.tiptap { outline: none; }
+.tiptap h1 { font-family: 'Montserrat', sans-serif; font-size: 1.875rem; font-weight: 700; color: #1b4b85; margin: 0.75em 0 0.4em; line-height: 1.3; }
+.tiptap h2 { font-family: 'Montserrat', sans-serif; font-size: 1.375rem; font-weight: 600; color: #1b4b85; margin: 1em 0 0.4em; line-height: 1.3; }
+.tiptap h3 { font-family: 'Montserrat', sans-serif; font-size: 1.15em; font-weight: 600; color: #8b2f3a; margin: 0.8em 0 0.3em; }
+.tiptap h4 { font-family: 'Montserrat', sans-serif; font-size: 1em; font-weight: 600; color: #2a2a32; margin: 0.6em 0 0.3em; }
+.tiptap h5 { font-size: 0.95em; font-weight: 600; color: #555; margin: 0.5em 0 0.2em; }
+.tiptap h6 { font-size: 0.875em; font-weight: 600; color: #666; margin: 0.5em 0 0.2em; }
+.tiptap p { margin: 0.5em 0; line-height: 1.8; color: #2a2a32; font-size: 1rem; }
+.tiptap ul, .tiptap ol { padding-left: 1.5em; margin: 0.5em 0; }
+.tiptap ul { list-style-type: disc; }
+.tiptap ol { list-style-type: decimal; }
+.tiptap li { margin: 0.25em 0; line-height: 1.7; }
+.tiptap blockquote { border-left: 4px solid #c5aa6f; background: #fdf9f0; padding: 12px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+.tiptap blockquote p { color: #4a3c20; }
+.tiptap hr { border: none; border-top: 2px solid #e8e4de; margin: 24px 0; }
+.tiptap a { color: #1b4b85; text-decoration: underline; cursor: pointer; }
+.tiptap mark { background-color: #fef9c3; padding: 0 2px; border-radius: 2px; }
+.tiptap sup { font-size: 0.72em; vertical-align: super; color: #1b4b85; font-weight: 600; }
+.tiptap sub { font-size: 0.72em; vertical-align: sub; }
+.tiptap img { max-width: 100%; border-radius: 8px; margin: 8px auto; display: block; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+.tiptap figure { margin: 24px 0; text-align: center; }
+.tiptap figcaption { font-size: 0.875em; color: #718096; margin-top: 8px; font-style: italic; }
+
+/* ── Table styles ── */
+.tiptap table { border-collapse: collapse; width: 100%; margin: 16px 0; overflow: hidden; border-radius: 8px; }
+.tiptap th { background: #1b4b85; color: #fff; font-weight: 600; text-align: left; padding: 10px 14px; border: 1px solid #2563a8; font-size: 0.875em; cursor: col-resize; user-select: none; }
+.tiptap td { padding: 8px 14px; border: 1px solid #e8e4de; font-size: 0.875em; }
+.tiptap tr:nth-child(even) td { background: #f8f7f5; }
+.tiptap tr:hover td { background: #f0ece6; }
+.tiptap .selectedCell { background: rgba(27,75,133,0.08) !important; outline: 2px solid #1b4b85 !important; }
+.tiptap .column-resize-handle {
+  background-color: #1b4b85;
+  bottom: -2px;
+  pointer-events: none;
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 4px;
+}
+.tiptap .tableWrapper { overflow-x: auto; }
+.tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #a0aec0; pointer-events: none; height: 0; }
+.tiptap > *:first-child { margin-top: 0; }
+.tiptap > *:last-child { margin-bottom: 0; }
+
+/* ── Resizable images ── */
+.tiptap .image-resizer { display: inline-block; position: relative; }
+.tiptap .image-resizer img { display: block; }
+
+/* ── Custom blocks ── */
+.tiptap .block-tip { background: #f6f7fa; border-left: 5px solid #a8b8d8; padding: 10px 14px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+.tiptap .block-perla { background: #eff6ff; border-left: 5px solid #1b4b85; padding: 10px 14px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+.tiptap .block-nota { background: #fff8e5; border-left: 5px solid #c5aa6f; padding: 10px 14px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+.tiptap .block-warning { background: #fff5f5; border-left: 5px solid #8b2f3a; padding: 10px 14px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+.tiptap .block-conclusion { background: #fff8e5; border: 1px solid #e8d89a; border-radius: 8px; padding: 12px 14px; margin: 16px 0; }
+.tiptap .block-objectives { background: #f0f7ff; border: 1px solid #bcd4f0; border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+
+/* ── Editor Blocks (Correction 17) ── */
+.tiptap .tj-editor-block {
+  position: relative;
+  margin: 16px 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 4px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: default;
+}
+.tiptap .tj-editor-block:hover {
+  border-color: rgba(27,75,133,0.25);
+  box-shadow: 0 0 0 3px rgba(27,75,133,0.06);
+}
+.tiptap .tj-editor-block.tj-block-selected,
+.tiptap .tj-editor-block:focus-within {
+  border-color: #1b4b85;
+  box-shadow: 0 0 0 3px rgba(27,75,133,0.12);
+}
+.tiptap .tj-editor-block::before {
+  content: attr(data-tj-block-name);
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: #1b4b85;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  padding: 1px 8px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+  z-index: 5;
+  white-space: nowrap;
+}
+.tiptap .tj-editor-block:hover::before,
+.tiptap .tj-editor-block.tj-block-selected::before,
+.tiptap .tj-editor-block:focus-within::before {
+  opacity: 1;
+}
+.tiptap .tj-editor-block p,
+.tiptap .tj-editor-block div,
+.tiptap .tj-editor-block span {
+  cursor: text;
+}
+.tiptap .tj-editor-block .tj-block-delete {
+  position: absolute;
+  top: -10px;
+  right: 8px;
+  background: #c53030;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  padding: 1px 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 5;
+}
+.tiptap .tj-editor-block:hover .tj-block-delete,
+.tiptap .tj-editor-block.tj-block-selected .tj-block-delete {
+  opacity: 1;
+}
+.tiptap .tj-editor-block .tj-block-delete:hover {
+  background: #9b2c2c;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4cfc8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a8b8d8; }
+
+/* (Floating table toolbar removed — all table controls are in the global toolbar) */
+
+/* ── Resizable images in editor ── */
+.tiptap figure { position: relative; display: inline-block; width: 100%; text-align: center; }
+.tiptap figure img {
+  cursor: default;
+  transition: box-shadow 0.15s;
+  position: relative;
+}
+.tiptap figure img.ProseMirror-selectednode,
+.tiptap img.ProseMirror-selectednode {
+  outline: 2px solid #1b4b85;
+  box-shadow: 0 0 0 4px rgba(27,75,133,0.15) !important;
+}
+/* Image resize handle via native HTML resize - applied via inline style */
+.resizable-img-wrap {
+  display: inline-block;
+  position: relative;
+  resize: horizontal;
+  overflow: hidden;
+  min-width: 80px;
+  max-width: 100%;
+}
