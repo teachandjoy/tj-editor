@@ -1,16 +1,25 @@
 import { useState, useCallback, useRef } from 'react';
-import { X, Upload, FileText, FileCode, Eye, AlertCircle } from 'lucide-react';
+import { X, Upload, FileText, FileCode, Eye, AlertCircle, Image, Check, Download } from 'lucide-react';
 import { TJ } from '../../constants/theme';
 import ModalPortal from '../ui/ModalPortal';
+import type { RepositoryFolder } from '../../types';
 
 type ImportTab = 'html-file' | 'html-paste' | 'docx';
+
+interface ExtractedImage {
+  src: string;
+  name: string;
+  selected: boolean;
+}
 
 interface ImportDialogProps {
   onClose: () => void;
   onImport: (html: string) => void;
+  folders?: RepositoryFolder[];
+  onSaveImages?: (images: { src: string; name: string; folderId: string }[]) => void;
 }
 
-export default function ImportDialog({ onClose, onImport }: ImportDialogProps) {
+export default function ImportDialog({ onClose, onImport, folders, onSaveImages }: ImportDialogProps) {
   const [tab, setTab] = useState<ImportTab>('html-file');
   const [htmlContent, setHtmlContent] = useState('');
   const [pastedHtml, setPastedHtml] = useState('');
@@ -21,6 +30,10 @@ export default function ImportDialog({ onClose, onImport }: ImportDialogProps) {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
+  const [extractedImages, setExtractedImages] = useState<ExtractedImage[]>([]);
+  const [showImageSaver, setShowImageSaver] = useState(false);
+  const [imgSaveFolder, setImgSaveFolder] = useState('root');
+  const [imgSaveStatus, setImgSaveStatus] = useState<'idle' | 'saving' | 'done'>('idle');
 
   const extractBodyContent = useCallback((html: string): string => {
     // Extract content from body if full HTML document
@@ -86,6 +99,19 @@ export default function ImportDialog({ onClose, onImport }: ImportDialogProps) {
       setHtmlContent(html);
       setPreviewHtml(html);
       setShowPreview(true);
+
+      // Extract base64 images for optional repository save
+      const imgParser = new DOMParser();
+      const imgDoc = imgParser.parseFromString(html, 'text/html');
+      const imgs: ExtractedImage[] = [];
+      imgDoc.querySelectorAll('img').forEach((img, i) => {
+        const src = img.getAttribute('src') || '';
+        if (src.startsWith('data:')) {
+          const ext = src.match(/data:image\/(\w+)/)?.[1] || 'png';
+          imgs.push({ src, name: `imagen_word_${i + 1}.${ext}`, selected: true });
+        }
+      });
+      setExtractedImages(imgs);
 
       if (result.messages.length > 0) {
         const warnings = result.messages.filter(m => m.type === 'warning').map(m => m.message).join('; ');
@@ -260,6 +286,81 @@ export default function ImportDialog({ onClose, onImport }: ImportDialogProps) {
                 <AlertCircle size={12} />
                 <span>Revise el contenido antes de confirmar. Se cargará en el editor TipTap.</span>
               </div>
+
+              {/* Image extraction from Word */}
+              {extractedImages.length > 0 && onSaveImages && (
+                <div className="mt-4 p-4 rounded-xl border" style={{ borderColor: TJ.gold, background: '#fffbf0' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Image size={16} style={{ color: TJ.gold }} />
+                      <span className="text-sm font-bold" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
+                        {extractedImages.length} imágenes encontradas
+                      </span>
+                    </div>
+                    {!showImageSaver ? (
+                      <button onClick={() => setShowImageSaver(true)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg font-semibold transition-all"
+                        style={{ background: TJ.primary, color: 'white', fontFamily: 'Montserrat, sans-serif' }}>
+                        <Download size={12} /> Guardar en repositorio
+                      </button>
+                    ) : imgSaveStatus === 'done' ? (
+                      <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: '#276749' }}>
+                        <Check size={14} /> Guardadas
+                      </span>
+                    ) : null}
+                  </div>
+                  {showImageSaver && imgSaveStatus !== 'done' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Carpeta destino</label>
+                        <select value={imgSaveFolder} onChange={e => setImgSaveFolder(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg text-sm" style={{ borderColor: TJ.border }}>
+                          <option value="root">Repositorio (raíz)</option>
+                          {(folders || []).filter(f => f.id !== 'root').map(f => (
+                            <option key={f.id} value={f.id}>{f.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="max-h-40 overflow-auto space-y-1.5">
+                        {extractedImages.map((img, i) => (
+                          <div key={i} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'white', border: `1px solid ${TJ.border}` }}>
+                            <input type="checkbox" checked={img.selected}
+                              onChange={() => setExtractedImages(prev => prev.map((im, j) => j === i ? { ...im, selected: !im.selected } : im))}
+                              style={{ accentColor: TJ.primary }} />
+                            <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0" style={{ background: '#f8f7f5' }}>
+                              <img src={img.src} alt={img.name} className="w-full h-full object-cover" />
+                            </div>
+                            <input value={img.name}
+                              onChange={e => setExtractedImages(prev => prev.map((im, j) => j === i ? { ...im, name: e.target.value } : im))}
+                              className="flex-1 text-xs px-2 py-1 border rounded" style={{ borderColor: TJ.border }} />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setExtractedImages(prev => prev.map(im => ({ ...im, selected: true })))}
+                          className="text-xs px-2 py-1 rounded-lg border" style={{ borderColor: TJ.border, color: TJ.text }}>Todas</button>
+                        <button onClick={() => setExtractedImages(prev => prev.map(im => ({ ...im, selected: false })))}
+                          className="text-xs px-2 py-1 rounded-lg border" style={{ borderColor: TJ.border, color: TJ.text }}>Ninguna</button>
+                        <div className="flex-1" />
+                        <button
+                          onClick={() => {
+                            const toSave = extractedImages.filter(im => im.selected);
+                            if (toSave.length > 0) {
+                              setImgSaveStatus('saving');
+                              onSaveImages(toSave.map(im => ({ src: im.src, name: im.name, folderId: imgSaveFolder })));
+                              setImgSaveStatus('done');
+                            }
+                          }}
+                          disabled={extractedImages.filter(im => im.selected).length === 0 || imgSaveStatus === 'saving'}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg text-white font-semibold disabled:opacity-50"
+                          style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
+                          {imgSaveStatus === 'saving' ? 'Guardando...' : `Guardar ${extractedImages.filter(im => im.selected).length} imágenes`}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

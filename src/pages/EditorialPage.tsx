@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useRef } from 'react';
 import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
-import { CheckCircle, Clock, AlertTriangle, Edit3, ArrowRight, ArrowLeft, RotateCcw, LayoutGrid, List, Filter } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, Edit3, ArrowRight, ArrowLeft, RotateCcw, LayoutGrid, List, Filter, Users } from 'lucide-react';
 import type { TopicStatus } from '../types';
 
 const TJ = { primary: '#1b4b85', secondary: '#8b2f3a', gold: '#c5aa6f', border: '#e8e4de', text: '#2a2a32' };
@@ -22,26 +22,38 @@ const statusLabels: Record<TopicStatus, string> = {
 };
 
 export default function EditorialPage() {
-  const { currentUser, topics, offers, updateTopic } = useApp();
+  const { currentUser, topics, offers, users, updateTopic } = useApp();
   const navigate = useNavigate();
   const dragTopicId = useRef<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'full' | 'compact'>('full');
   const [filterOffer, setFilterOffer] = useState<string>('all');
+  const [filterUser, setFilterUser] = useState<string>('all');
   if (!currentUser) return null;
 
   const visibleTopics = currentUser.role === 'editor'
     ? topics.filter(t => t.assignedEditors.includes(currentUser.id))
     : topics;
 
-  const filteredTopics = filterOffer === 'all'
+  const afterOfferFilter = filterOffer === 'all'
     ? visibleTopics
     : visibleTopics.filter(t => t.offerId === filterOffer);
+
+  const filteredTopics = filterUser === 'all'
+    ? afterOfferFilter
+    : afterOfferFilter.filter(t => t.assignedEditors.includes(filterUser) || t.assignedCoordinators.includes(filterUser) || t.author === users.find(u => u.id === filterUser)?.name);
 
   // Get unique offers from visible topics for the filter
   const topicOffers = Array.from(new Set(visibleTopics.map(t => t.offerId).filter(Boolean)));
   const offerNames: Record<string, string> = {};
   offers.forEach(o => { offerNames[o.id] = o.name; });
+
+  // Users for filter: admin sees all, coordinador sees assigned, editor sees self only
+  const filterableUsers = currentUser.role === 'admin'
+    ? users
+    : currentUser.role === 'coordinador'
+      ? users.filter(u => u.id === currentUser.id || u.role === 'editor')
+      : [currentUser];
 
   const isCoordOrAdmin = currentUser.role !== 'editor';
 
@@ -56,15 +68,28 @@ export default function EditorialPage() {
           </p>
 
           {/* Offer filter */}
-          {topicOffers.length > 1 && (
+          <div className="flex items-center gap-1.5">
+            <Filter size={13} style={{ color: '#a8b8d8' }} />
+            <select value={filterOffer} onChange={e => setFilterOffer(e.target.value)}
+              className="text-xs border rounded-lg px-2 py-1.5 bg-white"
+              style={{ borderColor: TJ.border, color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>
+              <option value="all">Todas las ofertas</option>
+              {topicOffers.map(oid => (
+                <option key={oid} value={oid!}>{offerNames[oid!] || oid}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* User filter */}
+          {filterableUsers.length > 1 && (
             <div className="flex items-center gap-1.5">
-              <Filter size={13} style={{ color: '#a8b8d8' }} />
-              <select value={filterOffer} onChange={e => setFilterOffer(e.target.value)}
+              <Users size={13} style={{ color: '#a8b8d8' }} />
+              <select value={filterUser} onChange={e => setFilterUser(e.target.value)}
                 className="text-xs border rounded-lg px-2 py-1.5 bg-white"
                 style={{ borderColor: TJ.border, color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>
-                <option value="all">Todas las ofertas</option>
-                {topicOffers.map(oid => (
-                  <option key={oid} value={oid!}>{offerNames[oid!] || oid}</option>
+                <option value="all">Todos los usuarios</option>
+                {filterableUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
                 ))}
               </select>
             </div>

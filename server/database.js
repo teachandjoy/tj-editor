@@ -416,7 +416,35 @@ function getDefaultTopics() {
       description: 'Bases anatomicas y topograficas para anestesia regional de extremidad superior',
       status: 'aprobado', author: 'Dr. Salvador Vilchis', version: 'v2', date: '15/04/2024',
       offerName: 'Diplomado en Anestesia Regional',
-      content: '<h1>Anatomia Funcional del Plexo Braquial</h1><p>El plexo braquial es la principal red nerviosa que inerva la extremidad superior.</p>',
+      content: '<h1>Anatomia Funcional del Plexo Braquial</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ul><li>Identificar las raices, troncos, divisiones, fasciculos y ramas terminales del plexo braquial.</li><li>Correlacionar la anatomia del plexo braquial con las tecnicas de bloqueo regional.</li><li>Reconocer variantes anatomicas clinicamente relevantes.</li></ul>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">El plexo braquial es la principal red nerviosa que inerva la extremidad superior. Su conocimiento detallado es fundamental para la practica segura y eficaz de la anestesia regional. Este tema aborda la anatomia funcional desde las raices cervicales hasta las ramas terminales, con enfasis en los puntos de referencia ecograficos y las relaciones vasculares criticas.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Organizacion General del Plexo</h3>' +
+        '<p style="text-align:justify">El plexo braquial se forma a partir de las ramas ventrales de los nervios espinales C5-T1. Estas raices convergen para formar tres troncos principales:</p>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Organizacion del plexo braquial por niveles</strong></p>' +
+        '<table><thead><tr><th>Nivel</th><th>Estructura</th><th>Raices</th><th>Ubicacion</th></tr></thead><tbody>' +
+        '<tr><td>Raices</td><td>5 raices cervicales</td><td>C5, C6, C7, C8, T1</td><td>Foramenes intervertebrales</td></tr>' +
+        '<tr><td>Troncos</td><td>Superior, Medio, Inferior</td><td>C5-C6, C7, C8-T1</td><td>Triangulo posterior del cuello</td></tr>' +
+        '<tr><td>Divisiones</td><td>Anterior y Posterior (x3)</td><td>Todas</td><td>Posterior a la clavicula</td></tr>' +
+        '<tr><td>Fasciculos</td><td>Lateral, Posterior, Medial</td><td>Combinaciones</td><td>Alrededor de la arteria axilar</td></tr>' +
+        '</tbody></table>' +
+        '<h3>2. Relaciones Anatomicas Clave</h3>' +
+        '<p style="text-align:justify">A nivel interescalenico, las raices del plexo se encuentran entre los musculos escaleno anterior y medio. La arteria subclavia se situa anterior e inferior al tronco inferior. El nervio frenico discurre sobre el escaleno anterior, lo cual explica la paralisis diafragmatica frecuente tras bloqueos interescalenicos.</p>' +
+        '<div class="armty-perla" style="background:#ffffff;border-left:6px solid #2373BA;padding:10px 14px;margin:14px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Perla clinica:</strong> La distancia entre el plexo braquial y la pleura a nivel supraclavicular es de solo 1-2 cm, lo que exige precaucion extrema durante la puncion.</p></div>' +
+        '<h3>3. Variantes Anatomicas</h3>' +
+        '<p style="text-align:justify">Las variantes anatomicas del plexo braquial se presentan en aproximadamente el 30% de la poblacion. Las mas frecuentes incluyen la contribucion de C4 (plexo prefijado) o T2 (plexo posfijado), asi como la presencia de un tronco medio bifurcado.</p>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 2. Frecuencia de variantes anatomicas del plexo braquial</strong></p>' +
+        '<table><thead><tr><th>Variante</th><th>Frecuencia</th><th>Relevancia clinica</th></tr></thead><tbody>' +
+        '<tr><td>Plexo prefijado (C4-C8)</td><td>22%</td><td>Mayor riesgo de bloqueo incompleto distal</td></tr>' +
+        '<tr><td>Plexo posfijado (C6-T2)</td><td>8%</td><td>Territorio sensitivo ampliado</td></tr>' +
+        '<tr><td>Comunicacion con plexo cervical</td><td>15%</td><td>Analgesia cervical colateral</td></tr>' +
+        '</tbody></table>' +
+        '<h2>Conclusion</h2>' +
+        '<p style="text-align:justify">El dominio de la anatomia del plexo braquial es la piedra angular de la anestesia regional exitosa. La comprension de las relaciones estructurales, las variantes anatomicas y los puntos de referencia ecograficos permite al anestesiologo planificar y ejecutar bloqueos nerviosos con mayor seguridad y eficacia.</p>' +
+        '<sup style="color:#1b4b85;font-weight:600">(Tabla 1)</sup> <sup style="color:#1b4b85;font-weight:600">(Tabla 2)</sup>',
       blocks: [], referenceIds: ['ref-1', 'ref-2'], assignedEditors: ['editor-1'], templateId: 'tpl-1', order: 1,
     },
     {
@@ -425,7 +453,30 @@ function getDefaultTopics() {
       description: 'Comparativa de tecnicas para la localizacion nerviosa en anestesia regional',
       status: 'en_revision', author: 'Dr. Jonathan Quinonez', version: 'v1', date: '22/05/2024',
       offerName: 'Diplomado en Anestesia Regional',
-      content: '<h1>Tecnicas de Neuroestimulacion y Guia Ecografica</h1><p>La anestesia regional ha evolucionado significativamente.</p>',
+      content: '<h1>Tecnicas de Neuroestimulacion y Guia Ecografica</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ul><li>Comparar las tecnicas de neuroestimulacion electrica con la guia ecografica.</li><li>Describir los principios fisicos del ultrasonido aplicados a la anestesia regional.</li><li>Seleccionar la tecnica adecuada segun el contexto clinico.</li></ul>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">La anestesia regional ha evolucionado significativamente con la incorporacion de tecnologias de localizacion nerviosa. Desde la neuroestimulacion electrica hasta el ultrasonido en tiempo real, cada tecnica ofrece ventajas y limitaciones especificas que el profesional debe conocer para optimizar sus resultados clinicos.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Neuroestimulacion Electrica</h3>' +
+        '<p style="text-align:justify">La neuroestimulacion utiliza corrientes electricas de baja intensidad (0.1-1.0 mA) para provocar respuestas motoras que confirman la proximidad de la aguja al nervio objetivo. Los parametros optimos incluyen una duracion de pulso de 0.1 ms y una frecuencia de 2 Hz.</p>' +
+        '<div class="armty-tip" style="background:#f6f7fa;border-left:6px solid #919BA5;padding:10px 14px;margin:14px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Tip clinico:</strong> Una respuesta motora obtenida a menos de 0.3 mA sin parestesia sugiere contacto intraneural; retire la aguja ligeramente antes de inyectar.</p></div>' +
+        '<h3>2. Guia Ecografica</h3>' +
+        '<p style="text-align:justify">El ultrasonido permite la visualizacion directa de nervios, vasos y la distribucion del anestesico local en tiempo real. Los transductores lineales de alta frecuencia (10-15 MHz) son ideales para estructuras superficiales, mientras que los convexos de baja frecuencia (2-5 MHz) se utilizan para bloqueos profundos.</p>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Comparativa de tecnicas de localizacion nerviosa</strong></p>' +
+        '<table><thead><tr><th>Parametro</th><th>Neuroestimulacion</th><th>Ultrasonido</th><th>Combinada</th></tr></thead><tbody>' +
+        '<tr><td>Visualizacion directa</td><td>No</td><td>Si</td><td>Si</td></tr>' +
+        '<tr><td>Confirmacion funcional</td><td>Si</td><td>No</td><td>Si</td></tr>' +
+        '<tr><td>Curva de aprendizaje</td><td>Moderada</td><td>Alta</td><td>Alta</td></tr>' +
+        '<tr><td>Tasa de exito (%)</td><td>85-90</td><td>92-97</td><td>95-99</td></tr>' +
+        '<tr><td>Tiempo procedimiento</td><td>5-10 min</td><td>8-15 min</td><td>10-18 min</td></tr>' +
+        '</tbody></table>' +
+        '<h3>3. Tecnica Combinada</h3>' +
+        '<p style="text-align:justify">La combinacion de ambas tecnicas ("dual guidance") maximiza la precision y seguridad. El ultrasonido guia la trayectoria de la aguja mientras la neuroestimulacion confirma la identidad del nervio antes de la inyeccion.</p>' +
+        '<blockquote><p>"La guia ecografica no elimina la necesidad de comprender la anatomia; la hace mas evidente y accesible." — Dr. Admir Hadzic, 2022</p></blockquote>' +
+        '<h2>Conclusion</h2>' +
+        '<p style="text-align:justify">La seleccion de la tecnica de localizacion nerviosa debe basarse en la experiencia del operador, la disponibilidad de equipos y las caracteristicas anatomicas del paciente. La tendencia actual favorece la guia ecografica como estandar de cuidado, complementada con neuroestimulacion cuando la visualizacion es suboptima.</p>',
       blocks: [], referenceIds: ['ref-1', 'ref-2', 'ref-3'], assignedEditors: ['editor-2'], templateId: 'tpl-1', order: 2,
     },
     {
@@ -434,7 +485,31 @@ function getDefaultTopics() {
       description: 'Tecnica, indicaciones y manejo de complicaciones del bloqueo supraclavicular',
       status: 'en_desarrollo', author: 'Ing. Amado Urias', version: 'v1', date: '10/06/2024',
       offerName: 'Diplomado en Anestesia Regional',
-      content: '<h1>Bloqueo del Plexo Braquial: Abordaje Supraclavicular</h1><p>A nivel supraclavicular, los troncos del plexo braquial se compactan.</p>',
+      content: '<h1>Bloqueo del Plexo Braquial: Abordaje Supraclavicular</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ol><li>Describir la anatomia ecografica del plexo braquial a nivel supraclavicular.</li><li>Ejecutar la tecnica de bloqueo supraclavicular paso a paso.</li><li>Identificar y manejar las complicaciones potenciales.</li></ol>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">A nivel supraclavicular, los troncos del plexo braquial se compactan en un area reducida sobre la primera costilla, lateral a la arteria subclavia. Esta disposicion compacta convierte al abordaje supraclavicular en el "bloqueo espinal de la extremidad superior", proporcionando anestesia completa y predecible del brazo.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Anatomia Ecografica</h3>' +
+        '<p style="text-align:justify">En la imagen ecografica, el plexo braquial aparece como un racimo de estructuras hipoecoicas ("racimo de uvas") situado posterolateral a la arteria subclavia y superficial a la primera costilla. La pleura se visualiza como una linea hiperecogenica con deslizamiento pulmonar inferior a la costilla.</p>' +
+        '<h3>2. Tecnica Paso a Paso</h3>' +
+        '<ol><li><strong>Posicion del paciente:</strong> Semisentado o supino, cabeza girada al lado contralateral, brazo ipsilateral a lo largo del cuerpo.</li>' +
+        '<li><strong>Preparacion:</strong> Asepsia y antisepsia de la region supraclavicular. Transductor lineal de alta frecuencia.</li>' +
+        '<li><strong>Escaneo:</strong> Colocar el transductor en posicion coronal oblicua en la fosa supraclavicular. Identificar la arteria subclavia y el plexo.</li>' +
+        '<li><strong>Puncion:</strong> Abordaje en plano (lateral a medial). Avanzar la aguja bajo vision directa hasta el "corner pocket" entre la arteria y la primera costilla.</li>' +
+        '<li><strong>Inyeccion:</strong> Aspiracion negativa, luego inyectar 20-25 mL de anestesico local fraccionado, observando la dispersion alrededor del plexo.</li></ol>' +
+        '<div class="armty-note" style="background:#ffffff;border-left:6px solid #39528F;padding:10px 14px;margin:14px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Nota importante:</strong> Nunca avance la aguja sin visualizar la punta. La primera costilla es la barrera de seguridad contra el neumotorax.</p></div>' +
+        '<h3>3. Complicaciones</h3>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Complicaciones del bloqueo supraclavicular</strong></p>' +
+        '<table><thead><tr><th>Complicacion</th><th>Incidencia</th><th>Prevencion</th><th>Manejo</th></tr></thead><tbody>' +
+        '<tr><td>Neumotorax</td><td>0.5-1%</td><td>Visualizacion continua de la aguja</td><td>Observacion o drenaje segun gravedad</td></tr>' +
+        '<tr><td>Sindrome de Horner</td><td>1-3%</td><td>Limitar volumen de AL</td><td>Autoresolutivo (2-4 h)</td></tr>' +
+        '<tr><td>Paralisis diafragmatica</td><td>25-50%</td><td>Dosis minima eficaz</td><td>Monitoreo SpO2</td></tr>' +
+        '<tr><td>Puncion vascular</td><td>2-5%</td><td>Doppler color previo</td><td>Compresion directa</td></tr>' +
+        '</tbody></table>' +
+        '<h2>Conclusion</h2>' +
+        '<p style="text-align:justify">El bloqueo supraclavicular es una tecnica altamente eficaz para la anestesia de la extremidad superior. La guia ecografica ha mejorado significativamente su seguridad al permitir la visualizacion en tiempo real de las estructuras criticas.</p>',
       blocks: [], referenceIds: ['ref-1', 'ref-2'], assignedEditors: ['editor-1', 'editor-2'], templateId: 'tpl-1', order: 1,
     },
     {
@@ -443,8 +518,185 @@ function getDefaultTopics() {
       description: 'Metodos de evaluacion de la calidad e instalacion del bloqueo nervioso periferico',
       status: 'en_desarrollo', author: 'Dr. Juan Saucedo', version: 'v1', date: '18/06/2024',
       offerName: 'Diplomado en Anestesia Regional',
-      content: '<h1>Evaluacion y Monitoreo del Bloqueo Nervioso</h1><p>La evaluacion del bloqueo nervioso periferico es una competencia critica.</p>',
+      content: '<h1>Evaluacion y Monitoreo del Bloqueo Nervioso</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ul><li>Aplicar escalas estandarizadas para evaluar la calidad del bloqueo nervioso.</li><li>Interpretar el patron de instalacion del bloqueo sensorial y motor.</li><li>Documentar adecuadamente los hallazgos de la evaluacion.</li></ul>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">La evaluacion del bloqueo nervioso periferico es una competencia critica que permite determinar la calidad, extension y duracion del efecto anestesico. Una evaluacion sistematica garantiza la seguridad del paciente y optimiza las condiciones quirurgicas.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Evaluacion Sensorial</h3>' +
+        '<p style="text-align:justify">La evaluacion sensorial se realiza mediante estimulos termicos (hielo o alcohol) y mecanicos (pinchazo con aguja roma) en los dermatomas correspondientes al territorio del nervio bloqueado. Se utiliza una escala de 0 a 2:</p>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Escala de evaluacion sensorial del bloqueo</strong></p>' +
+        '<table><thead><tr><th>Grado</th><th>Descripcion</th><th>Interpretacion</th></tr></thead><tbody>' +
+        '<tr><td>0</td><td>Sensibilidad normal</td><td>Sin bloqueo</td></tr>' +
+        '<tr><td>1</td><td>Hipoalgesia (siente tacto, no dolor)</td><td>Bloqueo parcial</td></tr>' +
+        '<tr><td>2</td><td>Analgesia/anestesia completa</td><td>Bloqueo completo</td></tr>' +
+        '</tbody></table>' +
+        '<h3>2. Evaluacion Motora</h3>' +
+        '<p style="text-align:justify">La funcion motora se evalua solicitando al paciente que realice movimientos especificos contra resistencia. La escala de Bromage modificada es la mas utilizada:</p>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 2. Escala de Bromage modificada para extremidad superior</strong></p>' +
+        '<table><thead><tr><th>Grado</th><th>Movimiento</th><th>Fuerza</th></tr></thead><tbody>' +
+        '<tr><td>0</td><td>Movimiento completo</td><td>Normal</td></tr>' +
+        '<tr><td>1</td><td>Flexion de codo posible</td><td>Reducida</td></tr>' +
+        '<tr><td>2</td><td>Solo movimiento de dedos</td><td>Muy reducida</td></tr>' +
+        '<tr><td>3</td><td>Sin movimiento</td><td>Paralisis completa</td></tr>' +
+        '</tbody></table>' +
+        '<h3>3. Tiempos de Evaluacion</h3>' +
+        '<p style="text-align:justify">Se recomienda evaluar el bloqueo a los 10, 20 y 30 minutos post-inyeccion. La mayoria de los bloqueos exitosos muestran signos de instalacion a los 10-15 minutos con anestesicos locales de accion intermedia.</p>' +
+        '<div style="background:#fff8e5;border:1px solid #f0d999;border-radius:8px;padding:12px 14px;margin:20px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Conclusion:</strong> La evaluacion sistematica del bloqueo nervioso es esencial para garantizar condiciones quirurgicas adecuadas y detectar oportunamente bloqueos fallidos o incompletos que requieran intervencion.</p></div>' +
+        '<sup style="color:#1b4b85;font-weight:600">(Tabla 1)</sup> <sup style="color:#1b4b85;font-weight:600">(Tabla 2)</sup>',
       blocks: [], referenceIds: ['ref-1', 'ref-2', 'ref-3'], assignedEditors: ['editor-1', 'editor-2'], templateId: 'tpl-1', order: 2,
+    },
+    {
+      id: 'topic-5', moduleId: 'mod-1', offerId: 'offer-1',
+      title: 'Farmacologia de los Anestesicos Locales',
+      description: 'Propiedades farmacologicas, mecanismos de accion y seleccion clinica de anestesicos locales',
+      status: 'en_revision', author: 'Dr. Salvador Vilchis', version: 'v1', date: '25/04/2024',
+      offerName: 'Diplomado en Anestesia Regional',
+      content: '<h1>Farmacologia de los Anestesicos Locales</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ul><li>Clasificar los anestesicos locales segun su estructura quimica y propiedades farmacocineticas.</li><li>Calcular dosis maximas seguras para cada anestesico local.</li><li>Reconocer y tratar la toxicidad sistemica por anestesicos locales (LAST).</li></ul>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">Los anestesicos locales son farmacos que bloquean de manera reversible la conduccion nerviosa al inhibir los canales de sodio voltaje-dependientes. Su conocimiento farmacodinamico y farmacocinetico es esencial para optimizar la eficacia y minimizar los riesgos de toxicidad en la practica de la anestesia regional.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Clasificacion Quimica</h3>' +
+        '<p style="text-align:justify">Los anestesicos locales se dividen en dos grandes familias segun el enlace quimico que une el anillo aromatico con la cadena intermedia: aminoesteres (procaina, cloroprocaina, tetracaina) y aminoamidas (lidocaina, bupivacaina, ropivacaina, levobupivacaina).</p>' +
+        '<h3>2. Propiedades Farmacocineticas</h3>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Comparativa de anestesicos locales de uso comun</strong></p>' +
+        '<table><thead><tr><th>Farmaco</th><th>Potencia</th><th>Inicio (min)</th><th>Duracion (h)</th><th>Dosis max (mg/kg)</th><th>Uso principal</th></tr></thead><tbody>' +
+        '<tr><td>Lidocaina 1-2%</td><td>Media</td><td>5-10</td><td>1.5-2</td><td>4.5 (7 c/epi)</td><td>Bloqueos de inicio rapido</td></tr>' +
+        '<tr><td>Bupivacaina 0.25-0.5%</td><td>Alta</td><td>15-20</td><td>4-8</td><td>2.5</td><td>Bloqueos prolongados</td></tr>' +
+        '<tr><td>Ropivacaina 0.5-0.75%</td><td>Alta</td><td>10-15</td><td>4-6</td><td>3</td><td>Menor cardiotoxicidad</td></tr>' +
+        '<tr><td>Levobupivacaina 0.5%</td><td>Alta</td><td>15-20</td><td>4-8</td><td>2.5</td><td>Perfil de seguridad mejorado</td></tr>' +
+        '<tr><td>Cloroprocaina 3%</td><td>Baja</td><td>3-5</td><td>0.5-1</td><td>11</td><td>Ambulatorio, inicio ultrarapido</td></tr>' +
+        '</tbody></table>' +
+        '<h3>3. Toxicidad Sistemica (LAST)</h3>' +
+        '<p style="text-align:justify">La toxicidad sistemica por anestesicos locales es la complicacion mas temida. Se manifiesta inicialmente con sintomas neurologicos (acufenos, parestesias periorales, agitacion, convulsiones) seguidos de cardiotoxicidad (arritmias, colapso cardiovascular).</p>' +
+        '<div class="armty-note" style="background:#ffffff;border-left:6px solid #39528F;padding:10px 14px;margin:14px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Nota critica:</strong> Ante cualquier sospecha de LAST, administre emulsion lipidica intravenosa al 20% (Intralipid): bolo de 1.5 mL/kg seguido de infusion a 0.25 mL/kg/min. Tenga disponible el protocolo en todas las areas donde se practique anestesia regional.</p></div>' +
+        '<h3>4. Adyuvantes</h3>' +
+        '<p style="text-align:justify">Los adyuvantes pueden prolongar la duracion y mejorar la calidad del bloqueo:</p>' +
+        '<ul><li><strong>Epinefrina (1:200,000):</strong> Reduce la absorcion sistemica, prolonga la duracion, sirve como marcador de inyeccion intravascular.</li><li><strong>Dexametasona (4-8 mg perineural):</strong> Prolonga la analgesia hasta 8-12 horas adicionales.</li><li><strong>Clonidina (75-150 mcg):</strong> Efecto analgesico sinergico moderado.</li></ul>' +
+        '<h2>Conclusion</h2>' +
+        '<p style="text-align:justify">La seleccion del anestesico local debe considerar el tipo y duracion de la cirugia, las comorbilidades del paciente y la dosis maxima permitida. El conocimiento del perfil farmacologico de cada agente permite personalizar la tecnica anestesica y maximizar la seguridad.</p>' +
+        '<sup style="color:#1b4b85;font-weight:600">(Tabla 1)</sup>',
+      blocks: [], referenceIds: ['ref-1', 'ref-3'], assignedEditors: ['editor-1'], templateId: 'tpl-1', order: 3,
+    },
+    {
+      id: 'topic-6', moduleId: 'mod-2', offerId: 'offer-1',
+      title: 'Bloqueo del Nervio Femoral y Canal Aductor',
+      description: 'Tecnicas de bloqueo para analgesia de extremidad inferior: femoral y canal de los aductores',
+      status: 'en_desarrollo', author: 'Dr. Jonathan Quinonez', version: 'v1', date: '01/07/2024',
+      offerName: 'Diplomado en Anestesia Regional',
+      content: '<h1>Bloqueo del Nervio Femoral y Canal de los Aductores</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ol><li>Describir la anatomia del nervio femoral y el canal aductor.</li><li>Diferenciar las indicaciones del bloqueo femoral vs. canal aductor.</li><li>Ejecutar ambas tecnicas bajo guia ecografica con precision.</li></ol>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">El bloqueo del nervio femoral y del canal de los aductores son tecnicas fundamentales para la analgesia de la extremidad inferior. Mientras que el bloqueo femoral proporciona analgesia amplia pero con debilidad cuadricipital significativa, el bloqueo del canal aductor ofrece analgesia selectiva preservando la funcion motora, lo que facilita la deambulacion temprana.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Anatomia del Nervio Femoral</h3>' +
+        '<p style="text-align:justify">El nervio femoral (L2-L4) es la rama mas grande del plexo lumbar. Desciende entre los musculos iliaco y psoas mayor, pasando bajo el ligamento inguinal lateral a la arteria femoral. En la imagen ecografica, aparece como una estructura triangular o fusiforme hiperecoica en el surco iliofascial.</p>' +
+        '<h3>2. Canal de los Aductores (Hunter)</h3>' +
+        '<p style="text-align:justify">El canal aductor es un tunel aponeuroptico en el tercio medio del muslo, delimitado por el musculo vasto medial (lateral), el aductor largo/magno (medial) y la membrana vastoaductora (anterior). Contiene el nervio safeno, la rama al vasto medial y fibras del nervio obturador.</p>' +
+        '<h3>3. Comparativa de Tecnicas</h3>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Bloqueo femoral vs. canal aductor</strong></p>' +
+        '<table><thead><tr><th>Caracteristica</th><th>Bloqueo Femoral</th><th>Canal Aductor</th></tr></thead><tbody>' +
+        '<tr><td>Analgesia rodilla</td><td>Excelente</td><td>Excelente</td></tr>' +
+        '<tr><td>Debilidad cuadricipital</td><td>Significativa (80%)</td><td>Minima (8%)</td></tr>' +
+        '<tr><td>Deambulacion temprana</td><td>Limitada</td><td>Posible</td></tr>' +
+        '<tr><td>Indicacion principal</td><td>Fractura femoral, cirugia de rodilla mayor</td><td>Artroplastia de rodilla, artroscopia</td></tr>' +
+        '<tr><td>Volumen recomendado</td><td>20-30 mL</td><td>15-20 mL</td></tr>' +
+        '</tbody></table>' +
+        '<div class="armty-perla" style="background:#ffffff;border-left:6px solid #2373BA;padding:10px 14px;margin:14px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Perla clinica:</strong> En protocolos de recuperacion acelerada (ERAS) para artroplastia total de rodilla, el bloqueo del canal aductor ha reemplazado al femoral como tecnica de primera linea, ya que permite la deambulacion a las 6-8 horas postcirugicas.</p></div>' +
+        '<h3>4. Tecnica Ecografica del Canal Aductor</h3>' +
+        '<ol><li>Colocar al paciente en supino con el muslo en ligera rotacion externa.</li><li>Posicionar el transductor lineal transversalmente en el tercio medio del muslo.</li><li>Identificar la arteria femoral superficial profunda al musculo sartorio.</li><li>El nervio safeno se visualiza como un punto hiperecoico lateral a la arteria.</li><li>Insertar la aguja en plano (lateral a medial) hasta posicionar la punta junto al nervio.</li><li>Inyectar 15-20 mL de ropivacaina al 0.5% o bupivacaina al 0.25%.</li></ol>' +
+        '<h2>Conclusion</h2>' +
+        '<p style="text-align:justify">La eleccion entre bloqueo femoral y canal aductor debe individualizarse segun el procedimiento quirurgico, los objetivos de rehabilitacion y el perfil de riesgo del paciente. Ambas tecnicas son complementarias y forman parte esencial del arsenal del anestesiologo regional moderno.</p>',
+      blocks: [], referenceIds: ['ref-1', 'ref-2', 'ref-3'], assignedEditors: ['editor-2'], templateId: 'tpl-1', order: 3,
+    },
+    {
+      id: 'topic-7', moduleId: 'mod-1', offerId: 'offer-1',
+      title: 'Principios de Ultrasonido Aplicado a Anestesia Regional',
+      description: 'Fisica del ultrasonido, optimizacion de imagen y artefactos comunes en la practica de bloqueos nerviosos',
+      status: 'aprobado', author: 'Ing. Amado Urias', version: 'v2', date: '05/05/2024',
+      offerName: 'Diplomado en Anestesia Regional',
+      content: '<h1>Principios de Ultrasonido Aplicado a Anestesia Regional</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ul><li>Explicar los principios fisicos basicos del ultrasonido diagnostico.</li><li>Optimizar la imagen ecografica para la visualizacion de nervios perifericos.</li><li>Identificar y corregir los artefactos mas comunes.</li></ul>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">El ultrasonido se ha convertido en la herramienta fundamental para la anestesia regional moderna. Comprender sus principios fisicos permite al operador optimizar la calidad de la imagen, interpretar correctamente las estructuras visualizadas y reconocer artefactos que podrian conducir a errores de identificacion.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Principios Fisicos</h3>' +
+        '<p style="text-align:justify">El ultrasonido diagnostico utiliza ondas sonoras de alta frecuencia (2-18 MHz) que se propagan a traves de los tejidos. Cuando estas ondas encuentran una interfaz entre tejidos con diferente impedancia acustica, parte de la energia se refleja (eco) y parte se transmite. El equipo procesa los ecos reflejados para construir la imagen bidimensional en tiempo real.</p>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Relacion frecuencia-profundidad en transductores</strong></p>' +
+        '<table><thead><tr><th>Tipo de transductor</th><th>Frecuencia</th><th>Profundidad util</th><th>Resolucion</th><th>Aplicacion</th></tr></thead><tbody>' +
+        '<tr><td>Lineal alta frecuencia</td><td>10-18 MHz</td><td>2-4 cm</td><td>Muy alta</td><td>Nervios superficiales, interescalenico</td></tr>' +
+        '<tr><td>Lineal media frecuencia</td><td>6-10 MHz</td><td>4-6 cm</td><td>Alta</td><td>Supraclavicular, axilar, femoral</td></tr>' +
+        '<tr><td>Convexo baja frecuencia</td><td>2-5 MHz</td><td>8-15 cm</td><td>Moderada</td><td>Lumbar, subgluteo, ciatico</td></tr>' +
+        '</tbody></table>' +
+        '<h3>2. Ecogenicidad de los Tejidos</h3>' +
+        '<p style="text-align:justify">Los nervios perifericos presentan un patron ecografico caracteristico en corte transversal: aspecto de "panal de abejas" con multiples areas hipoecoicas (fasciculos) rodeadas por un marco hiperecoico (perineuro). Este patron se denomina "fascicular" y permite diferenciar nervios de tendones y vasos.</p>' +
+        '<h3>3. Optimizacion de Imagen</h3>' +
+        '<ul><li><strong>Ganancia total:</strong> Ajustar hasta que el fondo de la imagen sea gris oscuro (no negro absoluto).</li><li><strong>Ganancia por zonas (TGC):</strong> Compensar la atenuacion en profundidad.</li><li><strong>Profundidad:</strong> Ajustar para que la estructura objetivo este en el tercio central de la pantalla.</li><li><strong>Foco:</strong> Posicionar a la profundidad de la estructura de interes.</li><li><strong>Preset:</strong> Seleccionar "Nervio" o "MSK" si esta disponible en el equipo.</li></ul>' +
+        '<h3>4. Artefactos Comunes</h3>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 2. Artefactos ecograficos y su manejo</strong></p>' +
+        '<table><thead><tr><th>Artefacto</th><th>Causa</th><th>Apariencia</th><th>Solucion</th></tr></thead><tbody>' +
+        '<tr><td>Anisotropia</td><td>Angulo de incidencia oblicuo</td><td>Nervio desaparece o se oscurece</td><td>Bascular el transductor (tilting)</td></tr>' +
+        '<tr><td>Sombra acustica</td><td>Estructura altamente reflectante (hueso, calificacion)</td><td>Zona oscura posterior</td><td>Cambiar la ventana acustica</td></tr>' +
+        '<tr><td>Refuerzo posterior</td><td>Estructura con baja atenuacion (vaso)</td><td>Zona brillante posterior al vaso</td><td>Ajustar TGC o ganancia</td></tr>' +
+        '<tr><td>Reverberacion</td><td>Rebote entre aguja y transductor</td><td>Lineas paralelas repetitivas</td><td>Ajustar angulo de insercion</td></tr>' +
+        '</tbody></table>' +
+        '<div class="armty-tip" style="background:#f6f7fa;border-left:6px solid #919BA5;padding:10px 14px;margin:14px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Tip practico:</strong> La anisotropia es la causa mas frecuente de "desaparicion" de un nervio durante el escaneo. Si pierde la visualizacion, basculen lentamente el transductor antes de cambiar la posicion.</p></div>' +
+        '<h2>Conclusion</h2>' +
+        '<p style="text-align:justify">El dominio de los principios de ultrasonido es un prerequisito para la practica segura de la anestesia regional guiada por ecografia. La optimizacion sistematica de la imagen y el reconocimiento de artefactos mejoran la identificacion de estructuras y reducen las complicaciones asociadas al procedimiento.</p>' +
+        '<sup style="color:#1b4b85;font-weight:600">(Tabla 1)</sup> <sup style="color:#1b4b85;font-weight:600">(Tabla 2)</sup>',
+      blocks: [], referenceIds: ['ref-1', 'ref-2', 'ref-3'], assignedEditors: ['editor-1', 'editor-2'], templateId: 'tpl-1', order: 4,
+    },
+    {
+      id: 'topic-8', moduleId: 'mod-2', offerId: 'offer-1',
+      title: 'Protocolos de Seguridad en Anestesia Regional',
+      description: 'Listas de verificacion, consentimiento informado y manejo de emergencias en la practica de bloqueos nerviosos',
+      status: 'en_desarrollo', author: 'Dr. Juan Saucedo', version: 'v1', date: '15/07/2024',
+      offerName: 'Diplomado en Anestesia Regional',
+      content: '<h1>Protocolos de Seguridad en Anestesia Regional</h1>' +
+        '<h2>Objetivos de Aprendizaje</h2>' +
+        '<ul><li>Implementar listas de verificacion pre-procedimiento para bloqueos nerviosos.</li><li>Aplicar el protocolo estandarizado de manejo de LAST.</li><li>Documentar adecuadamente el procedimiento y el consentimiento informado.</li></ul>' +
+        '<h2>Introduccion</h2>' +
+        '<p style="text-align:justify">La seguridad del paciente es la prioridad absoluta en la practica de la anestesia regional. La implementacion de protocolos estandarizados, listas de verificacion y algoritmos de manejo de emergencias ha demostrado reducir significativamente la incidencia de complicaciones graves. Este tema presenta los lineamientos actuales basados en evidencia y las recomendaciones de las sociedades internacionales.</p>' +
+        '<h2>Desarrollo del Tema</h2>' +
+        '<h3>1. Lista de Verificacion Pre-Procedimiento</h3>' +
+        '<p style="text-align:justify">Antes de realizar cualquier bloqueo nervioso, se debe completar una lista de verificacion que incluya:</p>' +
+        '<ol><li>Verificacion de identidad del paciente y sitio quirurgico.</li><li>Revision de consentimiento informado firmado.</li><li>Revision de alergias (especialmente a anestesicos locales y latex).</li><li>Revision de anticoagulantes y antiagregantes plaquetarios.</li><li>Verificacion de equipo de ultrasonido funcional.</li><li>Disponibilidad de emulsion lipidica 20% (Intralipid).</li><li>Monitorizacion basica instalada (ECG, SpO2, PANI).</li><li>Acceso intravenoso permeable.</li></ol>' +
+        '<h3>2. Protocolo LAST (Local Anesthetic Systemic Toxicity)</h3>' +
+        '<p style="text-align:justify">El protocolo de manejo de toxicidad sistemica por anestesicos locales sigue las recomendaciones de la ASRA 2020:</p>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 1. Protocolo LAST - Pasos de manejo</strong></p>' +
+        '<table><thead><tr><th>Paso</th><th>Accion</th><th>Dosis/Detalle</th></tr></thead><tbody>' +
+        '<tr><td>1</td><td>Suspender inyeccion de AL</td><td>Inmediato</td></tr>' +
+        '<tr><td>2</td><td>Pedir ayuda y kit de LAST</td><td>Emulsion lipidica 20%</td></tr>' +
+        '<tr><td>3</td><td>Manejo de via aerea</td><td>O2 100%, considerar intubacion</td></tr>' +
+        '<tr><td>4</td><td>Convulsiones: benzodiacepinas</td><td>Midazolam 2-4 mg IV</td></tr>' +
+        '<tr><td>5</td><td>Emulsion lipidica IV (bolo)</td><td>1.5 mL/kg en 1 min</td></tr>' +
+        '<tr><td>6</td><td>Emulsion lipidica IV (infusion)</td><td>0.25 mL/kg/min x 30-60 min</td></tr>' +
+        '<tr><td>7</td><td>Si paro cardiaco: RCP</td><td>Evitar vasopresina y CCB</td></tr>' +
+        '<tr><td>8</td><td>Repetir bolo lipidos si necesario</td><td>Max 12 mL/kg en 1 hora</td></tr>' +
+        '</tbody></table>' +
+        '<div class="armty-note" style="background:#ffffff;border-left:6px solid #39528F;padding:10px 14px;margin:14px 0;"><p style="margin:0;text-align:justify;font-size:medium;"><strong>Nota de seguridad:</strong> La emulsion lipidica debe estar disponible en TODAS las areas donde se administren anestesicos locales, no solo en quirofano. Verifique la fecha de caducidad mensualmente.</p></div>' +
+        '<h3>3. Consentimiento Informado</h3>' +
+        '<p style="text-align:justify">El consentimiento informado para anestesia regional debe incluir:</p>' +
+        '<ul><li>Descripcion del procedimiento propuesto y alternativas.</li><li>Beneficios esperados (analgesia, reduccion de opioides).</li><li>Riesgos generales: dolor en sitio de puncion, hematoma, infeccion.</li><li>Riesgos especificos del bloqueo: lesion nerviosa (transitoria 2-4%, permanente 0.02%), toxicidad por AL, neumotorax (en bloqueos supraclaviculares).</li><li>Tiempo esperado de recuperacion sensitiva y motora.</li></ul>' +
+        '<h3>4. Documentacion del Procedimiento</h3>' +
+        '<p style="text-align:center;font-weight:600;font-size:0.9em;color:#1b4b85"><strong>Tabla 2. Elementos de documentacion del bloqueo nervioso</strong></p>' +
+        '<table><thead><tr><th>Elemento</th><th>Descripcion</th><th>Ejemplo</th></tr></thead><tbody>' +
+        '<tr><td>Tipo de bloqueo</td><td>Nombre del bloqueo realizado</td><td>Bloqueo supraclavicular derecho</td></tr>' +
+        '<tr><td>Tecnica de guia</td><td>Ecografica, neuroestimulacion, combinada</td><td>Guia ecografica + NE 0.4 mA</td></tr>' +
+        '<tr><td>Anestesico local</td><td>Tipo, concentracion, volumen</td><td>Ropivacaina 0.5%, 20 mL</td></tr>' +
+        '<tr><td>Adyuvantes</td><td>Farmacos anadidos</td><td>Dexametasona 4 mg perineural</td></tr>' +
+        '<tr><td>Evaluacion del bloqueo</td><td>Resultado sensitivo y motor</td><td>Sensorial 2/2, Motor 2/3 a los 20 min</td></tr>' +
+        '<tr><td>Complicaciones</td><td>Cualquier evento adverso</td><td>Ninguna</td></tr>' +
+        '</tbody></table>' +
+        '<h2>Conclusion</h2>' +
+        '<p style="text-align:justify">La implementacion de protocolos de seguridad estandarizados es un componente no negociable de la practica de la anestesia regional. La preparacion anticipada, la disponibilidad de recursos de emergencia y la documentacion completa son las bases de una atencion segura y de calidad.</p>' +
+        '<sup style="color:#1b4b85;font-weight:600">(Tabla 1)</sup> <sup style="color:#1b4b85;font-weight:600">(Tabla 2)</sup>',
+      blocks: [], referenceIds: ['ref-1', 'ref-2', 'ref-3'], assignedEditors: ['editor-1', 'editor-2'], templateId: 'tpl-1', order: 4,
     },
   ];
 }

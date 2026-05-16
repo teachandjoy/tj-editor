@@ -118,7 +118,12 @@ export function useAppStore() {
 
   const addOffer = useCallback(async (offer: Offer) => {
     setOffers(prev => [...prev, offer]);
-    try { await apiPost('/offers', offer); } catch { /* fallback */ }
+    try {
+      await apiPost('/offers', offer);
+      // Reload folders to pick up the auto-created repository folder
+      const updatedFolders = await apiGet<RepositoryFolder[]>('/folders');
+      setFolders(updatedFolders);
+    } catch { /* fallback */ }
   }, []);
 
   const updateOffer = useCallback(async (id: string, updates: Partial<Offer>) => {

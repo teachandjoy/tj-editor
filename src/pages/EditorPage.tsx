@@ -122,7 +122,7 @@ ${topic.content}${refsHTML}
 export default function EditorPage() {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
-  const { topics, offers, identities, updateTopic, references, updateReference, addReference, media, uploadMedia, currentUser } = useApp();
+  const { topics, offers, identities, updateTopic, references, updateReference, addReference, media, uploadMedia, addMedia, folders, currentUser } = useApp();
   const topic = topics.find(t => t.id === topicId);
 
   const [showReferences, setShowReferences] = useState(false);
@@ -151,6 +151,9 @@ export default function EditorPage() {
   const [showFigureCitation, setShowFigureCitation] = useState(false);
   const [figureCitationType, setFigureCitationType] = useState<string>('Figura');
   const [figureCitationCustom, setFigureCitationCustom] = useState('');
+  const [showTableNameDialog, setShowTableNameDialog] = useState(false);
+  const [tableNameDraft, setTableNameDraft] = useState('');
+  const [tableCount, setTableCount] = useState(1);
 
   const editorWrapRef = useRef<HTMLDivElement>(null);
 
@@ -463,35 +466,52 @@ export default function EditorPage() {
     setLinkUrl(''); setShowLinkInput(false);
   }, [editor, linkUrl]);
 
-  // ── Figure citation: parse images/figures from editor content ──
+  // ── Figure citation: parse images/figures/tables from editor content ──
   const editorFigures = useMemo(() => {
     if (!editor) return [];
     const html = editor.getHTML();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    const figures: { src: string; caption: string; index: number }[] = [];
-    // Find all <figure> elements
+    const items: { src: string; caption: string; index: number; kind: string }[] = [];
+    let figIdx = 1;
+    let tblIdx = 1;
+    // Find all <figure> elements (images with captions)
     doc.querySelectorAll('figure').forEach((fig) => {
       const img = fig.querySelector('img');
       const figcaption = fig.querySelector('figcaption');
       if (img) {
-        figures.push({
+        items.push({
           src: img.getAttribute('src') || '',
           caption: figcaption?.textContent || img.getAttribute('alt') || 'Sin descripción',
-          index: figures.length + 1,
+          index: figIdx++,
+          kind: 'Figura',
         });
       }
     });
     // Also find standalone <img> not inside <figure>
     doc.querySelectorAll('img').forEach((img) => {
-      if (img.closest('figure')) return; // already counted
-      figures.push({
+      if (img.closest('figure')) return;
+      items.push({
         src: img.getAttribute('src') || '',
         caption: img.getAttribute('alt') || 'Sin descripción',
-        index: figures.length + 1,
+        index: figIdx++,
+        kind: 'Imagen',
       });
     });
-    return figures;
+    // Find all tables in editor content
+    doc.querySelectorAll('table').forEach((table) => {
+      const caption = table.getAttribute('data-table-name') || table.querySelector('caption')?.textContent || '';
+      const prev = table.previousElementSibling;
+      const nameFromPrev = prev?.tagName === 'P' && prev.textContent?.match(/^Tabla\s+\d+\.\s*(.+)/i);
+      const displayName = caption || (nameFromPrev ? nameFromPrev[1].trim() : `Tabla ${tblIdx}`);
+      items.push({
+        src: '',
+        caption: displayName,
+        index: tblIdx++,
+        kind: 'Tabla',
+      });
+    });
+    return items;
   }, [editor, editor?.getHTML()]);
 
   const insertFigureCitation = useCallback((figIndex: number, label: string) => {
@@ -502,6 +522,18 @@ export default function EditorPage() {
     ).run();
     setShowFigureCitation(false);
   }, [editor, figureCitationCustom]);
+
+  const insertNamedTable = useCallback(() => {
+    if (!editor) return;
+    const name = tableNameDraft.trim() || `Tabla ${tableCount}`;
+    const label = `Tabla ${tableCount}. ${name}`;
+    editor.chain().focus().insertContent(
+      `<p style="text-align:center;font-weight:600;font-size:0.9em;color:${TJ.primary}"><strong>${label}</strong></p>`
+    ).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    setTableCount(c => c + 1);
+    setTableNameDraft('');
+    setShowTableNameDialog(false);
+  }, [editor, tableNameDraft, tableCount]);
 
   const handleImportContent = useCallback((html: string) => {
     if (!editor) return;
@@ -731,7 +763,7 @@ export default function EditorPage() {
           <TbBtn onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive('code')} title="Código"><Code size={14} /></TbBtn>
           <Sep />
           {/* Table controls — highlighted when inside a table */}
-          <TbBtn onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insertar tabla 3×3"><TableIcon size={14} /></TbBtn>
+          <TbBtn onClick={() => setShowTableNameDialog(true)} title="Insertar tabla con nombre"><TableIcon size={14} /></TbBtn>
           {editor.isActive('table') && (
             <>
               <div style={{ display:'flex',alignItems:'center',gap:2,background:'rgba(27,75,133,0.07)',borderRadius:6,padding:'1px 4px' }}>
@@ -1086,6 +1118,22 @@ export default function EditorPage() {
         <ImportDialog
           onClose={() => setShowImportDialog(false)}
           onImport={handleImportContent}
+          folders={folders}
+          onSaveImages={(images) => {
+            images.forEach((img) => {
+              addMedia({
+                id: `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                name: img.name,
+                url: img.src,
+                type: 'image',
+                description: 'Importada desde Word',
+                uploadedBy: currentUser?.id || 'system',
+                uploadedAt: new Date().toISOString().slice(0, 10),
+                size: Math.round(img.src.length * 0.75),
+                folderId: img.folderId,
+              });
+            });
+          }}
         />
       )}
 
@@ -1096,6 +1144,35 @@ export default function EditorPage() {
           onClose={() => setShowPublicationPreview(false)}
           onExport={() => handleExport(true)}
         />
+      )}
+
+      {/* ── Table Name Dialog ── */}
+      {showTableNameDialog && (
+        <ModalPortal><div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm modal-enter" style={{ border: `1px solid ${TJ.border}` }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: TJ.border }}>
+              <h3 className="font-bold text-sm" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Insertar Tabla</h3>
+              <button onClick={() => setShowTableNameDialog(false)} className="p-1 rounded-lg hover:bg-gray-100"><X size={16} /></button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Nombre de la tabla</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold flex-shrink-0" style={{ color: TJ.primary }}>Tabla {tableCount}.</span>
+                  <input value={tableNameDraft} onChange={e => setTableNameDraft(e.target.value)} placeholder="Nombre descriptivo..."
+                    className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none" style={{ borderColor: TJ.border }}
+                    onKeyDown={e => e.key === 'Enter' && insertNamedTable()} autoFocus />
+                </div>
+              </div>
+              <p className="text-xs" style={{ color: '#a8b8d8' }}>Se insertará una tabla 3×3 con encabezado. Podrás agregar filas y columnas después.</p>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: TJ.border }}>
+              <button onClick={() => setShowTableNameDialog(false)} className="px-4 py-2 text-sm rounded-lg border" style={{ borderColor: TJ.border }}>Cancelar</button>
+              <button onClick={insertNamedTable}
+                className="px-4 py-2 text-sm rounded-lg text-white font-semibold" style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Insertar Tabla</button>
+            </div>
+          </div>
+        </div></ModalPortal>
       )}
 
       {/* ── Figure Citation Modal ── */}
@@ -1131,13 +1208,13 @@ export default function EditorPage() {
               {editorFigures.length === 0 ? (
                 <div className="text-center py-12">
                   <Image size={36} className="mx-auto mb-3 opacity-20" />
-                  <p className="text-sm" style={{ color: '#a8b8d8' }}>No hay figuras/imágenes en este tema.</p>
-                  <p className="text-xs mt-1" style={{ color: '#d4cfc8' }}>Inserta imágenes desde el repositorio o súbelas primero.</p>
+                  <p className="text-sm" style={{ color: '#a8b8d8' }}>No hay figuras, tablas o imágenes en este tema.</p>
+                  <p className="text-xs mt-1" style={{ color: '#d4cfc8' }}>Inserta imágenes o tablas primero para poder citarlas.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {editorFigures.map((fig) => (
-                    <div key={`${fig.src}-${fig.index}`}
+                    <div key={`${fig.kind}-${fig.index}`}
                       className="flex items-center gap-3 p-3 rounded-xl border transition-all"
                       style={{ borderColor: TJ.border }}
                       onMouseEnter={e => (e.currentTarget.style.borderColor = TJ.primary)}
@@ -1145,15 +1222,15 @@ export default function EditorPage() {
                       <div className="w-16 h-14 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: '#f0ece6' }}>
                         {fig.src ? (
                           <img src={fig.src} alt={fig.caption} className="w-full h-full object-cover" />
-                        ) : <Image size={22} style={{ color: '#d4cfc8' }} />}
+                        ) : fig.kind === 'Tabla' ? <TableIcon size={22} style={{ color: TJ.primary }} /> : <Image size={22} style={{ color: '#d4cfc8' }} />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-bold" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
-                          {figureCitationCustom.trim() || figureCitationType} {fig.index}
+                          {fig.kind} {fig.index}
                         </div>
                         <div className="text-xs truncate" style={{ color: '#666' }}>{fig.caption}</div>
                       </div>
-                      <button onClick={() => insertFigureCitation(fig.index, figureCitationType)}
+                      <button onClick={() => insertFigureCitation(fig.index, figureCitationCustom.trim() || fig.kind)}
                         className="px-3 py-1.5 text-xs rounded-lg text-white font-semibold flex-shrink-0"
                         style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
                         Citar
