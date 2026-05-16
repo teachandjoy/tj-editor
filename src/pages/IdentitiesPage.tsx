@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
 import { Plus, X, Trash2, Edit, Check, Upload, Download, FileJson } from 'lucide-react';
-import type { CorporateIdentity, IdentityBlock } from '../types';
+import type { CorporateIdentity, IdentityBlock, HtmlFormatTemplates } from '../types';
 import { hasPermission } from '../utils/permissions';
 import { TJ } from '../constants/theme';
 import ModalPortal from '../components/ui/ModalPortal';
@@ -55,7 +55,7 @@ export default function IdentitiesPage() {
   const { currentUser, identities, addIdentity, updateIdentity, deleteIdentity } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CorporateIdentity | null>(null);
-  const [activeTab, setActiveTab] = useState<'general' | 'colores' | 'blocks'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'colores' | 'blocks' | 'formatos'>('general');
   const [form, setForm] = useState<Partial<CorporateIdentity>>({
     colorPrimary: '#1b4b85', colorSecondary: '#8b2f3a', colorTertiary: '#c5aa6f',
     colorBackground: '#f4f5f7', colorTextPrimary: '#2a2a32', colorButtons: '#1b4b85', colorButtonsHover: '#8b2f3a',
@@ -212,6 +212,7 @@ export default function IdentitiesPage() {
     { id: 'general' as const, label: 'General' },
     { id: 'colores' as const, label: 'Colores y Tipografía' },
     { id: 'blocks' as const, label: `Bloques (${form.blocks?.length || 0})` },
+    { id: 'formatos' as const, label: 'Formatos HTML' },
   ];
 
   return (
@@ -476,6 +477,47 @@ export default function IdentitiesPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'formatos' && (
+                <div className="space-y-4">
+                  <p className="text-xs mb-3" style={{ color: '#a8b8d8' }}>
+                    Define plantillas HTML para cada tipo de contenido. Al exportar, el sistema aplicará estos formatos automáticamente.
+                  </p>
+                  {([
+                    { key: 'heading1' as keyof HtmlFormatTemplates, label: 'Título 1 (H1)', placeholder: '<h1 style="color:#1b4b85;font-family:Montserrat,sans-serif;font-size:2rem;font-weight:700;margin:24px 0 12px;">{{content}}</h1>' },
+                    { key: 'heading2' as keyof HtmlFormatTemplates, label: 'Título 2 (H2)', placeholder: '<h2 style="color:#1b4b85;font-family:Montserrat,sans-serif;font-size:1.5rem;font-weight:600;margin:20px 0 10px;">{{content}}</h2>' },
+                    { key: 'heading3' as keyof HtmlFormatTemplates, label: 'Título 3 (H3)', placeholder: '<h3 style="color:#8b2f3a;font-family:Montserrat,sans-serif;font-size:1.2rem;font-weight:600;margin:16px 0 8px;">{{content}}</h3>' },
+                    { key: 'heading4' as keyof HtmlFormatTemplates, label: 'Subtítulo (H4)', placeholder: '<h4 style="font-family:Montserrat,sans-serif;font-size:1rem;font-weight:600;">{{content}}</h4>' },
+                    { key: 'paragraph' as keyof HtmlFormatTemplates, label: 'Párrafo', placeholder: '<p style="font-family:Open Sans,sans-serif;font-size:14px;line-height:1.8;text-align:justify;margin:8px 0;">{{content}}</p>' },
+                    { key: 'table' as keyof HtmlFormatTemplates, label: 'Tabla', placeholder: '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-family:Open Sans,sans-serif;">{{content}}</table>' },
+                    { key: 'image' as keyof HtmlFormatTemplates, label: 'Imagen', placeholder: '<figure style="text-align:center;margin:20px 0;"><img src="{{src}}" alt="{{alt}}" style="max-width:100%;border-radius:4px;"/></figure>' },
+                    { key: 'imageCaption' as keyof HtmlFormatTemplates, label: 'Pie de imagen', placeholder: '<figcaption style="font-size:12px;color:#666;text-align:center;margin-top:6px;font-style:italic;">{{content}}</figcaption>' },
+                    { key: 'references' as keyof HtmlFormatTemplates, label: 'Referencias Bibliográficas', placeholder: '<div style="border-top:2px solid #1b4b85;padding-top:16px;margin-top:32px;"><h3 style="color:#1b4b85;">Referencias</h3>{{content}}</div>' },
+                    { key: 'blockquote' as keyof HtmlFormatTemplates, label: 'Cita / Blockquote', placeholder: '<blockquote style="border-left:4px solid #c5aa6f;padding:8px 16px;margin:12px 0;font-style:italic;color:#555;">{{content}}</blockquote>' },
+                    { key: 'list' as keyof HtmlFormatTemplates, label: 'Lista', placeholder: '<ul style="font-family:Open Sans,sans-serif;padding-left:24px;line-height:1.8;">{{content}}</ul>' },
+                  ]).map(({ key, label, placeholder }) => (
+                    <div key={key} className="border rounded-xl overflow-hidden" style={{ borderColor: TJ.border }}>
+                      <div className="px-3 py-2 bg-gray-50 border-b" style={{ borderColor: TJ.border }}>
+                        <span className="text-xs font-bold" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>{label}</span>
+                      </div>
+                      <textarea
+                        className={inputCls}
+                        style={{ ...inputStyle, minHeight: 60, fontFamily: 'monospace', fontSize: 11, resize: 'vertical', borderRadius: 0, border: 'none' }}
+                        value={(form.htmlTemplates || {})[key] || ''}
+                        onChange={e => setForm(p => ({ ...p, htmlTemplates: { ...(p.htmlTemplates || {}), [key]: e.target.value } }))}
+                        placeholder={placeholder}
+                      />
+                      {(form.htmlTemplates || {})[key] && (
+                        <div className="px-3 py-2" style={{ background: '#fafafa' }}>
+                          <p className="text-xs font-semibold mb-1" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Vista previa:</p>
+                          <div className="p-2 bg-white rounded-lg border text-sm" style={{ borderColor: TJ.border }}
+                            dangerouslySetInnerHTML={{ __html: ((form.htmlTemplates || {})[key] || '').replace(/\{\{content\}\}/g, 'Texto de ejemplo').replace(/\{\{src\}\}/g, '').replace(/\{\{alt\}\}/g, 'Ejemplo') }} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
 

@@ -11,6 +11,7 @@ function rowToFolder(row) {
     name: row.name,
     parentId: row.parent_id || null,
     accessRoles: JSON.parse(row.access_roles || '[]'),
+    accessUserIds: JSON.parse(row.access_user_ids || '[]'),
     offerId: row.offer_id || undefined,
   };
 }
@@ -47,8 +48,8 @@ router.post('/', (req, res) => {
   try {
     const f = req.body;
     if (!f.id || !f.name) return res.status(400).json({ error: 'id y name son requeridos' });
-    db.prepare('INSERT INTO folders (id, name, parent_id, access_roles, offer_id) VALUES (?, ?, ?, ?, ?)')
-      .run(f.id, f.name, f.parentId || null, JSON.stringify(f.accessRoles || []), f.offerId || null);
+    db.prepare('INSERT INTO folders (id, name, parent_id, access_roles, access_user_ids, offer_id) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(f.id, f.name, f.parentId || null, JSON.stringify(f.accessRoles || []), JSON.stringify(f.accessUserIds || []), f.offerId || null);
     const row = db.prepare('SELECT * FROM folders WHERE id = ?').get(f.id);
     res.status(201).json(rowToFolder(row));
   } catch (err) {
@@ -62,8 +63,8 @@ router.put('/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM folders WHERE id = ?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Carpeta no encontrada' });
     const f = req.body;
-    db.prepare('UPDATE folders SET name = ?, parent_id = ?, access_roles = ?, offer_id = ? WHERE id = ?')
-      .run(f.name ?? existing.name, f.parentId !== undefined ? f.parentId : existing.parent_id, f.accessRoles !== undefined ? JSON.stringify(f.accessRoles) : existing.access_roles, f.offerId !== undefined ? f.offerId : existing.offer_id, req.params.id);
+    db.prepare('UPDATE folders SET name = ?, parent_id = ?, access_roles = ?, access_user_ids = ?, offer_id = ? WHERE id = ?')
+      .run(f.name ?? existing.name, f.parentId !== undefined ? f.parentId : existing.parent_id, f.accessRoles !== undefined ? JSON.stringify(f.accessRoles) : existing.access_roles, f.accessUserIds !== undefined ? JSON.stringify(f.accessUserIds) : existing.access_user_ids, f.offerId !== undefined ? f.offerId : existing.offer_id, req.params.id);
     const row = db.prepare('SELECT * FROM folders WHERE id = ?').get(req.params.id);
     res.json(rowToFolder(row));
   } catch (err) {

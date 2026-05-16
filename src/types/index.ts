@@ -153,6 +153,8 @@ export interface BibliographyReference {
   type: 'article' | 'book' | 'chapter' | 'website' | 'thesis' | 'conference';
   offerId?: string;
   moduleTag?: string;
+  moduleIds?: string[];
+  topicIds?: string[];
 }
 
 export interface Template {
@@ -193,6 +195,7 @@ export interface RepositoryFolder {
   parentId: string | null;
   accessRoles: UserRole[];
   offerId?: string;
+  accessUserIds?: string[];
 }
 
 export interface IdentityBlock {
@@ -200,6 +203,20 @@ export interface IdentityBlock {
   name: string;
   html: string;
   detectedTypes?: string[];
+}
+
+export interface HtmlFormatTemplates {
+  heading1?: string;
+  heading2?: string;
+  heading3?: string;
+  heading4?: string;
+  paragraph?: string;
+  table?: string;
+  image?: string;
+  imageCaption?: string;
+  references?: string;
+  blockquote?: string;
+  list?: string;
 }
 
 export interface CorporateIdentity {
@@ -225,4 +242,5 @@ export interface CorporateIdentity {
   snippet?: string;
   detectedBlocks?: string[];
   blocks?: IdentityBlock[];
+  htmlTemplates?: HtmlFormatTemplates;
 }

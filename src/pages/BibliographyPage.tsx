@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
 import { Plus, BookOpen, Trash2, X, ChevronDown, Search, Globe, Loader2 } from 'lucide-react';
@@ -11,7 +11,7 @@ const inputCls = 'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none'
 const inputStyle = { borderColor: TJ.border };
 
 export default function BibliographyPage() {
-  const { currentUser, offers, references, addReference, deleteReference } = useApp();
+  const { currentUser, offers, topics, references, addReference, deleteReference } = useApp();
   const [showCreate, setShowCreate] = useState(false);
   const [offerFilter, setOfferFilter] = useState<string>('all');
   const [style, setStyle] = useState<ReferenceStyle>('apa');
@@ -30,6 +30,8 @@ export default function BibliographyPage() {
   const [edition, setEdition] = useState('');
   const [refOfferId, setRefOfferId] = useState('');
   const [moduleTag, setModuleTag] = useState('');
+  const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [lookupQuery, setLookupQuery] = useState('');
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState('');
@@ -81,6 +83,17 @@ export default function BibliographyPage() {
     }
   }, [lookupQuery, style]);
 
+  const offerModules = useMemo(() => {
+    if (!refOfferId) return [];
+    const offer = offers.find(o => o.id === refOfferId);
+    return offer?.modules || [];
+  }, [refOfferId, offers]);
+
+  const moduleTopics = useMemo(() => {
+    if (selectedModuleIds.length === 0) return [];
+    return topics.filter(t => selectedModuleIds.includes(t.moduleId));
+  }, [selectedModuleIds, topics]);
+
   if (!currentUser) return null;
 
   const canCreate = hasPermission(currentUser, 'referencias', 'crear');
@@ -89,7 +102,7 @@ export default function BibliographyPage() {
   const resetForm = () => {
     setAuthors(''); setTitle(''); setYear(''); setJournal(''); setVolume(''); setIssue('');
     setPages(''); setPublisher(''); setCity(''); setDoi(''); setUrl(''); setEdition('');
-    setRefOfferId(''); setModuleTag('');
+    setRefOfferId(''); setModuleTag(''); setSelectedModuleIds([]); setSelectedTopicIds([]);
   };
 
   const handleCreate = () => {
@@ -100,6 +113,8 @@ export default function BibliographyPage() {
       pages: pages || undefined, publisher: publisher || undefined, city: city || undefined,
       doi: doi || undefined, url: url || undefined, edition: edition || undefined,
       offerId: refOfferId || undefined, moduleTag: moduleTag || undefined,
+      moduleIds: selectedModuleIds.length > 0 ? selectedModuleIds : undefined,
+      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
     };
     addReference(ref);
     resetForm();
@@ -272,7 +287,7 @@ export default function BibliographyPage() {
                 {/* Org fields */}
                 <div>
                   <label className="block text-xs font-semibold mb-1.5" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Oferta educativa</label>
-                  <select className={inputCls} style={inputStyle} value={refOfferId} onChange={e => setRefOfferId(e.target.value)}>
+                  <select className={inputCls} style={inputStyle} value={refOfferId} onChange={e => { setRefOfferId(e.target.value); setSelectedModuleIds([]); setSelectedTopicIds([]); }}>
                     <option value="">— General —</option>
                     {offers.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                   </select>
@@ -281,6 +296,42 @@ export default function BibliographyPage() {
                   <label className="block text-xs font-semibold mb-1.5" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Módulo / Tema (tag)</label>
                   <input className={inputCls} style={inputStyle} value={moduleTag} onChange={e => setModuleTag(e.target.value)} placeholder="Ej: Módulo 1" />
                 </div>
+                {refOfferId && offerModules.length > 0 && (
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Módulos aplicables</label>
+                    <div className="flex flex-wrap gap-2 p-2 border rounded-lg" style={{ borderColor: TJ.border, minHeight: 40 }}>
+                      {offerModules.map(m => (
+                        <label key={m.id} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg cursor-pointer transition-all"
+                          style={{ background: selectedModuleIds.includes(m.id) ? 'rgba(27,75,133,0.1)' : '#f8f8f8', color: selectedModuleIds.includes(m.id) ? TJ.primary : '#666' }}>
+                          <input type="checkbox" checked={selectedModuleIds.includes(m.id)}
+                            onChange={e => {
+                              if (e.target.checked) setSelectedModuleIds(prev => [...prev, m.id]);
+                              else { setSelectedModuleIds(prev => prev.filter(id => id !== m.id)); setSelectedTopicIds(prev => prev.filter(id => !m.topics.some(t => t.id === id))); }
+                            }} className="accent-blue-700" />
+                          {m.name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedModuleIds.length > 0 && moduleTopics.length > 0 && (
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Temas aplicables</label>
+                    <div className="flex flex-wrap gap-2 p-2 border rounded-lg" style={{ borderColor: TJ.border, minHeight: 40 }}>
+                      {moduleTopics.map(t => (
+                        <label key={t.id} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg cursor-pointer transition-all"
+                          style={{ background: selectedTopicIds.includes(t.id) ? 'rgba(139,47,58,0.1)' : '#f8f8f8', color: selectedTopicIds.includes(t.id) ? TJ.secondary : '#666' }}>
+                          <input type="checkbox" checked={selectedTopicIds.includes(t.id)}
+                            onChange={e => {
+                              if (e.target.checked) setSelectedTopicIds(prev => [...prev, t.id]);
+                              else setSelectedTopicIds(prev => prev.filter(id => id !== t.id));
+                            }} className="accent-red-700" />
+                          {t.title}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Preview */}

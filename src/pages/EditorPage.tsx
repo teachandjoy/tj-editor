@@ -168,7 +168,8 @@ export default function EditorPage() {
 
   const offer = useMemo(() => offers.find(o => o.id === topic?.offerId), [offers, topic]);
   const identity = useMemo(() => identities.find(i => i.id === offer?.identityId), [identities, offer]);
-  const snippetBlocks = identity?.detectedBlocks || [];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _snippetBlocks = identity?.detectedBlocks || [];
   const identityBlocks: IdentityBlock[] = identity?.blocks || [];
 
   const genericBlocks: [string, string][] = [
@@ -180,9 +181,23 @@ export default function EditorPage() {
     ['block-objectives', 'Objetivos'],
   ];
 
-  const [showNewBlockForm, setShowNewBlockForm] = useState(false);
-  const [newBlockName, setNewBlockName] = useState('');
-  const [newBlockHtml, setNewBlockHtml] = useState('');
+  // Scoped references: only show references applicable to this topic/module
+  const scopedReferences = useMemo(() => {
+    if (!topic) return references;
+    return references.filter(r => {
+      // General references (no scoping) are always visible
+      if (!r.offerId && !r.moduleIds?.length && !r.topicIds?.length) return true;
+      // If scoped to this topic specifically
+      if (r.topicIds?.includes(topic.id)) return true;
+      // If scoped to this module
+      if (r.moduleIds?.includes(topic.moduleId)) return true;
+      // If scoped to this offer (and no further module/topic restriction)
+      if (r.offerId === topic.offerId && !r.moduleIds?.length && !r.topicIds?.length) return true;
+      // Already linked to this topic
+      if (topic.referenceIds.includes(r.id)) return true;
+      return false;
+    });
+  }, [topic, references]);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
@@ -394,6 +409,8 @@ export default function EditorPage() {
         publisher: newRef.publisher || undefined, city: newRef.city || undefined,
         edition: newRef.edition || undefined,
         offerId: topic?.offerId,
+        moduleIds: topic?.moduleId ? [topic.moduleId] : undefined,
+        topicIds: topic?.id ? [topic.id] : undefined,
       };
       addReference(ref);
       if (topic) updateTopic(topic.id, { referenceIds: [...topic.referenceIds, ref.id] });
@@ -450,13 +467,30 @@ export default function EditorPage() {
 
   const insertBlock = useCallback((cls: string, label: string) => {
     if (!editor) return;
-    editor.chain().focus().insertContent(`<div class="${cls}"><p><strong>${label}:</strong> Escriba aquí...</p></div><p></p>`).run();
+    const { from, to } = editor.state.selection;
+    const selectedText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
+    const content = selectedText.trim() || `<strong>${label}:</strong> Escriba aquí...`;
+    if (selectedText.trim()) editor.chain().focus().deleteSelection().run();
+    editor.chain().focus().insertContent(`<div class="${cls}"><p>${content}</p></div><p></p>`).run();
   }, [editor]);
 
   const insertIdentityBlock = useCallback((block: IdentityBlock) => {
     if (!editor) return;
-    const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block">${block.html}</div><p></p>`;
-    editor.chain().focus().insertContent(wrappedHtml).run();
+    const { from, to } = editor.state.selection;
+    const selectedText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
+    let blockHtml = block.html;
+    if (selectedText.trim()) {
+      editor.chain().focus().deleteSelection().run();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(blockHtml, 'text/html');
+      const firstP = doc.querySelector('p');
+      if (firstP) {
+        firstP.innerHTML = selectedText.trim();
+        blockHtml = doc.body.innerHTML;
+      }
+    }
+    const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block" style="all:initial;">${blockHtml}</div><p></p>`;
+    editor.chain().focus().insertContent({ type: 'doc', content: [{ type: 'paragraph' }] }).insertContent(wrappedHtml, { parseOptions: { preserveWhitespace: 'full' } }).run();
     setShowBlockCatalog(false);
   }, [editor]);
 
@@ -553,7 +587,20 @@ export default function EditorPage() {
     setShowPublicationPreview(true);
   }, [topic, editor, topicRefs, identity]);
 
-  const TjColors = ['#000000', '#1b4b85', '#8b2f3a', '#c5aa6f', '#276749', '#92400e', '#c53030', '#6b46c1', '#2d3748', '#718096', '#ffffff'];
+  const TjColors = useMemo(() => {
+    if (identity) {
+      const identityColors = [
+        identity.colorPrimary,
+        identity.colorSecondary,
+        identity.colorTertiary,
+        identity.colorTextPrimary,
+        identity.colorButtons,
+        identity.colorButtonsHover,
+      ].filter((c, i, arr) => c && arr.indexOf(c) === i);
+      return ['#000000', ...identityColors, '#ffffff'];
+    }
+    return ['#000000', '#1b4b85', '#8b2f3a', '#c5aa6f', '#276749', '#92400e', '#c53030', '#6b46c1', '#2d3748', '#718096', '#ffffff'];
+  }, [identity]);
 
   if (!topic) return (
     <div className="flex items-center justify-center h-screen" style={{ background: '#eef0f3' }}>
@@ -905,74 +952,6 @@ export default function EditorPage() {
                   ))}
                 </div>
               )}
-              {/* Snippet-detected blocks */}
-              {snippetBlocks.length > 0 && (
-                <div className="px-3 py-2 border-t" style={{ borderColor: TJ.border }}>
-                  <p className="text-xs font-semibold mb-2" style={{ color: '#666', fontFamily: 'Montserrat, sans-serif' }}>Bloques del snippet:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {snippetBlocks.map(b => {
-                      const blockMap: Record<string, [string, string]> = {
-                        tip: ['block-tip', 'Tip'], perla: ['block-perla', 'Perla'], nota: ['block-nota', 'Nota'],
-                        note: ['block-nota', 'Nota'], warning: ['block-warning', 'Advertencia'],
-                        advertencia: ['block-warning', 'Advertencia'], conclusion: ['block-conclusion', 'Conclusión'],
-                        objectives: ['block-objectives', 'Objetivos'], callout: ['block-objectives', 'Callout'],
-                        insight: ['block-perla', 'Insight'],
-                      };
-                      const [cls, label] = blockMap[b.toLowerCase()] || ['block-tip', b];
-                      return (
-                        <button key={b} onClick={() => { insertBlock(cls, label); setShowBlockCatalog(false); }}
-                          className="px-2.5 py-1.5 text-xs rounded-lg border transition-all"
-                          style={{ borderColor: TJ.border, color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(27,75,133,0.08)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                          + {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              {/* Custom block creation */}
-              <div className="px-3 py-2 border-t" style={{ borderColor: TJ.border }}>
-                {!showNewBlockForm ? (
-                  <button onClick={() => setShowNewBlockForm(true)}
-                    className="flex items-center gap-1 text-xs w-full py-2 rounded-lg transition-all"
-                    style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
-                    <Plus size={12} /> Crear bloque personalizado
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <input value={newBlockName} onChange={e => setNewBlockName(e.target.value)}
-                      placeholder="Nombre del bloque (ej: Reflexión)"
-                      className="w-full px-2 py-1.5 text-xs border rounded-lg focus:outline-none"
-                      style={{ borderColor: TJ.border }} autoFocus />
-                    <textarea value={newBlockHtml} onChange={e => setNewBlockHtml(e.target.value)}
-                      placeholder="HTML del bloque (opcional — dejar vacío para bloque de texto simple)"
-                      rows={3} className="w-full px-2 py-1.5 text-xs border rounded-lg focus:outline-none font-mono"
-                      style={{ borderColor: TJ.border }} />
-                    <div className="flex gap-1.5">
-                      <button onClick={() => {
-                        if (!newBlockName.trim()) return;
-                        const html = newBlockHtml.trim() || `<p><strong>${newBlockName}:</strong> Escriba aquí...</p>`;
-                        const blockId = `custom-${Date.now()}`;
-                        editor?.chain().focus().insertContent(
-                          `<div data-tj-block="${blockId}" data-tj-block-name="${newBlockName}" class="tj-editor-block">${html}</div><p></p>`
-                        ).run();
-                        setNewBlockName(''); setNewBlockHtml(''); setShowNewBlockForm(false); setShowBlockCatalog(false);
-                      }}
-                        className="px-2.5 py-1 text-xs rounded-lg text-white font-semibold"
-                        style={{ background: TJ.primary }}>
-                        Insertar
-                      </button>
-                      <button onClick={() => { setShowNewBlockForm(false); setNewBlockName(''); setNewBlockHtml(''); }}
-                        className="px-2.5 py-1 text-xs rounded-lg border"
-                        style={{ borderColor: TJ.border }}>
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
               {/* Link to identities if no identity blocks */}
               {identityBlocks.length === 0 && snippetBlocks.length === 0 && identity && (
                 <div className="px-3 py-2 border-t text-center" style={{ borderColor: TJ.border }}>
@@ -1016,7 +995,7 @@ export default function EditorPage() {
               <button onClick={() => { setShowRefNew(false); setEditingRef(null); }}
                 className="px-5 py-2.5 text-xs font-bold border-b-2 transition-all"
                 style={{ borderColor: !showRefNew ? TJ.primary : 'transparent', color: !showRefNew ? TJ.primary : '#a8b8d8', fontFamily: 'Montserrat, sans-serif' }}>
-                Existentes ({references.length})
+                Existentes ({scopedReferences.length})
               </button>
               <button onClick={() => { setShowRefNew(true); setEditingRef(null); setNewRef({ ...emptyRef }); }}
                 className="px-5 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1"
@@ -1033,10 +1012,10 @@ export default function EditorPage() {
             <div className="flex-1 overflow-auto px-5 py-4">
               {!showRefNew && !editingRef ? (
                 <div className="space-y-2">
-                  {references.length === 0 && (
-                    <p className="text-sm text-center py-8" style={{ color: '#a8b8d8' }}>No hay referencias. Crea una nueva.</p>
+                  {scopedReferences.length === 0 && (
+                    <p className="text-sm text-center py-8" style={{ color: '#a8b8d8' }}>No hay referencias para este tema/módulo. Crea una nueva.</p>
                   )}
-                  {references.map((ref, idx) => (
+                  {scopedReferences.map((ref, idx) => (
                     <div key={ref.id}
                       className="p-3 rounded-xl border transition-all"
                       style={{ borderColor: topic.referenceIds.includes(ref.id) ? TJ.primary : TJ.border, background: topic.referenceIds.includes(ref.id) ? 'rgba(27,75,133,0.03)' : '#fff' }}>

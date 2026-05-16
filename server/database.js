@@ -206,6 +206,13 @@ export function initializeDatabase() {
   // Add deleted_at for soft-delete / trash
   try { db.exec(`ALTER TABLE topics ADD COLUMN deleted_at TEXT DEFAULT NULL`); } catch { /* column exists */ }
   try { db.exec(`ALTER TABLE topics ADD COLUMN deleted_by TEXT DEFAULT NULL`); } catch { /* column exists */ }
+  // Add module_ids and topic_ids to references for scoped visibility
+  try { db.exec(`ALTER TABLE "references" ADD COLUMN module_ids TEXT DEFAULT '[]'`); } catch { /* column exists */ }
+  try { db.exec(`ALTER TABLE "references" ADD COLUMN topic_ids TEXT DEFAULT '[]'`); } catch { /* column exists */ }
+  // Add access_user_ids to folders for user-based access control
+  try { db.exec(`ALTER TABLE folders ADD COLUMN access_user_ids TEXT DEFAULT '[]'`); } catch { /* column exists */ }
+  // Add html_templates to identities for format templates
+  try { db.exec(`ALTER TABLE identities ADD COLUMN html_templates TEXT DEFAULT '{}'`); } catch { /* column exists */ }
 
   // Seed default data if empty
   seedData();

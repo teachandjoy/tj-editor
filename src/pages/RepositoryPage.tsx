@@ -25,6 +25,8 @@ export default function RepositoryPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showShareModal, setShowShareModal] = useState<string | null>(null);
   const [shareRoles, setShareRoles] = useState<UserRole[]>([]);
+  const [shareUserIds, setShareUserIds] = useState<string[]>([]);
+  const [showAccessManager, setShowAccessManager] = useState<string | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [showDetails, setShowDetails] = useState<string | null>(null);
@@ -110,6 +112,26 @@ export default function RepositoryPage() {
     setShowShareModal(folderId);
     const folder = folders.find(f => f.id === folderId);
     setShareRoles(folder?.accessRoles || []);
+    setShareUserIds(folder?.accessUserIds || []);
+  };
+
+  const getInheritedAccessUserIds = (folderId: string): string[] => {
+    const ids = new Set<string>();
+    let current = folderId;
+    while (current && current !== 'root') {
+      const folder = folders.find(f => f.id === current);
+      if (!folder) break;
+      (folder.accessUserIds || []).forEach(uid => ids.add(uid));
+      current = folder.parentId || 'root';
+    }
+    return Array.from(ids);
+  };
+
+  const handleOpenAccessManager = (folderId: string) => {
+    setShowAccessManager(folderId);
+    const folder = folders.find(f => f.id === folderId);
+    setShareRoles(folder?.accessRoles || []);
+    setShareUserIds(folder?.accessUserIds || []);
   };
 
   const formatSize = (bytes: number) => {
@@ -407,6 +429,10 @@ export default function RepositoryPage() {
               className="w-full text-left px-4 py-2.5 text-xs hover:bg-gray-50 flex items-center gap-2.5" style={{ fontFamily: 'Montserrat, sans-serif', color: TJ.text }}>
               <Share2 size={13} style={{ color: '#276749' }} /> Compartir carpeta
             </button>)}
+            {isAdmin && (<button onClick={() => { handleOpenAccessManager(contextMenu.id); }}
+              className="w-full text-left px-4 py-2.5 text-xs hover:bg-gray-50 flex items-center gap-2.5" style={{ fontFamily: 'Montserrat, sans-serif', color: TJ.text }}>
+              <Lock size={13} style={{ color: TJ.primary }} /> Administrar acceso
+            </button>)}
             <button onClick={() => { const f = folders.find(fl => fl.id === contextMenu.id); if (f) { setRenameId(f.id); setRenameDraft(f.name); } }}
               className="w-full text-left px-4 py-2.5 text-xs hover:bg-gray-50 flex items-center gap-2.5" style={{ fontFamily: 'Montserrat, sans-serif', color: TJ.text }}>
               <Edit3 size={13} style={{ color: '#666' }} /> Renombrar
@@ -465,17 +491,30 @@ export default function RepositoryPage() {
               <button onClick={() => setShowShareModal(null)} className="p-1 rounded-lg hover:bg-gray-100"><X size={16} /></button>
             </div>
             <div className="px-5 py-4">
-              <p className="text-xs mb-3" style={{ color: '#a8b8d8' }}>Selecciona los roles que tendran acceso a esta carpeta:</p>
-              <div className="space-y-2 max-h-60 overflow-auto mb-4">
-                {users.filter(u => u.id !== currentUser.id).map(user => (
-                  <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
-                    <Users size={14} style={{ color: '#a8b8d8' }} />
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>{user.name}</div>
-                      <div className="text-xs" style={{ color: '#a8b8d8' }}>{user.role} - {user.email}</div>
-                    </div>
-                  </div>
-                ))}
+              <p className="text-xs mb-3" style={{ color: '#a8b8d8' }}>Selecciona los usuarios y roles que tendr\u00e1n acceso a esta carpeta y todas sus subcarpetas/archivos:</p>
+              <div className="space-y-2 max-h-48 overflow-auto mb-4">
+                {users.filter(u => u.id !== currentUser.id).map(user => {
+                  const inherited = (() => {
+                    const folder = folders.find(f => f.id === showShareModal);
+                    if (!folder?.parentId || folder.parentId === 'root') return false;
+                    return getInheritedAccessUserIds(folder.parentId).includes(user.id);
+                  })();
+                  return (
+                    <label key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input type="checkbox" checked={shareUserIds.includes(user.id) || inherited} disabled={inherited}
+                        onChange={e => { if (e.target.checked) setShareUserIds(prev => [...prev, user.id]); else setShareUserIds(prev => prev.filter(id => id !== user.id)); }}
+                        style={{ accentColor: TJ.primary }} />
+                      <Users size={14} style={{ color: inherited ? '#276749' : '#a8b8d8' }} />
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>{user.name}</div>
+                        <div className="text-xs" style={{ color: '#a8b8d8' }}>
+                          {user.role} - {user.email}
+                          {inherited && <span className="ml-1" style={{ color: '#276749' }}>(heredado)</span>}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-2" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Acceso por rol</label>
@@ -492,8 +531,84 @@ export default function RepositoryPage() {
             </div>
             <div className="flex justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: TJ.border }}>
               <button onClick={() => setShowShareModal(null)} className="px-4 py-2 text-sm rounded-lg border" style={{ borderColor: TJ.border }}>Cancelar</button>
-              <button onClick={() => { if (showShareModal) updateFolder(showShareModal, { accessRoles: shareRoles }); setShowShareModal(null); }}
+              <button onClick={() => { if (showShareModal) updateFolder(showShareModal, { accessRoles: shareRoles, accessUserIds: shareUserIds }); setShowShareModal(null); }}
                 className="px-4 py-2 text-sm rounded-lg text-white font-semibold" style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Guardar</button>
+            </div>
+          </div>
+        </div></ModalPortal>
+      )}
+
+      {/* Access Manager Modal */}
+      {showAccessManager && (
+        <ModalPortal><div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg modal-enter" style={{ border: `1px solid ${TJ.border}` }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: TJ.border }}>
+              <div className="flex items-center gap-2">
+                <Lock size={16} style={{ color: TJ.primary }} />
+                <h3 className="font-bold text-sm" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
+                  Administrar acceso: {folders.find(f => f.id === showAccessManager)?.name}
+                </h3>
+              </div>
+              <button onClick={() => setShowAccessManager(null)} className="p-1 rounded-lg hover:bg-gray-100"><X size={16} /></button>
+            </div>
+            <div className="px-5 py-4">
+              <div className="p-3 rounded-xl mb-4" style={{ background: '#f8f7f5', border: `1px solid ${TJ.border}` }}>
+                <p className="text-xs" style={{ color: '#666' }}>
+                  <strong>Acceso jer\u00e1rquico:</strong> Los usuarios con acceso a esta carpeta tambi\u00e9n tendr\u00e1n acceso a todas las subcarpetas y archivos contenidos. El acceso se hereda de carpetas padre.
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-2" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Acceso por rol</label>
+                <div className="flex gap-2 mb-4">
+                  {(['admin', 'coordinador', 'editor'] as UserRole[]).map(role => (
+                    <button key={role} onClick={() => setShareRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role])}
+                      className="px-3 py-1.5 text-xs rounded-lg border transition-all font-semibold capitalize"
+                      style={{ borderColor: shareRoles.includes(role) ? TJ.primary : TJ.border, background: shareRoles.includes(role) ? 'rgba(27,75,133,0.08)' : 'white', color: shareRoles.includes(role) ? TJ.primary : '#666', fontFamily: 'Montserrat, sans-serif' }}>
+                      {role === 'admin' ? 'Admin' : role === 'coordinador' ? 'Coord.' : 'Editor'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-2" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>Acceso por usuario</label>
+                <div className="space-y-1.5 max-h-56 overflow-auto">
+                  {users.filter(u => u.id !== currentUser.id).map(user => {
+                    const inherited = (() => {
+                      const folder = folders.find(f => f.id === showAccessManager);
+                      if (!folder?.parentId || folder.parentId === 'root') return false;
+                      return getInheritedAccessUserIds(folder.parentId).includes(user.id);
+                    })();
+                    return (
+                      <label key={user.id} className="flex items-center gap-3 p-2.5 rounded-lg border transition-all cursor-pointer"
+                        style={{ borderColor: (shareUserIds.includes(user.id) || inherited) ? TJ.primary : TJ.border, background: (shareUserIds.includes(user.id) || inherited) ? 'rgba(27,75,133,0.03)' : 'white' }}>
+                        <input type="checkbox" checked={shareUserIds.includes(user.id) || inherited} disabled={inherited}
+                          onChange={e => { if (e.target.checked) setShareUserIds(prev => [...prev, user.id]); else setShareUserIds(prev => prev.filter(id => id !== user.id)); }}
+                          style={{ accentColor: TJ.primary }} />
+                        <div className="flex-1">
+                          <div className="text-xs font-bold" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>{user.name}</div>
+                          <div className="text-xs" style={{ color: '#a8b8d8' }}>{user.role}{inherited ? ' — acceso heredado de carpeta padre' : ''}</div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Show child folders affected */}
+              {folders.filter(f => f.parentId === showAccessManager).length > 0 && (
+                <div className="mt-4 p-3 rounded-xl" style={{ background: '#f0ece6' }}>
+                  <p className="text-xs font-semibold mb-1" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Subcarpetas que heredar\u00e1n este acceso:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {folders.filter(f => f.parentId === showAccessManager).map(f => (
+                      <span key={f.id} className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(27,75,133,0.1)', color: TJ.primary }}>{f.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: TJ.border }}>
+              <button onClick={() => setShowAccessManager(null)} className="px-4 py-2 text-sm rounded-lg border" style={{ borderColor: TJ.border }}>Cancelar</button>
+              <button onClick={() => { if (showAccessManager) updateFolder(showAccessManager, { accessRoles: shareRoles, accessUserIds: shareUserIds }); setShowAccessManager(null); }}
+                className="px-4 py-2 text-sm rounded-lg text-white font-semibold" style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Guardar acceso</button>
             </div>
           </div>
         </div></ModalPortal>
