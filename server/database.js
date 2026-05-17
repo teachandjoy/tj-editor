@@ -349,6 +349,31 @@ function seedData() {
         id: 'armty-referencias',
         name: 'Referencias ARMTY',
         html: '<details style="border:1px solid #919BA5;border-radius:8px;overflow:hidden;background:#ffffff;margin-top:16px;"><summary style="list-style:none;cursor:pointer;background:#0F206C;color:#ffffff;padding:12px 14px;font-size:1.05rem;outline:none;">Referencias (clic para desplegar/ocultar)</summary><div style="padding:12px 14px;background:#f6f7fa;border-top:1px solid #919BA5;"><ol style="margin:0 0 0 18px;padding:0;font-size:medium;"><li style="margin:4px 0;text-align:justify;">Autor AA, Autor BB. T\u00edtulo del art\u00edculo. <em>Nombre de la Revista</em>. A\u00f1o;volumen(n\u00famero):p\u00e1ginas.</li><li style="margin:4px 0;text-align:justify;">Autor AA, Autor BB. <em>T\u00edtulo del libro</em>. Edici\u00f3n. Ciudad: Editorial; A\u00f1o. p. xx\u2013yy.</li><li style="margin:4px 0;text-align:justify;">Organizaci\u00f3n. T\u00edtulo del documento. Edici\u00f3n (si aplica). Ciudad: Editor; A\u00f1o.</li></ol></div></details>'
+      },
+      {
+        id: 'armty-caso-clinico',
+        name: 'Caso Cl\u00ednico ARMTY',
+        html: '<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8edf8 100%);border:2px solid #2373BA;border-radius:10px;padding:16px 18px;margin:16px 0;"><p style="margin:0 0 8px 0;font-size:1.05rem;font-weight:700;color:#0F206C;">\ud83c\udfe5 Caso Cl\u00ednico</p><p style="margin:0;text-align:justify;font-size:medium;color:#333;">Paciente masculino de 45 a\u00f1os, ASA II, programado para reparaci\u00f3n de tend\u00f3n de Aquiles bajo bloqueo de nervio ci\u00e1tico popl\u00edteo guiado por ultrasonido...</p></div>'
+      },
+      {
+        id: 'armty-alerta',
+        name: 'Alerta / Precauci\u00f3n ARMTY',
+        html: '<div style="background:#fff5f5;border-left:6px solid #e53e3e;padding:12px 14px;margin:14px 0;border-radius:0 8px 8px 0;"><p style="margin:0;font-size:medium;"><strong style="color:#c53030;">\u26a0\ufe0f Precauci\u00f3n:</strong> Informaci\u00f3n cr\u00edtica de seguridad del paciente.</p></div>'
+      },
+      {
+        id: 'armty-recuerda',
+        name: 'Recuerda ARMTY',
+        html: '<div style="background:#f0fff4;border-left:6px solid #38a169;padding:12px 14px;margin:14px 0;border-radius:0 8px 8px 0;"><p style="margin:0;font-size:medium;"><strong style="color:#276749;">\ud83d\udca1 Recuerda:</strong> Punto clave para la pr\u00e1ctica cl\u00ednica.</p></div>'
+      },
+      {
+        id: 'armty-evidencia',
+        name: 'Evidencia Cient\u00edfica ARMTY',
+        html: '<div style="background:#ffffff;border:1px solid #2373BA;border-radius:8px;padding:14px 16px;margin:14px 0;"><p style="margin:0 0 6px 0;font-weight:700;color:#0F206C;font-size:0.95rem;">\ud83d\udcca Evidencia Cient\u00edfica</p><p style="margin:0;text-align:justify;font-size:medium;color:#444;">Seg\u00fan un metaan\u00e1lisis reciente (2024), la t\u00e9cnica guiada por ultrasonido reduce significativamente las complicaciones...</p></div>'
+      },
+      {
+        id: 'armty-procedimiento',
+        name: 'Procedimiento Paso a Paso ARMTY',
+        html: '<div style="background:#f8f9ff;border:1px solid #39528F;border-radius:8px;padding:14px 16px;margin:14px 0;"><p style="margin:0 0 8px 0;font-weight:700;color:#39528F;font-size:1rem;">\ud83d\udccb Procedimiento</p><ol style="margin:0 0 0 18px;padding:0;font-size:medium;"><li style="margin:6px 0;text-align:justify;">Paso 1: Posicionar al paciente.</li><li style="margin:6px 0;text-align:justify;">Paso 2: Identificar estructuras por ultrasonido.</li><li style="margin:6px 0;text-align:justify;">Paso 3: Realizar la t\u00e9cnica con aguja adecuada.</li></ol></div>'
       }
     ];
 

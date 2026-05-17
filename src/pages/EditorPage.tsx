@@ -155,6 +155,19 @@ export default function EditorPage() {
   const [tableNameDraft, setTableNameDraft] = useState('');
   const [tableCount, setTableCount] = useState(1);
 
+  // ── Block Editor Panel state ──
+  const [blockEditorOpen, setBlockEditorOpen] = useState(false);
+  const [blockEditorData, setBlockEditorData] = useState<{
+    mode: 'generic' | 'identity';
+    cls?: string;
+    label?: string;
+    block?: IdentityBlock;
+    existingBlockHtml?: string;
+    existingBlockPos?: number;
+  } | null>(null);
+  const blockEditorRef = useRef<HTMLDivElement>(null);
+  const blockEditorInitRef = useRef(false);
+
   const editorWrapRef = useRef<HTMLDivElement>(null);
 
   // Ref form
@@ -256,6 +269,7 @@ export default function EditorPage() {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (blockEditorOpen) { setBlockEditorOpen(false); setBlockEditorData(null); return; }
         if (isFullscreen) setIsFullscreen(false);
         setShowBlockCatalog(false);
         setShowHeadingMenu(false);
@@ -267,7 +281,7 @@ export default function EditorPage() {
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [isFullscreen]);
+  }, [isFullscreen, blockEditorOpen]);
 
   // Unsaved changes confirmation
   useEffect(() => {
@@ -281,15 +295,13 @@ export default function EditorPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [editor, topic]);
 
-  // Block manipulation: click to select, delete button, Delete key
+  // Block manipulation: click to select, edit pencil, delete, drag
   useEffect(() => {
     const wrap = editorWrapRef.current;
     if (!wrap || !editor) return;
 
     const handleClick = (e: MouseEvent) => {
-      // Deselect all blocks first
       wrap.querySelectorAll('.tj-editor-block.tj-block-selected').forEach(el => el.classList.remove('tj-block-selected'));
-      // Find clicked block
       const target = e.target as HTMLElement;
       const block = target.closest('.tj-editor-block') as HTMLElement | null;
       if (block && wrap.contains(block)) {
@@ -301,7 +313,6 @@ export default function EditorPage() {
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const selected = wrap.querySelector('.tj-editor-block.tj-block-selected');
         if (selected) {
-          // Only delete the block if the cursor is not inside editable text
           const sel = window.getSelection();
           const isEditingText = sel && sel.rangeCount > 0 && selected.contains(sel.anchorNode) && sel.toString().length === 0 && sel.anchorNode?.nodeType === Node.TEXT_NODE;
           if (!isEditingText) {
@@ -313,38 +324,70 @@ export default function EditorPage() {
       }
     };
 
-    // Inject delete buttons into blocks that don't have them
-    const injectDeleteButtons = () => {
-      wrap.querySelectorAll('.tj-editor-block:not(:has(.tj-block-delete))').forEach(block => {
-        const btn = document.createElement('button');
-        btn.className = 'tj-block-delete';
-        btn.textContent = '✕ Eliminar';
-        btn.contentEditable = 'false';
-        btn.addEventListener('click', (ev) => {
+    // Inject control bar (drag handle, edit pencil, delete) into blocks
+    const injectBlockControls = () => {
+      const allBlocks = wrap.querySelectorAll('.tj-editor-block, [class*="block-"]');
+      allBlocks.forEach(block => {
+        if (block.querySelector('.tj-block-controls')) return;
+        if (block.closest('.tj-block-controls')) return;
+        const blockEl = block as HTMLElement;
+        // Skip non-block elements that matched the selector
+        if (!blockEl.classList.contains('tj-editor-block') && !Array.from(blockEl.classList).some(c => /^block-/.test(c))) return;
+        const controls = document.createElement('div');
+        controls.className = 'tj-block-controls';
+        controls.contentEditable = 'false';
+        controls.innerHTML = '<span class="tj-block-ctrl-drag" title="Arrastrar bloque">\u2630</span><span class="tj-block-ctrl-edit" title="Editar bloque">\u270E</span><span class="tj-block-ctrl-delete" title="Eliminar bloque">\u2715</span>';
+        blockEl.style.position = 'relative';
+        blockEl.insertBefore(controls, blockEl.firstChild);
+
+        // Make block draggable
+        blockEl.setAttribute('draggable', 'true');
+
+        // Edit handler
+        const editBtn = controls.querySelector('.tj-block-ctrl-edit');
+        if (editBtn) {
+          editBtn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            openExistingBlockEditor(blockEl);
+          });
+        }
+
+        // Delete handler
+        const deleteBtn = controls.querySelector('.tj-block-ctrl-delete');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            blockEl.remove();
+            editor.commands.focus();
+          });
+        }
+
+        // Double-click to edit
+        blockEl.addEventListener('dblclick', (ev) => {
+          const target = ev.target as HTMLElement;
+          if (target.closest('.tj-block-controls')) return;
           ev.preventDefault();
-          ev.stopPropagation();
-          block.remove();
-          editor.commands.focus();
+          openExistingBlockEditor(blockEl);
         });
-        block.appendChild(btn);
       });
     };
 
-    // Only watch for direct children added to wrap (not subtree typing events)
     const observer = new MutationObserver((mutations) => {
       const hasNewBlock = mutations.some(m =>
         Array.from(m.addedNodes).some(n =>
           n instanceof HTMLElement && (
             n.classList.contains('tj-editor-block') ||
-            n.querySelector?.('.tj-editor-block')
+            n.querySelector?.('.tj-editor-block') ||
+            /\bblock-/.test(n.className || '')
           )
         )
       );
-      if (hasNewBlock) injectDeleteButtons();
+      if (hasNewBlock) setTimeout(injectBlockControls, 50);
     });
-    observer.observe(wrap, { childList: true, subtree: false });
-    // Run once for existing blocks
-    injectDeleteButtons();
+    observer.observe(wrap, { childList: true, subtree: true });
+    injectBlockControls();
 
     wrap.addEventListener('click', handleClick);
     document.addEventListener('keydown', handleKeyDown);
@@ -353,7 +396,7 @@ export default function EditorPage() {
       document.removeEventListener('keydown', handleKeyDown);
       observer.disconnect();
     };
-  }, [editor]);
+  }, [editor, openExistingBlockEditor]);
 
   const handleSave = useCallback(() => {
     if (!topic || !editor) return;
@@ -469,30 +512,123 @@ export default function EditorPage() {
     if (!editor) return;
     const { from, to } = editor.state.selection;
     const selectedText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
-    const content = selectedText.trim() || `<strong>${label}:</strong> Escriba aquí...`;
-    if (selectedText.trim()) editor.chain().focus().deleteSelection().run();
-    editor.chain().focus().insertContent(`<div class="${cls}"><p>${content}</p></div><p></p>`).run();
+    blockEditorInitRef.current = false;
+    setBlockEditorData({
+      mode: 'generic',
+      cls,
+      label,
+      existingBlockHtml: selectedText.trim() || '',
+    });
+    setBlockEditorOpen(true);
   }, [editor]);
 
   const insertIdentityBlock = useCallback((block: IdentityBlock) => {
     if (!editor) return;
     const { from, to } = editor.state.selection;
     const selectedText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
-    let blockHtml = block.html;
-    if (selectedText.trim()) {
-      editor.chain().focus().deleteSelection().run();
+    blockEditorInitRef.current = false;
+    setBlockEditorData({
+      mode: 'identity',
+      block,
+      existingBlockHtml: selectedText.trim() || '',
+    });
+    setBlockEditorOpen(true);
+    setShowBlockCatalog(false);
+  }, [editor]);
+
+  // ── Save block from the WYSIWYG editor panel ──
+  const saveBlockFromEditor = useCallback(() => {
+    if (!editor || !blockEditorData || !blockEditorRef.current) return;
+    const userContent = blockEditorRef.current.innerHTML.trim();
+    if (!userContent || userContent === '<br>') return;
+
+    if (blockEditorData.existingBlockPos != null) {
+      // Editing existing block — delete old, insert new at same spot
+      const pos = blockEditorData.existingBlockPos;
+      const node = editor.state.doc.nodeAt(pos);
+      if (node) {
+        const tr = editor.state.tr.delete(pos, pos + node.nodeSize);
+        editor.view.dispatch(tr);
+      }
+      editor.chain().focus().setTextSelection(Math.min(pos, editor.state.doc.content.size)).run();
+    }
+
+    if (blockEditorData.mode === 'generic') {
+      const cls = blockEditorData.cls || 'block-tip';
+      editor.chain().focus().insertContent(`<div class="${cls}"><p>${userContent}</p></div><p></p>`).run();
+    } else if (blockEditorData.mode === 'identity' && blockEditorData.block) {
+      const block = blockEditorData.block;
+      let blockHtml = block.html;
       const parser = new DOMParser();
       const doc = parser.parseFromString(blockHtml, 'text/html');
       const firstP = doc.querySelector('p');
       if (firstP) {
-        firstP.innerHTML = selectedText.trim();
+        firstP.innerHTML = userContent;
         blockHtml = doc.body.innerHTML;
       }
+      const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block" style="all:initial;">${blockHtml}</div><p></p>`;
+      editor.chain().focus().insertContent(wrappedHtml, { parseOptions: { preserveWhitespace: 'full' } }).run();
     }
-    const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block" style="all:initial;">${blockHtml}</div><p></p>`;
-    editor.chain().focus().insertContent({ type: 'doc', content: [{ type: 'paragraph' }] }).insertContent(wrappedHtml, { parseOptions: { preserveWhitespace: 'full' } }).run();
-    setShowBlockCatalog(false);
-  }, [editor]);
+
+    setBlockEditorOpen(false);
+    setBlockEditorData(null);
+  }, [editor, blockEditorData]);
+
+  // ── Open block editor for existing block in editor ──
+  const openExistingBlockEditor = useCallback((blockEl: HTMLElement) => {
+    if (!editor) return;
+    // Find the ProseMirror position of this block
+    const view = editor.view;
+    const pos = view.posAtDOM(blockEl, 0);
+    // Resolve to the start of the node
+    const resolved = view.state.doc.resolve(pos);
+    let nodePos = resolved.before(resolved.depth);
+    // Make sure we found a divBlock node
+    const node = view.state.doc.nodeAt(nodePos);
+    if (!node || node.type.name !== 'divBlock') {
+      // Try parent
+      nodePos = resolved.before(Math.max(1, resolved.depth - 1));
+    }
+
+    // Extract inner content (without control buttons)
+    const clone = blockEl.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('.tj-block-controls, .tj-block-delete').forEach(el => el.remove());
+    const innerHtml = clone.innerHTML;
+
+    const isTjBlock = blockEl.hasAttribute('data-tj-block');
+    const blockId = blockEl.getAttribute('data-tj-block') || '';
+    const matchingBlock = identityBlocks.find(b => b.id === blockId);
+
+    blockEditorInitRef.current = false;
+    setBlockEditorData({
+      mode: isTjBlock ? 'identity' : 'generic',
+      cls: blockEl.className.split(' ').find(c => c.startsWith('block-')) || '',
+      label: blockEl.getAttribute('data-tj-block-name') || 'Bloque',
+      block: matchingBlock,
+      existingBlockHtml: innerHtml,
+      existingBlockPos: nodePos,
+    });
+    setBlockEditorOpen(true);
+  }, [editor, identityBlocks]);
+
+  // ── Initialize block editor content when it opens ──
+  useEffect(() => {
+    if (blockEditorOpen && blockEditorRef.current && blockEditorData && !blockEditorInitRef.current) {
+      blockEditorInitRef.current = true;
+      blockEditorRef.current.innerHTML = blockEditorData.existingBlockHtml || '';
+      // Focus at end
+      setTimeout(() => {
+        if (blockEditorRef.current) {
+          blockEditorRef.current.focus();
+          const sel = window.getSelection();
+          if (sel) {
+            sel.selectAllChildren(blockEditorRef.current);
+            sel.collapseToEnd();
+          }
+        }
+      }, 50);
+    }
+  }, [blockEditorOpen, blockEditorData]);
 
   const insertLink = useCallback(() => {
     if (!editor || !linkUrl) return;
@@ -748,7 +884,7 @@ export default function EditorPage() {
             {showHeadingMenu && (
               <div className="absolute left-0 top-full mt-1 bg-white border rounded-xl shadow-lg py-1 min-w-40 modal-enter" style={{ borderColor: TJ.border, zIndex: 9999 }}>
                 {[['Párrafo', null], ['Título 1', 1], ['Título 2', 2], ['Título 3', 3], ['Título 4', 4], ['Título 5', 5]].map(([lbl, lvl]) => (
-                  <button key={String(lbl)} onClick={() => { lvl ? editor.chain().focus().toggleHeading({ level: lvl as 1|2|3|4|5|6 }).run() : editor.chain().focus().setParagraph().run(); setShowHeadingMenu(false); }}
+                  <button key={String(lbl)} onClick={() => { if (lvl) { editor.chain().focus().toggleHeading({ level: lvl as 1|2|3|4|5|6 }).run(); } else { editor.chain().focus().setParagraph().run(); } setShowHeadingMenu(false); }}
                     className="w-full text-left px-4 py-2 hover:bg-gray-50"
                     style={{ fontSize: lvl ? Math.max(12, 16 - (Number(lvl) * 1.5)) : 14, fontWeight: lvl && Number(lvl) <= 3 ? 600 : 400 }}>
                     {lbl}
@@ -904,6 +1040,38 @@ export default function EditorPage() {
               </div>
             </div>
             <div className="flex-1 overflow-auto">
+              {/* Blocks in use — navigation */}
+              {(() => {
+                const wrap = editorWrapRef.current;
+                const blocksInUse: { label: string; el: HTMLElement }[] = [];
+                if (wrap) {
+                  wrap.querySelectorAll('.tj-editor-block, [class*="block-"]').forEach(el => {
+                    const htmlEl = el as HTMLElement;
+                    if (htmlEl.closest('.tj-block-controls')) return;
+                    const name = htmlEl.getAttribute('data-tj-block-name')
+                      || Array.from(htmlEl.classList).find(c => /^block-/.test(c))?.replace('block-', 'Bloque ')
+                      || 'Bloque';
+                    blocksInUse.push({ label: name, el: htmlEl });
+                  });
+                }
+                if (blocksInUse.length === 0) return null;
+                return (
+                  <div className="px-3 py-2 border-b" style={{ borderColor: TJ.border }}>
+                    <p className="text-xs font-semibold mb-1.5" style={{ color: '#38a169', fontFamily: 'Montserrat, sans-serif' }}>
+                      Bloques en uso ({blocksInUse.length}) — clic para navegar:
+                    </p>
+                    <div className="flex flex-col gap-0.5 max-h-28 overflow-auto">
+                      {blocksInUse.map((b, i) => (
+                        <button key={i} onClick={() => { b.el.scrollIntoView({ behavior: 'smooth', block: 'center' }); b.el.classList.add('tj-block-selected'); setTimeout(() => b.el.classList.remove('tj-block-selected'), 2000); setShowBlockCatalog(false); }}
+                          className="text-left text-xs px-2 py-1 rounded hover:bg-gray-50 transition-colors truncate"
+                          style={{ color: TJ.primary }}>
+                          📍 {b.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               {/* Generic blocks — always visible */}
               <div className="px-3 py-2">
                 <p className="text-xs font-semibold mb-2" style={{ color: '#666', fontFamily: 'Montserrat, sans-serif' }}>
@@ -953,7 +1121,7 @@ export default function EditorPage() {
                 </div>
               )}
               {/* Link to identities if no identity blocks */}
-              {identityBlocks.length === 0 && snippetBlocks.length === 0 && identity && (
+              {identityBlocks.length === 0 && identity && (
                 <div className="px-3 py-2 border-t text-center" style={{ borderColor: TJ.border }}>
                   <p className="text-xs mb-2" style={{ color: '#a8b8d8' }}>
                     La identidad &ldquo;{identity.name}&rdquo; no tiene bloques configurados.
@@ -981,6 +1149,97 @@ export default function EditorPage() {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* ── Block Editor Panel (WYSIWYG) ── */}
+      {blockEditorOpen && blockEditorData && (
+        <ModalPortal><div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl modal-enter" style={{ border: `1px solid ${TJ.border}` }}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: TJ.border }}>
+              <div>
+                <h3 className="font-bold text-sm" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
+                  {blockEditorData.existingBlockPos != null ? 'Editar Bloque' : 'Insertar Bloque'}
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: '#a8b8d8' }}>
+                  {blockEditorData.mode === 'identity' ? blockEditorData.block?.name : blockEditorData.label}
+                  {blockEditorData.mode === 'generic' && <span className="ml-1">— {blockEditorData.cls}</span>}
+                </p>
+              </div>
+              <button onClick={() => { setBlockEditorOpen(false); setBlockEditorData(null); }}
+                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Cerrar (Esc)"><X size={17} /></button>
+            </div>
+
+            {/* Block template preview for identity blocks */}
+            {blockEditorData.mode === 'identity' && blockEditorData.block?.html && (
+              <div className="px-5 pt-3">
+                <p className="text-xs font-semibold mb-1" style={{ color: '#999', fontFamily: 'Montserrat, sans-serif' }}>Vista previa del bloque:</p>
+                <div className="rounded-lg p-2 overflow-hidden" style={{ background: '#f8f8f8', border: `1px solid ${TJ.border}`, maxHeight: 80 }}
+                  dangerouslySetInnerHTML={{ __html: blockEditorData.block.html }} />
+              </div>
+            )}
+
+            {/* Mini WYSIWYG formatting toolbar */}
+            <div className="px-5 pt-3">
+              <div className="flex items-center gap-0.5 p-1.5 bg-gray-50 rounded-lg border flex-wrap" style={{ borderColor: TJ.border }}>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('bold'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Negrita (Ctrl+B)" style={{ color: '#555' }}><Bold size={14} /></button>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('italic'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Cursiva (Ctrl+I)" style={{ color: '#555' }}><Italic size={14} /></button>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('underline'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Subrayado" style={{ color: '#555' }}><UnderlineIcon size={14} /></button>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('strikeThrough'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Tachado" style={{ color: '#555' }}><Strikethrough size={14} /></button>
+                <div style={{ width: 1, height: 18, background: '#ddd', margin: '0 4px', flexShrink: 0 }} />
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Lista con viñetas" style={{ color: '#555' }}><List size={14} /></button>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('insertOrderedList'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Lista numerada" style={{ color: '#555' }}><ListOrdered size={14} /></button>
+                <div style={{ width: 1, height: 18, background: '#ddd', margin: '0 4px', flexShrink: 0 }} />
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('justifyLeft'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Izquierda" style={{ color: '#555' }}><AlignLeft size={14} /></button>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('justifyCenter'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Centro" style={{ color: '#555' }}><AlignCenter size={14} /></button>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('justifyFull'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Justificar" style={{ color: '#555' }}><AlignJustify size={14} /></button>
+                <div style={{ width: 1, height: 18, background: '#ddd', margin: '0 4px', flexShrink: 0 }} />
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'blockquote'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Cita" style={{ color: '#555' }}><Quote size={14} /></button>
+                <button type="button" onMouseDown={e => { e.preventDefault(); document.execCommand('superscript'); }} className="p-1.5 rounded hover:bg-white transition-colors" title="Superíndice" style={{ color: '#555' }}><SuperIcon size={14} /></button>
+              </div>
+            </div>
+
+            {/* ContentEditable editor area */}
+            <div className="px-5 py-3">
+              <div
+                ref={blockEditorRef}
+                contentEditable
+                suppressContentEditableWarning
+                className="min-h-[140px] max-h-[280px] overflow-auto p-4 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                style={{ borderColor: TJ.border, lineHeight: 1.7, fontFamily: 'Open Sans, sans-serif' }}
+                onKeyDown={e => {
+                  if (e.key === 'Escape') { e.preventDefault(); setBlockEditorOpen(false); setBlockEditorData(null); }
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveBlockFromEditor(); }
+                }}
+              />
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs" style={{ color: '#bbb' }}>
+                  <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border" style={{ borderColor: '#e5e7eb' }}>Ctrl+Enter</kbd> guardar
+                  <span className="mx-2">·</span>
+                  <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border" style={{ borderColor: '#e5e7eb' }}>Esc</kbd> cancelar
+                </p>
+              </div>
+            </div>
+
+            {/* Footer with save/cancel buttons */}
+            <div className="flex justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: TJ.border }}>
+              <button onClick={() => { setBlockEditorOpen(false); setBlockEditorData(null); }}
+                className="px-4 py-2 text-sm rounded-lg border transition-all"
+                style={{ borderColor: TJ.border, fontFamily: 'Montserrat, sans-serif' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = '#999')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = TJ.border)}>
+                Cancelar
+              </button>
+              <button onClick={saveBlockFromEditor}
+                className="px-4 py-2 text-sm rounded-lg text-white font-semibold transition-all"
+                style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}
+                onMouseEnter={e => (e.currentTarget.style.background = TJ.secondary)}
+                onMouseLeave={e => (e.currentTarget.style.background = TJ.primary)}>
+                {blockEditorData.existingBlockPos != null ? 'Guardar cambios' : 'Insertar Bloque'}
+              </button>
+            </div>
+          </div>
+        </div></ModalPortal>
       )}
 
       {/* ── References Modal ── */}

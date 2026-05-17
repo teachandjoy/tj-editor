@@ -176,30 +176,68 @@ body { font-family: 'Open Sans', sans-serif; }
 .tiptap .tj-editor-block span {
   cursor: text;
 }
-.tiptap .tj-editor-block .tj-block-delete {
+/* Block controls bar (edit/delete/drag) */
+.tiptap .tj-block-controls {
   position: absolute;
-  top: -10px;
+  top: -12px;
   right: 8px;
-  background: #c53030;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: 'Montserrat', sans-serif;
-  padding: 1px 6px;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  z-index: 10;
+  background: #fff;
+  border-radius: 6px;
+  padding: 2px 4px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.15);
+  border: 1px solid #e5e7eb;
+}
+.tiptap .tj-editor-block:hover .tj-block-controls,
+.tiptap .tj-editor-block.tj-block-selected .tj-block-controls,
+.tiptap [class*="block-"]:hover > .tj-block-controls {
+  display: flex;
+}
+.tiptap .tj-block-controls span {
   cursor: pointer;
-  opacity: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.15s;
+  user-select: none;
+}
+.tiptap .tj-block-controls span:hover {
+  background: rgba(27,75,133,0.1);
+}
+.tiptap .tj-block-ctrl-delete { color: #c53030 !important; }
+.tiptap .tj-block-ctrl-edit { color: #1b4b85 !important; }
+.tiptap .tj-block-ctrl-drag { color: #999 !important; cursor: grab !important; }
+
+/* Generic blocks also need relative positioning for controls */
+.tiptap [class*="block-"] {
+  position: relative;
+}
+
+/* Drag visual */
+.tiptap .tj-editor-block[draggable="true"],
+.tiptap [class*="block-"][draggable="true"] {
+  cursor: default;
+}
+.tiptap .tj-editor-block.tj-dragging,
+.tiptap [class*="block-"].tj-dragging {
+  opacity: 0.4;
+}
+
+/* Drop indicator */
+.tj-drop-indicator {
+  height: 3px;
+  background: #1b4b85;
+  border-radius: 2px;
+  margin: 4px 0;
   transition: opacity 0.15s;
-  z-index: 5;
 }
-.tiptap .tj-editor-block:hover .tj-block-delete,
-.tiptap .tj-editor-block.tj-block-selected .tj-block-delete {
-  opacity: 1;
-}
-.tiptap .tj-editor-block .tj-block-delete:hover {
-  background: #9b2c2c;
-}
+
+/* Legacy delete button (hidden, replaced by controls) */
+.tiptap .tj-block-delete { display: none !important; }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

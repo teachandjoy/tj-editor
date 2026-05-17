@@ -12,6 +12,7 @@ export const DivBlock = Node.create({
   group: 'block',
   content: 'block+',
   defining: true,
+  draggable: true,
 
   addAttributes() {
     return {
