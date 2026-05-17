@@ -167,6 +167,7 @@ export default function EditorPage() {
   } | null>(null);
   const blockEditorRef = useRef<HTMLDivElement>(null);
   const blockEditorInitRef = useRef(false);
+  const openExistingBlockEditorRef = useRef<(blockEl: HTMLElement) => void>(() => {});
 
   const editorWrapRef = useRef<HTMLDivElement>(null);
 
@@ -349,7 +350,7 @@ export default function EditorPage() {
           editBtn.addEventListener('click', (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
-            openExistingBlockEditor(blockEl);
+            openExistingBlockEditorRef.current(blockEl);
           });
         }
 
@@ -369,7 +370,7 @@ export default function EditorPage() {
           const target = ev.target as HTMLElement;
           if (target.closest('.tj-block-controls')) return;
           ev.preventDefault();
-          openExistingBlockEditor(blockEl);
+          openExistingBlockEditorRef.current(blockEl);
         });
       });
     };
@@ -396,7 +397,7 @@ export default function EditorPage() {
       document.removeEventListener('keydown', handleKeyDown);
       observer.disconnect();
     };
-  }, [editor, openExistingBlockEditor]);
+  }, [editor]);
 
   const handleSave = useCallback(() => {
     if (!topic || !editor) return;
@@ -610,6 +611,7 @@ export default function EditorPage() {
     });
     setBlockEditorOpen(true);
   }, [editor, identityBlocks]);
+  openExistingBlockEditorRef.current = openExistingBlockEditor;
 
   // ── Initialize block editor content when it opens ──
   useEffect(() => {
