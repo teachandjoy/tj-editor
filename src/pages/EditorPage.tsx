@@ -49,6 +49,18 @@ function getBlockStyles(cp: string, cs: string, ct: string): string {
   `;
 }
 
+/** Strip editor-only UI (block controls, drag handles) from HTML before export/save */
+function stripEditorControls(html: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+  doc.querySelectorAll('.tj-block-controls, .tj-block-delete').forEach(el => el.remove());
+  // Remove draggable attrs and editor-only classes
+  doc.querySelectorAll('[draggable]').forEach(el => el.removeAttribute('draggable'));
+  doc.querySelectorAll('.tj-block-selected').forEach(el => el.classList.remove('tj-block-selected'));
+  doc.querySelectorAll('.tj-dragging').forEach(el => el.classList.remove('tj-dragging'));
+  return doc.body.firstElementChild?.innerHTML || html;
+}
+
 function buildExportHTML(
   topic: { title: string; content: string; author: string; version: string; date: string; offerName: string },
   topicRefs: BibliographyReference[],
@@ -96,6 +108,7 @@ ${topic.content}${refsHTML}
   p{margin:0 0 10px;line-height:1.75;text-align:justify}
   table{width:100%;border-collapse:collapse;margin:14px 0}
   th{background:${cp};color:#fff;padding:9px 12px;border:1px solid #ddd;text-align:left;font-weight:600}
+  th p,th span{color:#fff}
   td{padding:8px 12px;border:1px solid #ddd}
   tr:nth-child(even) td{background:#fafafa}
   blockquote{border-left:4px solid ${ct};background:#fdf9f0;padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0}
@@ -401,14 +414,16 @@ export default function EditorPage() {
 
   const handleSave = useCallback(() => {
     if (!topic || !editor) return;
-    updateTopic(topic.id, { content: editor.getHTML() });
+    const cleanHtml = stripEditorControls(editor.getHTML());
+    updateTopic(topic.id, { content: cleanHtml });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }, [topic, editor, updateTopic]);
 
   const handleExport = useCallback((withSnippet: boolean) => {
     if (!topic) return;
-    const content = editor?.getHTML() || topic.content;
+    const rawContent = editor?.getHTML() || topic.content;
+    const content = stripEditorControls(rawContent);
     const html = buildExportHTML({ ...topic, content }, topicRefs, withSnippet ? identity?.snippet : undefined, identity);
     downloadFile(html, `${topic.title.replace(/[^a-z0-9]/gi, '_')}.html`);
     setShowExportMenu(false);
@@ -567,7 +582,7 @@ export default function EditorPage() {
         firstP.innerHTML = userContent;
         blockHtml = doc.body.innerHTML;
       }
-      const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block" style="all:initial;">${blockHtml}</div><p></p>`;
+      const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block">${blockHtml}</div><p></p>`;
       editor.chain().focus().insertContent(wrappedHtml, { parseOptions: { preserveWhitespace: 'full' } }).run();
     }
 
@@ -719,7 +734,8 @@ export default function EditorPage() {
 
   const handlePublicationPreview = useCallback(() => {
     if (!topic) return;
-    const content = editor?.getHTML() || topic.content;
+    const rawContent = editor?.getHTML() || topic.content;
+    const content = stripEditorControls(rawContent);
     const html = buildExportHTML({ ...topic, content }, topicRefs, identity?.snippet, identity);
     setPublicationPreviewHtml(html);
     setShowPublicationPreview(true);

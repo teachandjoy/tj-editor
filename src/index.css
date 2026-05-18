@@ -99,6 +99,7 @@ body { font-family: 'Open Sans', sans-serif; }
 /* ── Table styles ── */
 .tiptap table { border-collapse: collapse; width: 100%; margin: 16px 0; overflow: hidden; border-radius: 8px; }
 .tiptap th { background: #1b4b85; color: #fff; font-weight: 600; text-align: left; padding: 10px 14px; border: 1px solid #2563a8; font-size: 0.875em; cursor: col-resize; user-select: none; }
+.tiptap th p, .tiptap th span { color: #fff !important; }
 .tiptap td { padding: 8px 14px; border: 1px solid #e8e4de; font-size: 0.875em; }
 .tiptap tr:nth-child(even) td { background: #f8f7f5; }
 .tiptap tr:hover td { background: #f0ece6; }
