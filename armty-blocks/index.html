@@ -945,6 +945,18 @@ const Game = (() => {
     return lineCount;
   }
 
+  // --- Check overlap with existing answers ---
+  function wouldOverlap(nx, ny, nw, nh) {
+    for (let a of fallingAnswers) {
+      if (!a.alive) continue;
+      if (nx < a.x + a.w + 12 && nx + nw + 12 > a.x &&
+          ny < a.y + a.h + 16 && ny + nh + 16 > a.y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // --- Spawn falling answers ---
   function spawnAnswer() {
     const text = answerPool[Math.floor(Math.random() * answerPool.length)];
@@ -954,9 +966,17 @@ const Game = (() => {
     const lineH = fontSize + 4;
     const lines = measureTextLines(text, tw - 20, fontSize);
     const th = Math.max(44, lines * lineH + 18);
-    const x = Math.random() * (W - tw - 20) + 10;
+    // Try up to 8 positions to avoid overlap
+    let x = 0;
+    let y = -th - 10;
+    let placed = false;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      x = Math.random() * (W - tw - 20) + 10;
+      if (!wouldOverlap(x, y, tw, th)) { placed = true; break; }
+    }
+    if (!placed) return; // skip spawn if all positions overlap
     fallingAnswers.push({
-      x, y: -th - 10,
+      x, y,
       w: tw, h: th,
       text, isCorrect,
       speed: 0.5 + Math.random() * 0.35 + (currentLevel * 0.04),
@@ -1162,28 +1182,21 @@ const Game = (() => {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
 
-    // Falling answers
+    // Falling answers - all look identical (no hints about correct/incorrect)
     fallingAnswers.forEach(a => {
       if (!a.alive && a.hit) return;
-      const isC = a.isCorrect;
       const fontSize = Math.max(11, Math.min(14, W * 0.028));
-      // Box with glow
+      // Neutral box - same style for all answers
       ctx.save();
-      ctx.shadowColor = isC ? 'rgba(39,174,96,0.4)' : 'rgba(231,76,60,0.3)';
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = isC ? 'rgba(39,174,96,0.22)' : 'rgba(231,76,60,0.18)';
-      ctx.strokeStyle = isC ? 'rgba(39,174,96,0.7)' : 'rgba(231,76,60,0.6)';
-      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(35,115,186,0.3)';
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = 'rgba(35,115,186,0.12)';
+      ctx.strokeStyle = 'rgba(35,115,186,0.45)';
+      ctx.lineWidth = 1.5;
       roundRect(ctx, a.x, a.y, a.w, a.h, 8, true, true);
       ctx.restore();
-      // Icon indicator
-      ctx.font = (fontSize + 2) + 'px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = isC ? '#27ae60' : '#e74c3c';
-      ctx.fillText(isC ? '\u2714' : '\u2716', a.x + 6, a.y + 5);
       // Text
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = '#e0e6ef';
       ctx.font = 'bold ' + fontSize + 'px Helvetica, Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
