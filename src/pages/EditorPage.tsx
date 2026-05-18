@@ -309,20 +309,71 @@ export default function EditorPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [editor, topic]);
 
-  // Block manipulation: click to select, edit pencil, delete, drag
+  // ── Block overlay controls (rendered OUTSIDE ProseMirror DOM) ──
+  const [hoveredBlockEl, setHoveredBlockEl] = useState<HTMLElement | null>(null);
+  const [blockCtrlPos, setBlockCtrlPos] = useState<{ top: number; right: number } | null>(null);
+  const blockCtrlRef = useRef<HTMLDivElement>(null);
+
+  // Track which block the mouse is over and position the overlay
   useEffect(() => {
     const wrap = editorWrapRef.current;
     if (!wrap || !editor) return;
 
-    const handleClick = (e: MouseEvent) => {
-      wrap.querySelectorAll('.tj-editor-block.tj-block-selected').forEach(el => el.classList.remove('tj-block-selected'));
+    const isBlock = (el: HTMLElement) =>
+      el.classList.contains('tj-editor-block') || Array.from(el.classList).some(c => /^block-/.test(c));
+
+    const findBlock = (target: HTMLElement): HTMLElement | null => {
+      let cur: HTMLElement | null = target;
+      while (cur && cur !== wrap) {
+        if (isBlock(cur)) return cur;
+        cur = cur.parentElement;
+      }
+      return null;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const block = target.closest('.tj-editor-block') as HTMLElement | null;
-      if (block && wrap.contains(block)) {
-        block.classList.add('tj-block-selected');
+      // Ignore if hovering the overlay itself
+      if (blockCtrlRef.current?.contains(target)) return;
+      const block = findBlock(target);
+      if (block && block !== hoveredBlockEl) {
+        setHoveredBlockEl(block);
+        const wrapRect = wrap.getBoundingClientRect();
+        const blockRect = block.getBoundingClientRect();
+        setBlockCtrlPos({
+          top: blockRect.top - wrapRect.top,
+          right: 4,
+        });
+      } else if (!block) {
+        setHoveredBlockEl(null);
+        setBlockCtrlPos(null);
       }
     };
 
+    const handleMouseLeave = (e: MouseEvent) => {
+      const related = e.relatedTarget as HTMLElement | null;
+      if (blockCtrlRef.current?.contains(related)) return;
+      setHoveredBlockEl(null);
+      setBlockCtrlPos(null);
+    };
+
+    // Click to select block
+    const handleClick = (e: MouseEvent) => {
+      wrap.querySelectorAll('.tj-editor-block.tj-block-selected').forEach(el => el.classList.remove('tj-block-selected'));
+      const block = findBlock(e.target as HTMLElement);
+      if (block) block.classList.add('tj-block-selected');
+    };
+
+    // Double-click to edit block
+    const handleDblClick = (e: MouseEvent) => {
+      const block = findBlock(e.target as HTMLElement);
+      if (block) {
+        e.preventDefault();
+        openExistingBlockEditorRef.current(block);
+      }
+    };
+
+    // Delete/Backspace to remove selected block
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const selected = wrap.querySelector('.tj-editor-block.tj-block-selected');
@@ -338,79 +389,19 @@ export default function EditorPage() {
       }
     };
 
-    // Inject control bar (drag handle, edit pencil, delete) into blocks
-    const injectBlockControls = () => {
-      const allBlocks = wrap.querySelectorAll('.tj-editor-block, [class*="block-"]');
-      allBlocks.forEach(block => {
-        if (block.querySelector('.tj-block-controls')) return;
-        if (block.closest('.tj-block-controls')) return;
-        const blockEl = block as HTMLElement;
-        // Skip non-block elements that matched the selector
-        if (!blockEl.classList.contains('tj-editor-block') && !Array.from(blockEl.classList).some(c => /^block-/.test(c))) return;
-        const controls = document.createElement('div');
-        controls.className = 'tj-block-controls';
-        controls.contentEditable = 'false';
-        controls.innerHTML = '<span class="tj-block-ctrl-drag" title="Arrastrar bloque">\u2630</span><span class="tj-block-ctrl-edit" title="Editar bloque">\u270E</span><span class="tj-block-ctrl-delete" title="Eliminar bloque">\u2715</span>';
-        blockEl.style.position = 'relative';
-        blockEl.insertBefore(controls, blockEl.firstChild);
-
-        // Make block draggable
-        blockEl.setAttribute('draggable', 'true');
-
-        // Edit handler
-        const editBtn = controls.querySelector('.tj-block-ctrl-edit');
-        if (editBtn) {
-          editBtn.addEventListener('click', (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-            openExistingBlockEditorRef.current(blockEl);
-          });
-        }
-
-        // Delete handler
-        const deleteBtn = controls.querySelector('.tj-block-ctrl-delete');
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-            blockEl.remove();
-            editor.commands.focus();
-          });
-        }
-
-        // Double-click to edit
-        blockEl.addEventListener('dblclick', (ev) => {
-          const target = ev.target as HTMLElement;
-          if (target.closest('.tj-block-controls')) return;
-          ev.preventDefault();
-          openExistingBlockEditorRef.current(blockEl);
-        });
-      });
-    };
-
-    const observer = new MutationObserver((mutations) => {
-      const hasNewBlock = mutations.some(m =>
-        Array.from(m.addedNodes).some(n =>
-          n instanceof HTMLElement && (
-            n.classList.contains('tj-editor-block') ||
-            n.querySelector?.('.tj-editor-block') ||
-            /\bblock-/.test(n.className || '')
-          )
-        )
-      );
-      if (hasNewBlock) setTimeout(injectBlockControls, 50);
-    });
-    observer.observe(wrap, { childList: true, subtree: true });
-    injectBlockControls();
-
+    wrap.addEventListener('mousemove', handleMouseMove);
+    wrap.addEventListener('mouseleave', handleMouseLeave);
     wrap.addEventListener('click', handleClick);
+    wrap.addEventListener('dblclick', handleDblClick);
     document.addEventListener('keydown', handleKeyDown);
     return () => {
+      wrap.removeEventListener('mousemove', handleMouseMove);
+      wrap.removeEventListener('mouseleave', handleMouseLeave);
       wrap.removeEventListener('click', handleClick);
+      wrap.removeEventListener('dblclick', handleDblClick);
       document.removeEventListener('keydown', handleKeyDown);
-      observer.disconnect();
     };
-  }, [editor]);
+  }, [editor, hoveredBlockEl]);
 
   const handleSave = useCallback(() => {
     if (!topic || !editor) return;
@@ -1043,6 +1034,70 @@ export default function EditorPage() {
           style={{ boxShadow: '0 2px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)' }}>
 
           <EditorContent editor={editor} />
+
+          {/* Block controls overlay — rendered OUTSIDE ProseMirror DOM */}
+          {hoveredBlockEl && blockCtrlPos && (
+            <div
+              ref={blockCtrlRef}
+              className="tj-block-controls-overlay"
+              style={{
+                position: 'absolute',
+                top: blockCtrlPos.top,
+                right: blockCtrlPos.right,
+                zIndex: 50,
+                display: 'flex',
+                gap: 2,
+                background: 'rgba(255,255,255,0.95)',
+                border: '1px solid #d0d5dd',
+                borderRadius: 6,
+                padding: '2px 4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                userSelect: 'none',
+              }}
+              onMouseLeave={() => { setHoveredBlockEl(null); setBlockCtrlPos(null); }}
+            >
+              <span
+                title="Arrastrar bloque"
+                style={{ cursor: 'grab', padding: '2px 6px', borderRadius: 4, fontSize: 13, lineHeight: 1 }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  if (hoveredBlockEl) {
+                    hoveredBlockEl.setAttribute('draggable', 'true');
+                    hoveredBlockEl.dispatchEvent(new DragEvent('dragstart', { bubbles: true }));
+                  }
+                }}
+              >
+                &#x2630;
+              </span>
+              <span
+                title="Editar bloque (doble clic)"
+                style={{ cursor: 'pointer', padding: '2px 6px', borderRadius: 4, fontSize: 13, lineHeight: 1 }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (hoveredBlockEl) openExistingBlockEditorRef.current(hoveredBlockEl);
+                }}
+              >
+                &#x270E;
+              </span>
+              <span
+                title="Eliminar bloque"
+                style={{ cursor: 'pointer', padding: '2px 6px', borderRadius: 4, fontSize: 13, lineHeight: 1, color: '#e53e3e' }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (hoveredBlockEl && editor) {
+                    hoveredBlockEl.remove();
+                    editor.commands.focus();
+                    setHoveredBlockEl(null);
+                    setBlockCtrlPos(null);
+                  }
+                }}
+              >
+                &#x2715;
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

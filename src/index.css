@@ -205,6 +205,7 @@ body { font-family: 'Open Sans', sans-serif; }
   line-height: 1;
   transition: background 0.15s;
   user-select: none;
+  pointer-events: auto;
 }
 .tiptap .tj-block-controls span:hover {
   background: rgba(27,75,133,0.1);
@@ -239,6 +240,11 @@ body { font-family: 'Open Sans', sans-serif; }
 
 /* Legacy delete button (hidden, replaced by controls) */
 .tiptap .tj-block-delete { display: none !important; }
+
+/* Block controls overlay (React-rendered, outside ProseMirror) */
+.tj-block-controls-overlay span:hover {
+  background: rgba(27,75,133,0.12);
+}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
