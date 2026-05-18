@@ -562,7 +562,8 @@ export default function EditorPage() {
 
     if (blockEditorData.mode === 'generic') {
       const cls = blockEditorData.cls || 'block-tip';
-      editor.chain().focus().insertContent(`<div class="${cls}"><p>${userContent}</p></div><p></p>`).run();
+      const label = blockEditorData.label || 'Tip';
+      editor.chain().focus().insertContent(`<div class="${cls}"><p><strong>${label}:</strong> ${userContent}</p></div><p></p>`).run();
     } else if (blockEditorData.mode === 'identity' && blockEditorData.block) {
       const block = blockEditorData.block;
       let blockHtml = block.html;
@@ -570,7 +571,14 @@ export default function EditorPage() {
       const doc = parser.parseFromString(blockHtml, 'text/html');
       const firstP = doc.querySelector('p');
       if (firstP) {
-        firstP.innerHTML = userContent;
+        // Preserve the <strong>Title:</strong> prefix if present
+        const strongEl = firstP.querySelector('strong');
+        if (strongEl) {
+          const titlePrefix = strongEl.outerHTML;
+          firstP.innerHTML = `${titlePrefix} ${userContent}`;
+        } else {
+          firstP.innerHTML = `<strong>${block.name}:</strong> ${userContent}`;
+        }
         blockHtml = doc.body.innerHTML;
       }
       const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block">${blockHtml}</div><p></p>`;
@@ -597,9 +605,15 @@ export default function EditorPage() {
       nodePos = resolved.before(Math.max(1, resolved.depth - 1));
     }
 
-    // Extract inner content (without control buttons)
+    // Extract inner content (without control buttons and without title prefix)
     const clone = blockEl.cloneNode(true) as HTMLElement;
     clone.querySelectorAll('.tj-block-controls, .tj-block-delete').forEach(el => el.remove());
+    // Strip the <strong>Title:</strong> prefix so user only edits body text
+    const firstP = clone.querySelector('p');
+    if (firstP) {
+      const strong = firstP.querySelector('strong');
+      if (strong) strong.remove();
+    }
     const innerHtml = clone.innerHTML;
 
     const isTjBlock = blockEl.hasAttribute('data-tj-block');
@@ -1057,17 +1071,34 @@ export default function EditorPage() {
               onMouseLeave={() => { setHoveredBlockEl(null); setBlockCtrlPos(null); }}
             >
               <span
-                title="Arrastrar bloque"
-                style={{ cursor: 'grab', padding: '2px 6px', borderRadius: 4, fontSize: 13, lineHeight: 1 }}
+                title="Mover bloque arriba (⬆) — clic derecho para mover abajo"
+                style={{ cursor: 'pointer', padding: '2px 6px', borderRadius: 4, fontSize: 13, lineHeight: 1 }}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  if (hoveredBlockEl) {
-                    hoveredBlockEl.setAttribute('draggable', 'true');
-                    hoveredBlockEl.dispatchEvent(new DragEvent('dragstart', { bubbles: true }));
+                  e.stopPropagation();
+                  if (!hoveredBlockEl || !editor) return;
+                  // Move block up: swap with previous sibling
+                  const prev = hoveredBlockEl.previousElementSibling as HTMLElement | null;
+                  if (prev) {
+                    hoveredBlockEl.parentNode?.insertBefore(hoveredBlockEl, prev);
+                    setHoveredBlockEl(null);
+                    setBlockCtrlPos(null);
+                  }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!hoveredBlockEl || !editor) return;
+                  // Move block down: swap with next sibling
+                  const next = hoveredBlockEl.nextElementSibling as HTMLElement | null;
+                  if (next) {
+                    hoveredBlockEl.parentNode?.insertBefore(next, hoveredBlockEl);
+                    setHoveredBlockEl(null);
+                    setBlockCtrlPos(null);
                   }
                 }}
               >
-                &#x2630;
+                &#x2195;
               </span>
               <span
                 title="Editar bloque (doble clic)"
