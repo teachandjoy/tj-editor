@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ARMTY Blocks - Juego Educativo de Anestesia Regional</title>
+<link rel="icon" href="https://42551934.fs1.hubspotusercontent-na1.net/hubfs/42551934/ARMTY%20Logos/ARMTY_Logo.png" type="image/png">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;
+  background:#0a1128;color:#FAFAFA;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+}
+:root{
+  --primary:#39528F;--secondary:#2373BA;--tertiary:#0F206C;
+  --bg:#FAFAFA;--text-primary:#212121;--text-secondary:#606C7B;
+  --steel-gray:#606C7B;--deep-gray:#919BA5;--navy:#0F206C;--white:#FFFFFF;
+  --danger:#e74c3c;--success:#27ae60;--warning:#f39c12;--gold:#f1c40f;
+  --radius:8px;--shadow:0 4px 24px rgba(15,32,108,0.25);
+}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10;transition:opacity .3s}
+.screen.active{display:flex}
+#startScreen{background:linear-gradient(135deg,#0a1128 0%,var(--tertiary) 40%,var(--primary) 100%)}
+.start-logo{width:min(220px,50vw);margin-bottom:24px;filter:drop-shadow(0 4px 16px rgba(35,115,186,.4))}
+.start-title{font-size:clamp(2rem,6vw,3.5rem);font-weight:900;letter-spacing:2px;text-align:center;margin-bottom:8px;background:linear-gradient(90deg,var(--secondary),var(--bg));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.start-subtitle{font-size:clamp(.85rem,2.5vw,1.1rem);color:var(--deep-gray);text-align:center;max-width:420px;margin-bottom:32px;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:var(--radius);font-size:clamp(.95rem,2.5vw,1.1rem);font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px}
+.btn-primary{background:var(--primary);color:var(--white);box-shadow:var(--shadow)}
+.btn-primary:hover,.btn-primary:active{background:var(--secondary);transform:translateY(-2px)}
+.btn-secondary{background:transparent;color:var(--secondary);border:2px solid var(--secondary)}
+.btn-secondary:hover{background:var(--secondary);color:var(--white)}
+.btn-danger{background:var(--danger);color:var(--white)}
+.btn-success{background:var(--success);color:var(--white)}
+#readingScreen{background:linear-gradient(180deg,#0a1128 0%,var(--tertiary) 100%);padding:16px;overflow-y:auto}
+.reading-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:clamp(16px,3vw,32px);max-width:600px;width:100%;backdrop-filter:blur(8px)}
+.reading-block-name{font-size:clamp(.75rem,2vw,.9rem);color:var(--secondary);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.reading-section{font-size:clamp(.7rem,1.8vw,.8rem);color:var(--deep-gray);margin-bottom:12px}
+.reading-question{font-size:clamp(1rem,3vw,1.3rem);font-weight:700;margin-bottom:20px;line-height:1.4;color:var(--white)}
+.reading-answers{list-style:none;margin-bottom:20px}
+.reading-answers li{padding:10px 14px;margin-bottom:8px;border-radius:var(--radius);font-size:clamp(.85rem,2.2vw,1rem);line-height:1.4;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--bg)}
+.reading-instruction{text-align:center;padding:12px;margin-bottom:16px;border-radius:var(--radius);background:rgba(35,115,186,0.15);border:1px solid var(--secondary);font-size:clamp(.8rem,2vw,.95rem);line-height:1.4}
+.reading-instruction strong{color:var(--secondary)}
+.countdown-bar{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:16px;overflow:hidden}
+.countdown-fill{height:100%;background:linear-gradient(90deg,var(--secondary),var(--success));border-radius:3px;transition:width .1s linear}
+.reading-buttons{display:flex;gap:12px;margin-top:16px;justify-content:center;flex-wrap:wrap}
+.mode-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:clamp(.7rem,1.8vw,.8rem);font-weight:600;margin-bottom:12px}
+.mode-badge.sono{background:rgba(35,115,186,0.2);color:var(--secondary)}
+.mode-badge.technique{background:rgba(57,82,143,0.25);color:#8fa4d4}
+#gameScreen{background:#0a1128;padding:0}
+#gameCanvas{display:block;width:100%;height:100%}
+#resultScreen{background:linear-gradient(180deg,#0a1128 0%,var(--tertiary) 100%);padding:16px;overflow-y:auto}
+.result-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:clamp(16px,3vw,28px);max-width:560px;width:100%;backdrop-filter:blur(8px)}
+.result-icon{font-size:clamp(2.5rem,8vw,4rem);text-align:center;margin-bottom:12px}
+.result-title{font-size:clamp(1.2rem,4vw,1.8rem);font-weight:800;text-align:center;margin-bottom:16px}
+.result-title.win{color:var(--success)}
+.result-title.lose{color:var(--danger)}
+.result-section{margin-bottom:16px}
+.result-label{font-size:clamp(.7rem,1.8vw,.8rem);color:var(--deep-gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.result-value{font-size:clamp(.9rem,2.2vw,1.05rem);line-height:1.5;color:var(--bg)}
+.result-score{text-align:center;font-size:clamp(1.5rem,5vw,2.2rem);font-weight:900;color:var(--gold);margin:16px 0}
+.result-buttons{display:flex;gap:12px;margin-top:20px;justify-content:center;flex-wrap:wrap}
+#gameOverScreen{background:linear-gradient(180deg,#1a0a0a 0%,#2c0e0e 50%,#0a1128 100%);padding:16px}
+.gameover-title{font-size:clamp(2rem,7vw,3.5rem);font-weight:900;color:var(--danger);text-align:center;margin-bottom:8px;letter-spacing:3px}
+.gameover-sub{font-size:clamp(.9rem,2.5vw,1.1rem);color:var(--deep-gray);text-align:center;margin-bottom:24px}
+.gameover-stats{display:flex;gap:24px;margin-bottom:24px;justify-content:center;flex-wrap:wrap}
+.stat-box{text-align:center;padding:12px 20px;background:rgba(255,255,255,0.05);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.1)}
+.stat-num{font-size:clamp(1.5rem,4vw,2rem);font-weight:900;color:var(--gold)}
+.stat-label{font-size:clamp(.7rem,1.8vw,.8rem);color:var(--deep-gray);margin-top:4px}
+#winScreen{background:linear-gradient(180deg,#0a1128 0%,#0d2a1a 50%,#0a1128 100%);padding:16px}
+.win-title{font-size:clamp(1.8rem,6vw,3rem);font-weight:900;background:linear-gradient(90deg,var(--gold),var(--success));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:8px}
+.hud{position:fixed;top:0;left:0;right:0;z-index:20;pointer-events:none}
+.hud-top{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;gap:8px}
+.hud-question{flex:1;text-align:center;font-size:clamp(.75rem,2.2vw,.95rem);font-weight:600;color:var(--white);text-shadow:0 2px 8px rgba(0,0,0,0.8);line-height:1.3;padding:6px 8px;background:rgba(10,17,40,0.75);border-radius:var(--radius);backdrop-filter:blur(4px)}
+.hud-score{font-size:clamp(.8rem,2vw,.95rem);font-weight:700;color:var(--gold);white-space:nowrap;padding:6px 10px;background:rgba(10,17,40,0.75);border-radius:var(--radius)}
+.hud-right{display:flex;flex-direction:column;gap:4px}
+.hud-complication{display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(10,17,40,0.75);border-radius:var(--radius)}
+.hud-complication-bar{width:clamp(50px,12vw,80px);height:8px;background:rgba(255,255,255,0.15);border-radius:4px;overflow:hidden}
+.hud-complication-fill{height:100%;border-radius:4px;transition:width .3s,background .3s}
+.hud-complication-label{font-size:clamp(.55rem,1.3vw,.65rem);color:var(--deep-gray);white-space:nowrap}
+.hud-progress{display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(10,17,40,0.75);border-radius:var(--radius)}
+.hud-progress-bar{width:clamp(50px,12vw,80px);height:8px;background:rgba(255,255,255,0.15);border-radius:4px;overflow:hidden}
+.hud-progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--secondary),var(--success));transition:width .3s}
+.hud-progress-label{font-size:clamp(.55rem,1.3vw,.65rem);color:var(--deep-gray);white-space:nowrap}
+.mobile-controls{position:fixed;bottom:0;left:0;right:0;z-index:25;display:none;padding:12px 16px 20px;pointer-events:none}
+.mobile-controls.visible{display:flex;justify-content:space-between;align-items:flex-end}
+.mobile-btn{pointer-events:auto;width:clamp(56px,14vw,72px);height:clamp(56px,14vw,72px);border-radius:50%;border:2px solid rgba(255,255,255,0.25);background:rgba(57,82,143,0.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;font-size:clamp(1.2rem,3vw,1.6rem);color:var(--white);-webkit-tap-highlight-color:transparent}
+.mobile-btn:active{background:rgba(35,115,186,0.6);transform:scale(0.92)}
+.mobile-btn-group{display:flex;gap:12px}
+.fire-btn{background:rgba(231,76,60,0.4);border-color:rgba(231,76,60,0.4);width:clamp(64px,16vw,80px);height:clamp(64px,16vw,80px)}
+.fire-btn:active{background:rgba(231,76,60,0.7)}
+@media(max-width:480px){.reading-card,.result-card{padding:14px}.btn{padding:12px 24px;font-size:.9rem}}
+@media(min-width:769px){.mobile-controls{display:none !important}}
+</style>
+</head>
+<body>
+
+<div id="startScreen" class="screen active">
+  <img class="start-logo" src="https://42551934.fs1.hubspotusercontent-na1.net/hubfs/42551934/ARMTY%20Logos/Armty_Logo%20negativo%202.png" alt="ARMTY Logo">
+  <div class="start-title">ARMTY BLOCKS</div>
+  <div class="start-subtitle">Simulador Arcade de Anestesia Regional.<br>Dispara a los distractores. Protege la respuesta correcta.</div>
+  <button class="btn btn-primary" onclick="Game.startGame()">INICIAR SIMULACION</button>
+</div>
+
+<div id="readingScreen" class="screen">
+  <div class="reading-card">
+    <div class="reading-block-name" id="rdBlockName"></div>
+    <div class="reading-section" id="rdSection"></div>
+    <div id="rdModeBadge" class="mode-badge"></div>
+    <div class="reading-question" id="rdQuestion"></div>
+    <div class="reading-instruction">
+      <strong>OBJETIVO:</strong> Lee la pregunta y decide cual es la correcta.<br>
+      En el juego, <strong>dispara las incorrectas</strong> y <strong>protege la correcta</strong>.
+    </div>
+    <ul class="reading-answers" id="rdAnswers"></ul>
+    <div class="countdown-bar"><div class="countdown-fill" id="rdCountdown"></div></div>
+    <div class="reading-buttons">
+      <button class="btn btn-primary" onclick="Game.playerReady()">ESTOY LISTO</button>
+    </div>
+  </div>
+</div>
+
+<div id="gameScreen" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div class="hud" id="hud">
+    <div class="hud-top">
+      <div class="hud-score" id="hudScore">0 pts</div>
+      <div class="hud-question" id="hudQuestion"></div>
+      <div class="hud-right">
+        <div class="hud-progress">
+          <div class="hud-progress-bar"><div class="hud-progress-fill" id="hudProgBar"></div></div>
+          <div class="hud-progress-label">Progreso</div>
+        </div>
+        <div class="hud-complication">
+          <div class="hud-complication-bar"><div class="hud-complication-fill" id="hudCompBar"></div></div>
+          <div class="hud-complication-label">Complicaciones</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mobile-controls" id="mobileControls">
+    <div class="mobile-btn-group">
+      <button class="mobile-btn" id="btnLeft">&#9664;</button>
+      <button class="mobile-btn" id="btnRight">&#9654;</button>
+    </div>
+    <button class="mobile-btn fire-btn" id="btnFire">&#9733;</button>
+  </div>
+</div>
+
+<div id="resultScreen" class="screen">
+  <div class="result-card">
+    <div class="result-icon" id="resIcon"></div>
+    <div class="result-title" id="resTitle"></div>
+    <div class="result-score" id="resScore"></div>
+    <div class="result-section"><div class="result-label">Respuesta correcta</div><div class="result-value" id="resCorrect"></div></div>
+    <div class="result-section"><div class="result-label">Explicacion</div><div class="result-value" id="resFeedback"></div></div>
+    <div class="result-section"><div class="result-label">TIP Academico</div><div class="result-value" id="resTip" style="color:var(--secondary)"></div></div>
+    <div class="result-buttons" id="resButtons"></div>
+  </div>
+</div>
+
+<div id="gameOverScreen" class="screen">
+  <div class="gameover-title">GAME OVER</div>
+  <div class="gameover-sub">La barra de complicaciones alcanzo el maximo.</div>
+  <div class="gameover-stats">
+    <div class="stat-box"><div class="stat-num" id="goScore">0</div><div class="stat-label">Puntos</div></div>
+    <div class="stat-box"><div class="stat-num" id="goLevels">0</div><div class="stat-label">Niveles</div></div>
+  </div>
+  <button class="btn btn-danger" onclick="Game.restart()">REINICIAR</button>
+</div>
+
+<div id="winScreen" class="screen">
+  <img class="start-logo" src="https://42551934.fs1.hubspotusercontent-na1.net/hubfs/42551934/ARMTY%20Logos/Armty_Logo%20negativo%202.png" alt="ARMTY">
+  <div class="win-title">SIMULACION COMPLETADA</div>
+  <div class="start-subtitle">Has completado todos los bloques regionales. Excelente dominio del tema.</div>
+  <div class="gameover-stats">
+    <div class="stat-box"><div class="stat-num" id="winScore">0</div><div class="stat-label">Puntos totales</div></div>
+    <div class="stat-box"><div class="stat-num" id="winLevels">0</div><div class="stat-label">Niveles</div></div>
+  </div>
+  <button class="btn btn-primary" onclick="Game.restart()">JUGAR DE NUEVO</button>
+</div>
+
+<script>
+const levels = [
+  {blockName:"Bloqueo de Nervio Ciatico",mode:"sono",section:"Sonoanatomia",
+    question:"Estructuras ecograficas en abordaje popliteo?",
+    correct:"A/V poplitea y bifurcacion tibial-peroneo",
+    distractors:["A. femoral y n. safeno","V. yugular y n. vago","A. subclavia y 1er arco costal"],
+    teachingFeedback:"En el popliteo se identifica la bifurcacion del ciatico en tibial y peroneo comun, con arteria y vena poplitea como referencia.",
+    tip:"Flexion/extension del pie ayuda a diferenciar nervio de tendones.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Ciatico",mode:"technique",section:"Anatomia",
+    question:"Componentes funcionales del nervio ciatico?",
+    correct:"Tibial y peroneo comun",
+    distractors:["Femoral y safeno","Obturador y cutaneo lateral","Radial y cubital"],
+    teachingFeedback:"El ciatico se forma por el tibial (flexion) y peroneo comun (dorsiflexion), separados por septum fibrograso.",
+    tip:"Su separacion anatomica variable puede causar bloqueos incompletos.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Ciatico",mode:"technique",section:"Indicaciones",
+    question:"Indicacion principal del abordaje popliteo?",
+    correct:"Cirugia de pierna, tobillo y pie",
+    distractors:["Cirugia de hombro y clavicula","Cirugia de cadera y pelvis","Analgesia cervical y escapular"],
+    teachingFeedback:"El abordaje popliteo es ideal para analgesia distal a la rodilla.",
+    tip:"El nivel del abordaje determina la extension del bloqueo.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Ciatico",mode:"technique",section:"Medicamentos y dosis",
+    question:"Volumen recomendado para abordaje popliteo?",
+    correct:"Aproximadamente 10 mL",
+    distractors:["30 a 40 mL","1 a 3 mL","50 mL o mas"],
+    teachingFeedback:"Para el popliteo se recomiendan ~10 mL. Los proximales requieren ~15 mL.",
+    tip:"El ultrasonido permite reducir volumenes de anestesico local.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Ciatico",mode:"technique",section:"Contraindicaciones",
+    question:"Contraindicacion relativa del bloqueo ciatico?",
+    correct:"Riesgo de sindrome compartimental",
+    distractors:["Negativa del paciente","Infeccion en sitio de puncion","Alergia a latex"],
+    teachingFeedback:"El sindrome compartimental es relativo porque el bloqueo enmascara el dolor.",
+    tip:"Individualizar en neuropatia preexistente o riesgo compartimental.",difficulty:2},
+  {blockName:"Bloqueo Interescalenico",mode:"sono",section:"Sonoanatomia",
+    question:"Imagen ecografica clasica del plexo interescalenico?",
+    correct:"Alas de mariposa",
+    distractors:["Dona hiperecoica","Panal de abejas","Reloj de arena vascular"],
+    teachingFeedback:"A nivel del cricoides: las alas son los escalenos, el cuerpo son raices C5-C7.",
+    tip:"Esta imagen facilita la identificacion rapida de raices y troncos.",difficulty:1},
+  {blockName:"Bloqueo Interescalenico",mode:"technique",section:"Indicaciones",
+    question:"Indicacion principal del interescalenico?",
+    correct:"Cirugia de hombro y brazo proximal",
+    distractors:["Cirugia de mano y dedos","Analgesia abdominal inferior","Cirugia de rodilla"],
+    teachingFeedback:"Gold standard para cirugia de hombro, glenohumeral, clavicula y humero proximal.",
+    tip:"Tambien util para dolor cronico de hombro.",difficulty:1},
+  {blockName:"Bloqueo Interescalenico",mode:"technique",section:"Complicaciones",
+    question:"Complicacion especifica del interescalenico?",
+    correct:"Horner y paresia hemidiafragmatica",
+    distractors:["Neumotorax bilateral","Trombosis venosa profunda","Bloqueo del n. safeno"],
+    teachingFeedback:"Incluye Horner, paralisis de cuerdas vocales y paresia hemidiafragmatica por bloqueo del frenico.",
+    tip:"Volumenes bajos e inyecciones extrafasciales reducen estas complicaciones.",difficulty:2},
+  {blockName:"Bloqueo Interescalenico",mode:"technique",section:"Contraindicaciones",
+    question:"Contraindicacion absoluta del interescalenico?",
+    correct:"Paresia diafragmatica contralateral",
+    distractors:["Diabetes mellitus tipo 2","Edad mayor de 65 anos","IMC elevado"],
+    teachingFeedback:"La paresia contralateral es absoluta: el bloqueo causa paresia ipsilateral, eliminando funcion bilateral.",
+    tip:"Evitar en deterioro pulmonar importante.",difficulty:2},
+  {blockName:"Bloqueo Interescalenico",mode:"technique",section:"Medicamentos y dosis",
+    question:"Volumen recomendado para interescalenico?",
+    correct:"7.5 a 15 mL",
+    distractors:["30 a 40 mL","1 a 3 mL","50 a 60 mL"],
+    teachingFeedback:"El volumen habitual es 7.5-15 mL. Para tronco superior 10-15 mL.",
+    tip:"El ultrasonido permite reducir el volumen efectivo.",difficulty:1},
+  {blockName:"Bloqueo Supraclavicular",mode:"sono",section:"Sonoanatomia",
+    question:"Estructuras obligatorias en ecografia supraclavicular?",
+    correct:"A. subclavia, 1ra costilla y pleura",
+    distractors:["V. yugular, tiroides y esofago","A. carotida, n. vago y tiroides","V. subclavia y m. trapecio"],
+    teachingFeedback:"Identificar arteria subclavia, primer arco costal, troncos del plexo y pleura pulmonar.",
+    tip:"Inclinar el transductor caudalmente aumenta margen de seguridad.",difficulty:1},
+  {blockName:"Bloqueo Supraclavicular",mode:"technique",section:"Generalidades",
+    question:"Por que se le llama subaracnoideo de MS?",
+    correct:"Amplia cobertura y rapida instauracion",
+    distractors:["Se realiza en espacio subaracnoideo","Requiere puncion lumbar previa","Solo actua sobre raices medulares"],
+    teachingFeedback:"Es el subaracnoideo de la extremidad superior por su cobertura extensa y rapida instauracion.",
+    tip:"Ideal para codo, antebrazo y mano.",difficulty:1},
+  {blockName:"Bloqueo Supraclavicular",mode:"technique",section:"Tecnica de abordaje",
+    question:"Hacia donde se dirige la aguja?",
+    correct:"Corner pocket (subclavia/1ra costilla)",
+    distractors:["Directamente a la pleura","Hacia el esternocleidomastoideo","Perpendicular al n. frenico"],
+    teachingFeedback:"Tecnica en plano, lateral a medial, hacia corner pocket entre subclavia y primera costilla.",
+    tip:"Nunca avanzar si la pleura esta bajo la subclavia.",difficulty:2},
+  {blockName:"Bloqueo Supraclavicular",mode:"technique",section:"Complicaciones",
+    question:"Complicacion mas temida del supraclavicular?",
+    correct:"Neumotorax",
+    distractors:["Sindrome del tunel carpiano","Hematoma epidural cervical","Bloqueo del n. safeno"],
+    teachingFeedback:"Principales: neumotorax, lesion neural, toxicidad sistemica y falla ventilatoria.",
+    tip:"Deposito interfascial intertroncal mejora distribucion con menos riesgo.",difficulty:2},
+  {blockName:"Bloqueo Supraclavicular",mode:"technique",section:"Anatomia",
+    question:"Raices del tronco superior del plexo braquial?",
+    correct:"C5 y C6",
+    distractors:["C8 y T1","C3 y C4","L2 y L3"],
+    teachingFeedback:"C5-C6 = tronco superior, C7 = medio, C8-T1 = inferior.",
+    tip:"La relacion plexo-subclavia-costilla es clave.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Femoral",mode:"sono",section:"Sonoanatomia",
+    question:"Orden medial a lateral en region femoral?",
+    correct:"VAN: Vena, Arteria, Nervio",
+    distractors:["Arteria, Vena, Nervio","Nervio, Arteria, Vena","V. safena, A. poplitea, N. ciatico"],
+    teachingFeedback:"Distal al lig. inguinal: de medial a lateral Vena, Arteria y Nervio femoral.",
+    tip:"Nemotecnia VAN: Vena, Arteria, Nervio.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Femoral",mode:"technique",section:"Anatomia",
+    question:"Raices nerviosas del nervio femoral?",
+    correct:"L2, L3 y L4",
+    distractors:["C5, C6 y C7","S1, S2 y S3","T10, T11 y T12"],
+    teachingFeedback:"El femoral deriva de L2-L4, rama mas larga del plexo lumbar.",
+    tip:"Mejor visualizacion proximal al pliegue inguinal.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Femoral",mode:"technique",section:"Indicaciones",
+    question:"Indicaciones del bloqueo femoral?",
+    correct:"Fractura de cadera y cirugia de rodilla",
+    distractors:["Cirugia de hombro y brazo","Bloqueos de pared abdominal","Cirugia de columna lumbar"],
+    teachingFeedback:"Analgesia para cadera, femur y rodilla. Ideal en fracturas de cadera.",
+    tip:"Facilita posicionamiento para anestesia neuroaxial.",difficulty:1},
+  {blockName:"Bloqueo de Nervio Femoral",mode:"technique",section:"Contraindicaciones",
+    question:"Deambulacion temprana como contraindicacion relativa?",
+    correct:"Debilidad del cuadriceps y caidas",
+    distractors:["Dolor en sitio de puncion","Bloquea ambas extremidades","Hipotension ortostatica severa"],
+    teachingFeedback:"El bloqueo produce debilidad del cuadriceps, limitando deambulacion y aumentando caidas.",
+    tip:"La debilidad motora es el principal limitante postoperatorio.",difficulty:2},
+  {blockName:"Bloqueo de Nervio Femoral",mode:"technique",section:"Tecnica de abordaje",
+    question:"Distancia lateral recomendada al nervio?",
+    correct:"Al menos 1 cm lateral",
+    distractors:["Directamente sobre el nervio","5 cm medial al nervio","En contacto con la arteria"],
+    teachingFeedback:"Acceder al espacio profundo a fascia iliaca al menos 1 cm lateral para reducir lesion.",
+    tip:"Explorar proximal y distal para localizar el nervio compacto.",difficulty:2}
+];
+
+function shuffleArray(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function isMobile(){return window.innerWidth<769||'ontouchstart' in window;}
+
+const Game=(()=>{
+  let canvas,ctx,W,H;
+  let currentLevel=0,score=0,complication=0,levelProgress=0,requiredProgress=800;
+  let levelWon=false,levelLost=false,levelsCompleted=0;
+  let animFrameId=null,readingTimer=null,gameActive=false;
+  let shuffledLevels=[];
+  let player={x:0,y:0,w:52,h:60,speed:0};
+  let keys={left:false,right:false,fire:false};
+  let lastFireTime=0;
+  const FIRE_COOLDOWN=300;
+  let projectiles=[],fallingAnswers=[],particles=[];
+  let spawnTimer=0;
+  const SPAWN_INTERVAL=1500;
+  let answerPool=[],correctAnswer="";
+  let stars=[];
+  let lastSpawnCol=-1;
+
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(id==='gameScreen'){
+      document.getElementById('hud').style.display='';
+      if(isMobile())document.getElementById('mobileControls').classList.add('visible');
+    }else{
+      document.getElementById('hud').style.display='none';
+      document.getElementById('mobileControls').classList.remove('visible');
+    }
+  }
+
+  function init(){
+    canvas=document.getElementById('gameCanvas');
+    ctx=canvas.getContext('2d');
+    resize();
+    window.addEventListener('resize',resize);
+    initInput();
+    generateStars();
+  }
+
+  function resize(){
+    W=window.innerWidth;H=window.innerHeight;
+    canvas.width=W;canvas.height=H;
+    player.y=H-80;
+    if(player.x===0)player.x=W/2;
+  }
+
+  function generateStars(){
+    stars=[];
+    for(let i=0;i<80;i++){stars.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+0.3,a:Math.random()*0.6+0.2});}
+  }
+
+  function initInput(){
+    document.addEventListener('keydown',e=>{
+      if(e.key==='ArrowLeft')keys.left=true;
+      if(e.key==='ArrowRight')keys.right=true;
+      if(e.key===' '||e.key==='Spacebar'){e.preventDefault();keys.fire=true;}
+    });
+    document.addEventListener('keyup',e=>{
+      if(e.key==='ArrowLeft')keys.left=false;
+      if(e.key==='ArrowRight')keys.right=false;
+      if(e.key===' '||e.key==='Spacebar')keys.fire=false;
+    });
+    const btnL=document.getElementById('btnLeft'),btnR=document.getElementById('btnRight'),btnF=document.getElementById('btnFire');
+    function addTouch(el,k){
+      el.addEventListener('touchstart',e=>{e.preventDefault();keys[k]=true;},{passive:false});
+      el.addEventListener('touchend',e=>{e.preventDefault();keys[k]=false;},{passive:false});
+      el.addEventListener('touchcancel',()=>{keys[k]=false;});
+    }
+    addTouch(btnL,'left');addTouch(btnR,'right');addTouch(btnF,'fire');
+  }
+
+  function startGame(){
+    score=0;complication=0;levelsCompleted=0;currentLevel=0;
+    shuffledLevels=shuffleArray(levels);
+    showReadingScreen();
+  }
+
+  function restart(){
+    cancelAnimationFrame(animFrameId);
+    clearTimeout(readingTimer);
+    startGame();
+  }
+
+  function showReadingScreen(){
+    const lvl=shuffledLevels[currentLevel];
+    document.getElementById('rdBlockName').textContent=lvl.blockName;
+    document.getElementById('rdSection').textContent=lvl.section;
+    const badge=document.getElementById('rdModeBadge');
+    if(lvl.mode==='sono'){badge.className='mode-badge sono';badge.textContent='Transductor (Sonoanatomia)';}
+    else{badge.className='mode-badge technique';badge.textContent='Jeringa (Tecnica / Farmacologia)';}
+    document.getElementById('rdQuestion').textContent=lvl.question;
+    const ul=document.getElementById('rdAnswers');
+    ul.innerHTML='';
+    const allAnswers=shuffleArray([lvl.correct,...lvl.distractors]);
+    allAnswers.forEach(a=>{const li=document.createElement('li');li.textContent=a;ul.appendChild(li);});
+    showScreen('readingScreen');
+    const totalTime=18000;
+    const startTime=Date.now();
+    const bar=document.getElementById('rdCountdown');
+    bar.style.width='100%';
+    clearTimeout(readingTimer);
+    function tick(){
+      const pct=Math.max(0,1-(Date.now()-startTime)/totalTime);
+      bar.style.width=(pct*100)+'%';
+      if(pct>0){readingTimer=setTimeout(tick,50);}else{startLevel();}
+    }
+    tick();
+  }
+
+  function playerReady(){clearTimeout(readingTimer);startLevel();}
+
+  function startLevel(){
+    const lvl=shuffledLevels[currentLevel];
+    correctAnswer=lvl.correct;
+    answerPool=shuffleArray([lvl.correct,...lvl.distractors]);
+    levelProgress=0;
+    requiredProgress=600+(lvl.difficulty*200);
+    levelWon=false;levelLost=false;
+    projectiles=[];fallingAnswers=[];particles=[];
+    spawnTimer=0;lastSpawnCol=-1;
+    player.x=W/2;player.speed=0;
+    gameActive=true;
+    document.getElementById('hudQuestion').textContent=lvl.question;
+    updateHUD();
+    showScreen('gameScreen');
+    lastFrameTime=performance.now();
+    animFrameId=requestAnimationFrame(gameLoop);
+  }
+
+  function updateHUD(){
+    document.getElementById('hudScore').textContent=score+' pts';
+    const compBar=document.getElementById('hudCompBar');
+    const compPct=Math.min(100,complication);
+    compBar.style.width=compPct+'%';
+    if(compPct<40)compBar.style.background='var(--success)';
+    else if(compPct<70)compBar.style.background='var(--warning)';
+    else compBar.style.background='var(--danger)';
+    const progBar=document.getElementById('hudProgBar');
+    progBar.style.width=Math.min(100,(levelProgress/requiredProgress)*100)+'%';
+  }
+
+  function measureTextLines(text,maxW,fontSize){
+    ctx.font='bold '+fontSize+'px Helvetica,Arial,sans-serif';
+    const words=text.split(' ');let line='',lineCount=1;
+    for(let w of words){const test=line+(line?' ':'')+w;if(ctx.measureText(test).width>maxW&&line){lineCount++;line=w;}else{line=test;}}
+    return lineCount;
+  }
+
+  function wouldOverlap(nx,ny,nw,nh){
+    for(let a of fallingAnswers){
+      if(!a.alive)continue;
+      if(nx<a.x+a.w+24&&nx+nw+24>a.x&&ny<a.y+a.h+30&&ny+nh+30>a.y)return true;
+    }
+    return false;
+  }
+
+  function spawnAnswer(){
+    const text=answerPool[Math.floor(Math.random()*answerPool.length)];
+    const isCorrect=text===correctAnswer;
+    const tw=Math.min(W*0.36,220);
+    const fontSize=Math.max(11,Math.min(14,W*0.028));
+    const lineH=fontSize+4;
+    const lines=measureTextLines(text,tw-20,fontSize);
+    const th=Math.max(36,lines*lineH+14);
+    const cols=3;
+    const colW=(W-tw-20)/cols;
+    let col=Math.floor(Math.random()*cols);
+    if(col===lastSpawnCol)col=(col+1)%cols;
+    lastSpawnCol=col;
+    let x=0,y=-th-10,placed=false;
+    x=col*colW+Math.random()*(colW-10)+10;
+    x=Math.max(10,Math.min(W-tw-10,x));
+    if(!wouldOverlap(x,y,tw,th)){placed=true;}
+    else{for(let i=0;i<10;i++){x=Math.random()*(W-tw-20)+10;if(!wouldOverlap(x,y,tw,th)){placed=true;break;}}}
+    if(!placed)return;
+    const baseSpeed=1.0+(currentLevel*0.05);
+    fallingAnswers.push({x:x,y:y,w:tw,h:th,text:text,isCorrect:isCorrect,speed:baseSpeed+Math.random()*0.5,alive:true,hit:false});
+  }
+
+  function fireProjectile(){
+    const now=performance.now();
+    if(now-lastFireTime<FIRE_COOLDOWN)return;
+    lastFireTime=now;
+    const lvl=shuffledLevels[currentLevel];
+    const isSono=lvl.mode==='sono';
+    projectiles.push({x:player.x,y:player.y-player.h/2,w:isSono?20:6,h:14,speed:8,isSono:isSono,alive:true});
+  }
+
+  function spawnParticles(x,y,color,count){
+    for(let i=0;i<count;i++){particles.push({x:x,y:y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6-2,life:1,decay:0.02+Math.random()*0.03,r:Math.random()*3+1,color:color});}
+  }
+
+  function rectsOverlap(a,b){
+    return a.x-a.w/2<b.x+b.w/2&&a.x+a.w/2>b.x-b.w/2&&a.y-a.h/2<b.y+b.h/2&&a.y+a.h/2>b.y-b.h/2;
+  }
+
+  let lastFrameTime=0;
+
+  function gameLoop(timestamp){
+    if(!gameActive)return;
+    const dt=Math.min(32,timestamp-lastFrameTime);
+    lastFrameTime=timestamp;
+    const dtFactor=dt/16.67;
+    update(dtFactor,dt);draw();
+    if(!levelWon&&!levelLost){animFrameId=requestAnimationFrame(gameLoop);}
+  }
+
+  function update(dtFactor,dt){
+    const accel=0.9,friction=0.87,maxSpeed=9;
+    if(keys.left)player.speed-=accel*dtFactor;
+    if(keys.right)player.speed+=accel*dtFactor;
+    player.speed*=friction;
+    if(Math.abs(player.speed)>maxSpeed)player.speed=maxSpeed*Math.sign(player.speed);
+    player.x+=player.speed*dtFactor;
+    player.x=Math.max(player.w/2,Math.min(W-player.w/2,player.x));
+    if(keys.fire)fireProjectile();
+    projectiles.forEach(p=>{p.y-=p.speed*dtFactor;if(p.y<-20)p.alive=false;});
+    projectiles=projectiles.filter(p=>p.alive);
+    spawnTimer+=dt;
+    if(spawnTimer>=SPAWN_INTERVAL){spawnTimer=0;spawnAnswer();}
+    fallingAnswers.forEach(a=>{
+      a.y+=a.speed*dtFactor;
+      projectiles.forEach(p=>{
+        if(!p.alive||a.hit)return;
+        const aObj={x:a.x+a.w/2,y:a.y+a.h/2,w:a.w,h:a.h};
+        const pObj={x:p.x,y:p.y,w:p.w,h:p.h};
+        if(rectsOverlap(aObj,pObj)){
+          p.alive=false;a.hit=true;a.alive=false;
+          if(a.isCorrect){complication+=20;spawnParticles(a.x+a.w/2,a.y+a.h/2,'#e74c3c',15);}
+          else{score+=100;levelProgress+=100;spawnParticles(a.x+a.w/2,a.y+a.h/2,'#2ecc71',12);}
+        }
+      });
+      if(!a.hit&&a.alive){
+        const aObj={x:a.x+a.w/2,y:a.y+a.h/2,w:a.w,h:a.h};
+        const plObj={x:player.x,y:player.y,w:player.w,h:player.h};
+        if(rectsOverlap(aObj,plObj)){
+          a.hit=true;a.alive=false;
+          if(a.isCorrect){complication+=15;spawnParticles(player.x,player.y-20,'#e74c3c',10);}
+          else{complication+=5;levelProgress+=30;spawnParticles(player.x,player.y-20,'#f39c12',8);}
+        }
+      }
+      if(a.y>H+60&&a.alive){a.alive=false;if(!a.isCorrect){complication+=4;}}
+    });
+    fallingAnswers=fallingAnswers.filter(a=>a.alive||a.hit);
+    particles.forEach(p=>{p.x+=p.vx*dtFactor;p.y+=p.vy*dtFactor;p.vy+=0.15*dtFactor;p.life-=p.decay*dtFactor;});
+    particles=particles.filter(p=>p.life>0);
+    updateHUD();
+    if(levelProgress>=requiredProgress){levelWon=true;gameActive=false;score+=200;setTimeout(()=>showResult(true),500);}
+    if(complication>=100){levelLost=true;gameActive=false;setTimeout(()=>showGameOver(),500);}
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const bgGrad=ctx.createLinearGradient(0,0,0,H);
+    bgGrad.addColorStop(0,'#0a1128');bgGrad.addColorStop(1,'#0F206C');
+    ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
+    stars.forEach(s=>{ctx.beginPath();ctx.arc(s.x%W,s.y%H,s.r,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+s.a+')';ctx.fill();});
+    ctx.strokeStyle='rgba(35,115,186,0.06)';ctx.lineWidth=1;
+    for(let yy=0;yy<H;yy+=60){ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(W,yy);ctx.stroke();}
+    for(let xx=0;xx<W;xx+=60){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,H);ctx.stroke();}
+    fallingAnswers.forEach(a=>{
+      if(!a.alive&&a.hit)return;
+      const fontSize=Math.max(11,Math.min(14,W*0.028));
+      ctx.save();
+      ctx.shadowColor='rgba(35,115,186,0.3)';ctx.shadowBlur=8;
+      ctx.fillStyle='rgba(35,115,186,0.12)';ctx.strokeStyle='rgba(35,115,186,0.45)';ctx.lineWidth=1.5;
+      roundRect(ctx,a.x,a.y,a.w,a.h,8,true,true);
+      ctx.restore();
+      ctx.fillStyle='#e0e6ef';
+      ctx.font='bold '+fontSize+'px Helvetica,Arial,sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      wrapText(ctx,a.text,a.x+a.w/2,a.y+a.h/2,a.w-20,fontSize+4);
+    });
+    const lvl=shuffledLevels[currentLevel];
+    const isSono=lvl&&lvl.mode==='sono';
+    projectiles.forEach(p=>{
+      if(isSono){
+        ctx.save();ctx.strokeStyle='rgba(35,115,186,0.9)';ctx.lineWidth=3;ctx.beginPath();
+        for(let i=-9;i<=9;i++){const px=p.x+i*2;const py=p.y+Math.sin(i*0.8+performance.now()*0.01)*4;if(i===-9)ctx.moveTo(px,py);else ctx.lineTo(px,py);}
+        ctx.stroke();ctx.shadowColor='#2373BA';ctx.shadowBlur=8;ctx.stroke();ctx.restore();
+      }else{
+        ctx.fillStyle='rgba(35,115,186,0.85)';ctx.beginPath();ctx.ellipse(p.x,p.y,3,7,0,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='rgba(35,115,186,0.4)';ctx.beginPath();ctx.ellipse(p.x,p.y+8,2,4,0,0,Math.PI*2);ctx.fill();
+      }
+    });
+    drawPlayer(player.x,player.y,isSono);
+    particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+  }
+
+  function drawPlayer(x,y,isSono){
+    ctx.save();ctx.translate(x,y);
+    if(isSono){
+      const grad=ctx.createLinearGradient(-8,0,8,0);
+      grad.addColorStop(0,'#2a3e70');grad.addColorStop(0.5,'#39528F');grad.addColorStop(1,'#2a3e70');
+      ctx.fillStyle=grad;roundRect(ctx,-9,-6,18,32,4,true,false);
+      ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;
+      for(let gy=2;gy<22;gy+=4){ctx.beginPath();ctx.moveTo(-6,gy);ctx.lineTo(6,gy);ctx.stroke();}
+      ctx.fillStyle='#1a2d5c';ctx.beginPath();ctx.arc(0,28,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#0F206C';ctx.beginPath();ctx.arc(0,28,3,0,Math.PI*2);ctx.fill();
+      const headGrad=ctx.createLinearGradient(-22,-26,22,-26);
+      headGrad.addColorStop(0,'#1a4a8a');headGrad.addColorStop(0.3,'#2373BA');headGrad.addColorStop(0.7,'#2373BA');headGrad.addColorStop(1,'#1a4a8a');
+      ctx.fillStyle=headGrad;
+      ctx.beginPath();ctx.moveTo(-22,-6);ctx.quadraticCurveTo(-24,-18,-18,-26);ctx.quadraticCurveTo(0,-32,18,-26);ctx.quadraticCurveTo(24,-18,22,-6);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(-22,-6);ctx.quadraticCurveTo(-24,-18,-18,-26);ctx.quadraticCurveTo(0,-32,18,-26);ctx.quadraticCurveTo(24,-18,22,-6);ctx.stroke();
+      ctx.fillStyle='rgba(10,17,40,0.5)';ctx.beginPath();ctx.moveTo(-20,-8);ctx.quadraticCurveTo(0,-4,20,-8);ctx.quadraticCurveTo(0,-12,-20,-8);ctx.fill();
+      ctx.fillStyle='#27ae60';ctx.shadowColor='#27ae60';ctx.shadowBlur=6;ctx.beginPath();ctx.arc(12,-10,2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+      ctx.lineWidth=1.5;const t=performance.now()*0.003;
+      for(let i=1;i<=3;i++){const alpha=Math.max(0,0.4-i*0.1+Math.sin(t+i)*0.1);ctx.strokeStyle='rgba(35,115,186,'+alpha+')';ctx.beginPath();ctx.arc(0,-28,i*8,-Math.PI*0.7,-Math.PI*0.3);ctx.stroke();}
+    }else{
+      const barrelGrad=ctx.createLinearGradient(-10,0,10,0);
+      barrelGrad.addColorStop(0,'#b8d4e8');barrelGrad.addColorStop(0.3,'#e8f0f6');barrelGrad.addColorStop(0.7,'#e8f0f6');barrelGrad.addColorStop(1,'#b8d4e8');
+      ctx.fillStyle=barrelGrad;ctx.strokeStyle='#39528F';ctx.lineWidth=1.5;
+      roundRect(ctx,-10,-32,20,40,4,true,true);
+      ctx.strokeStyle='rgba(57,82,143,0.4)';ctx.lineWidth=0.8;
+      for(let gy=-26;gy<4;gy+=5){ctx.beginPath();ctx.moveTo(-8,gy);ctx.lineTo(-3,gy);ctx.stroke();}
+      ctx.fillStyle='rgba(35,115,186,0.35)';roundRect(ctx,-8,-28,16,24,2,true,false);
+      ctx.fillStyle='#39528F';roundRect(ctx,-5,8,10,18,2,true,false);
+      const handleGrad=ctx.createLinearGradient(-10,24,10,24);
+      handleGrad.addColorStop(0,'#2a3e70');handleGrad.addColorStop(0.5,'#39528F');handleGrad.addColorStop(1,'#2a3e70');
+      ctx.fillStyle=handleGrad;roundRect(ctx,-10,24,20,6,3,true,false);
+      ctx.fillStyle='#39528F';ctx.beginPath();ctx.moveTo(-5,-32);ctx.lineTo(5,-32);ctx.lineTo(3,-38);ctx.lineTo(-3,-38);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#c0c8d0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-38);ctx.lineTo(0,-52);ctx.stroke();
+      ctx.fillStyle='#e0e8f0';ctx.beginPath();ctx.moveTo(-1.5,-52);ctx.lineTo(0,-56);ctx.lineTo(1.5,-52);ctx.closePath();ctx.fill();
+      const dripT=performance.now()*0.002;const dripAlpha=(Math.sin(dripT)+1)*0.3;
+      ctx.fillStyle='rgba(35,115,186,'+dripAlpha+')';ctx.beginPath();ctx.ellipse(0,-58,2,2.5,0,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+    if(fill)ctx.fill();if(stroke)ctx.stroke();
+  }
+
+  function wrapText(ctx,text,x,y,maxW,lineH){
+    const words=text.split(' ');let line='';const lines=[];
+    for(let w of words){const test=line+(line?' ':'')+w;if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=w;}else{line=test;}}
+    lines.push(line);
+    const startY=y-((lines.length-1)*lineH)/2;
+    lines.forEach((l,i)=>{ctx.fillText(l,x,startY+i*lineH);});
+  }
+
+  function showResult(won){
+    const lvl=shuffledLevels[currentLevel];
+    document.getElementById('resIcon').textContent=won?'\u{1F3C6}':'\u{274C}';
+    const title=document.getElementById('resTitle');
+    title.textContent=won?'NIVEL COMPLETADO':'NIVEL FALLIDO';
+    title.className='result-title '+(won?'win':'lose');
+    document.getElementById('resScore').textContent=score+' puntos';
+    document.getElementById('resCorrect').textContent=lvl.correct;
+    document.getElementById('resFeedback').textContent=lvl.teachingFeedback;
+    document.getElementById('resTip').textContent=lvl.tip;
+    const btns=document.getElementById('resButtons');
+    btns.innerHTML='';
+    if(won){
+      levelsCompleted++;
+      if(currentLevel+1<shuffledLevels.length){
+        const b=document.createElement('button');b.className='btn btn-primary';b.textContent='SIGUIENTE NIVEL';
+        b.onclick=()=>{currentLevel++;showReadingScreen();};btns.appendChild(b);
+      }else{
+        const b=document.createElement('button');b.className='btn btn-success';b.textContent='VER RESULTADOS FINALES';
+        b.onclick=showWinScreen;btns.appendChild(b);
+      }
+    }else{
+      const b1=document.createElement('button');b1.className='btn btn-primary';b1.textContent='REINTENTAR';
+      b1.onclick=()=>{complication=Math.max(0,complication-30);showReadingScreen();};btns.appendChild(b1);
+    }
+    showScreen('resultScreen');
+  }
+
+  function showGameOver(){
+    document.getElementById('goScore').textContent=score;
+    document.getElementById('goLevels').textContent=levelsCompleted;
+    showScreen('gameOverScreen');
+  }
+
+  function showWinScreen(){
+    document.getElementById('winScore').textContent=score;
+    document.getElementById('winLevels').textContent=levelsCompleted;
+    showScreen('winScreen');
+  }
+
+  window.addEventListener('DOMContentLoaded',init);
+  return{startGame:startGame,restart:restart,playerReady:playerReady};
+})();
+</script>
+</body>
+</html>
