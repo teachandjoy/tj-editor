@@ -515,8 +515,22 @@ export default function EditorPage() {
     input.click();
   }, [uploadMedia, doInsertImage, topic, currentUser]);
 
+  const isCursorInsideBlock = useCallback((): boolean => {
+    if (!editor) return false;
+    const { from } = editor.state.selection;
+    const resolved = editor.state.doc.resolve(from);
+    for (let d = resolved.depth; d > 0; d--) {
+      if (resolved.node(d).type.name === 'divBlock') return true;
+    }
+    return false;
+  }, [editor]);
+
   const insertBlock = useCallback((cls: string, label: string) => {
     if (!editor) return;
+    if (isCursorInsideBlock()) {
+      alert('No se puede insertar un bloque dentro de otro bloque. Coloca el cursor fuera del bloque actual.');
+      return;
+    }
     const { from, to } = editor.state.selection;
     const selectedText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
     blockEditorInitRef.current = false;
@@ -527,10 +541,14 @@ export default function EditorPage() {
       existingBlockHtml: selectedText.trim() || '',
     });
     setBlockEditorOpen(true);
-  }, [editor]);
+  }, [editor, isCursorInsideBlock]);
 
   const insertIdentityBlock = useCallback((block: IdentityBlock) => {
     if (!editor) return;
+    if (isCursorInsideBlock()) {
+      alert('No se puede insertar un bloque dentro de otro bloque. Coloca el cursor fuera del bloque actual.');
+      return;
+    }
     const { from, to } = editor.state.selection;
     const selectedText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
     blockEditorInitRef.current = false;
@@ -541,7 +559,7 @@ export default function EditorPage() {
     });
     setBlockEditorOpen(true);
     setShowBlockCatalog(false);
-  }, [editor]);
+  }, [editor, isCursorInsideBlock]);
 
   // ── Save block from the WYSIWYG editor panel ──
   const saveBlockFromEditor = useCallback(() => {
@@ -1071,13 +1089,12 @@ export default function EditorPage() {
               onMouseLeave={() => { setHoveredBlockEl(null); setBlockCtrlPos(null); }}
             >
               <span
-                title="Mover bloque arriba (⬆) — clic derecho para mover abajo"
-                style={{ cursor: 'pointer', padding: '2px 6px', borderRadius: 4, fontSize: 13, lineHeight: 1 }}
+                title="Mover bloque arriba"
+                style={{ cursor: 'pointer', padding: '2px 4px', borderRadius: 4, fontSize: 11, lineHeight: 1 }}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (!hoveredBlockEl || !editor) return;
-                  // Move block up: swap with previous sibling
                   const prev = hoveredBlockEl.previousElementSibling as HTMLElement | null;
                   if (prev) {
                     hoveredBlockEl.parentNode?.insertBefore(hoveredBlockEl, prev);
@@ -1085,11 +1102,16 @@ export default function EditorPage() {
                     setBlockCtrlPos(null);
                   }
                 }}
-                onContextMenu={(e) => {
+              >
+                &#x25B2;
+              </span>
+              <span
+                title="Mover bloque abajo"
+                style={{ cursor: 'pointer', padding: '2px 4px', borderRadius: 4, fontSize: 11, lineHeight: 1 }}
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (!hoveredBlockEl || !editor) return;
-                  // Move block down: swap with next sibling
                   const next = hoveredBlockEl.nextElementSibling as HTMLElement | null;
                   if (next) {
                     hoveredBlockEl.parentNode?.insertBefore(next, hoveredBlockEl);
@@ -1098,7 +1120,7 @@ export default function EditorPage() {
                   }
                 }}
               >
-                &#x2195;
+                &#x25BC;
               </span>
               <span
                 title="Editar bloque (doble clic)"
