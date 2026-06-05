@@ -1,0 +1,2713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teach & Joy · Diseñador Instruccional</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Variables ───────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #1b4b85;
+      --blue-dark:  #0f2f5a;
+      --blue-light: #e8f0fb;
+      --red:        #8b2f3a;
+      --red-light:  #fdf0f1;
+      --gold:       #c5aa6f;
+      --gold-light: #faf6ee;
+      --bg:         #ebeae7;
+      --bg2:        #f5f4f1;
+      --text:       #2a2a32;
+      --text-sec:   #6b6b78;
+      --border:     #d8d5cf;
+      --white:      #ffffff;
+      --success:    #1a7a4a;
+      --radius:     8px;
+      --shadow:     0 4px 24px rgba(27,75,133,.08);
+      --shadow-lg:  0 12px 48px rgba(27,75,133,.12);
+      --font-h:     'Montserrat', sans-serif;
+      --font-b:     'Open Sans', sans-serif;
+      --transition: .3s cubic-bezier(.4,0,.2,1);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b);
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Animations ──────────────────────────────────────────── */
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(24px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes cardEnter {
+      from { opacity: 0; transform: translateY(20px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: .6; }
+    }
+
+    @keyframes floatA {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25%      { transform: translate(60px, -40px) rotate(90deg); }
+      50%      { transform: translate(20px, -80px) rotate(180deg); }
+      75%      { transform: translate(-40px, -30px) rotate(270deg); }
+    }
+    @keyframes floatB {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%      { transform: translate(-50px, 50px) scale(1.15); }
+      66%      { transform: translate(30px, 20px) scale(.9); }
+    }
+    @keyframes floatC {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50%      { transform: translate(40px, 60px) rotate(180deg); }
+    }
+
+    /* ── Background animated shapes ─────────────────────────── */
+    .bg-shapes {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .bg-shapes .shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: .06;
+    }
+    .bg-shapes .s1 {
+      width: 320px; height: 320px;
+      background: var(--blue);
+      top: -80px; right: -60px;
+      animation: floatA 25s ease-in-out infinite;
+    }
+    .bg-shapes .s2 {
+      width: 200px; height: 200px;
+      background: var(--gold);
+      bottom: 10%; left: -40px;
+      animation: floatB 20s ease-in-out infinite;
+    }
+    .bg-shapes .s3 {
+      width: 150px; height: 150px;
+      background: var(--red);
+      top: 40%; right: 10%;
+      border-radius: 30%;
+      animation: floatC 30s ease-in-out infinite;
+    }
+    .bg-shapes .s4 {
+      width: 100px; height: 100px;
+      background: var(--blue);
+      bottom: 20%; right: 30%;
+      animation: floatA 22s ease-in-out infinite reverse;
+    }
+    .bg-shapes .s5 {
+      width: 250px; height: 250px;
+      background: var(--gold);
+      top: 60%; left: 30%;
+      opacity: .04;
+      animation: floatB 28s ease-in-out infinite reverse;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────────── */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,.04);
+    }
+
+    .topbar-logo img {
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-admin-link {
+      font-family: var(--font-b);
+      font-size: .78rem;
+      color: var(--text-sec);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-admin-link:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-light);
+    }
+
+    /* ── Progress bar ─────────────────────────────────────────── */
+    .progress-bar-wrap {
+      position: fixed;
+      top: 60px;
+      left: 0; right: 0;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      z-index: 99;
+      padding: 0 24px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .progress-bar-wrap::-webkit-scrollbar { display: none; }
+
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      min-width: max-content;
+      height: 56px;
+      gap: 0;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      cursor: pointer;
+    }
+
+    .step-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 6px 10px;
+      border-radius: 20px;
+      font-family: var(--font-h);
+      font-size: .72rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: var(--transition);
+      color: var(--text-sec);
+      border: 1.5px solid transparent;
+      letter-spacing: .02em;
+    }
+
+    .step-pill .step-icon {
+      display: flex;
+      align-items: center;
+      color: inherit;
+    }
+
+    .step-pill .step-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .7rem;
+      font-weight: 700;
+      background: var(--bg);
+      color: var(--text-sec);
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .step-item.active .step-pill {
+      background: var(--blue-light);
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .step-item.active .step-num {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .step-item.done .step-pill {
+      color: var(--success);
+    }
+
+    .step-item.done .step-num {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .step-connector {
+      width: 24px;
+      height: 2px;
+      background: var(--border);
+      flex-shrink: 0;
+      margin: 0 2px;
+      transition: background .4s ease;
+    }
+
+    .step-connector.done { background: var(--success); }
+
+    /* ── Main layout ──────────────────────────────────────────── */
+    .main {
+      padding-top: 116px;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .wizard-wrap {
+      width: 100%;
+      max-width: 740px;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── Screens ──────────────────────────────────────────────── */
+    .screen { display: none; }
+    .screen.active { display: block; animation: screenIn .45s ease both; }
+
+    /* ── Welcome screen ───────────────────────────────────────── */
+    .welcome-hero {
+      text-align: center;
+      padding: 48px 0 40px;
+    }
+
+    .welcome-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-light);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 20px;
+      padding: 5px 16px;
+      font-size: .78rem;
+      font-weight: 600;
+      font-family: var(--font-h);
+      letter-spacing: .04em;
+      margin-bottom: 24px;
+      animation: screenIn .5s ease both;
+    }
+
+    .welcome-badge svg { width: 14px; height: 14px; }
+
+    .welcome-hero h1 {
+      font-family: var(--font-h);
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--blue-dark);
+      line-height: 1.2;
+      margin-bottom: 16px;
+      animation: screenIn .5s ease .1s both;
+    }
+
+    .welcome-hero h1 span { color: var(--red); }
+
+    .welcome-hero p {
+      color: var(--text-sec);
+      font-size: 1.05rem;
+      max-width: 520px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+      animation: screenIn .5s ease .15s both;
+    }
+
+    .welcome-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .welcome-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 24px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1.5px solid transparent;
+    }
+
+    .welcome-card:nth-child(1) { animation: cardEnter .45s ease .2s both; }
+    .welcome-card:nth-child(2) { animation: cardEnter .45s ease .3s both; }
+    .welcome-card:nth-child(3) { animation: cardEnter .45s ease .4s both; }
+
+    .welcome-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--blue-light);
+    }
+
+    .welcome-card .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      color: var(--blue);
+      background: var(--blue-light);
+    }
+
+    .welcome-card .icon svg { width: 22px; height: 22px; }
+
+    .welcome-card h3 {
+      font-family: var(--font-h);
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .welcome-card p {
+      font-size: .8rem;
+      color: var(--text-sec);
+      line-height: 1.5;
+    }
+
+    .btn-start {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--blue);
+      color: var(--white);
+      padding: 16px 36px;
+      border-radius: var(--radius);
+      font-family: var(--font-h);
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 20px rgba(27,75,133,.2);
+      animation: screenIn .5s ease .5s both;
+    }
+
+    .btn-start:hover {
+      background: var(--red);
+      box-shadow: 0 6px 24px rgba(139,47,58,.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-start:active { transform: translateY(0); }
+
+    .btn-new-design {
+      font-family: var(--font-h);
+      font-size: .88rem;
+      font-weight: 600;
+      border: 2px dashed var(--border);
+      background: transparent;
+      color: var(--text-sec);
+      padding: 12px 28px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      margin-top: 10px;
+    }
+    .btn-new-design:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-light);
+    }
+
+    /* ── Saved designs list ─────────────────────────────────── */
+    .designs-list {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto 20px;
+    }
+    .designs-list h4 {
+      font-family: var(--font-h);
+      font-size: .85rem;
+      color: var(--text-sec);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 10px;
+    }
+    .design-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      animation: cardEnter .35s ease both;
+    }
+    .design-item:hover {
+      border-color: var(--blue);
+      box-shadow: var(--shadow);
+    }
+    .design-item.active-design {
+      border-color: var(--blue);
+      background: var(--blue-light);
+    }
+    .design-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .design-item-title {
+      font-family: var(--font-h);
+      font-weight: 600;
+      font-size: .92rem;
+      color: var(--text);
+    }
+    .design-item-meta {
+      font-size: .75rem;
+      color: var(--text-sec);
+    }
+    .design-item-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .design-item-actions button {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      cursor: pointer;
+      color: var(--text-sec);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+    }
+    .design-item-actions button:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-light);
+    }
+
+    /* ── Step screen ──────────────────────────────────────────── */
+    .step-header {
+      margin-bottom: 28px;
+    }
+
+    .step-label {
+      font-family: var(--font-h);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .step-title {
+      font-family: var(--font-h);
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--blue-dark);
+      line-height: 1.2;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-title .step-title-icon {
+      display: flex;
+      align-items: center;
+      color: var(--blue);
+    }
+
+    .step-title .step-title-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .step-subtitle {
+      font-size: .95rem;
+      color: var(--text-sec);
+      line-height: 1.6;
+    }
+
+    /* ── Field card ───────────────────────────────────────────── */
+    .field-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      padding: 24px;
+      margin-bottom: 18px;
+      transition: var(--transition);
+      position: relative;
+      animation: cardEnter .35s ease both;
+    }
+
+    .field-card:nth-child(2) { animation-delay: .05s; }
+    .field-card:nth-child(3) { animation-delay: .1s; }
+    .field-card:nth-child(4) { animation-delay: .15s; }
+    .field-card:nth-child(5) { animation-delay: .2s; }
+
+    .field-card:focus-within {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(27,75,133,.06);
+    }
+
+    .field-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 12px;
+    }
+
+    .field-label-wrap { flex: 1; }
+
+    .field-label {
+      font-family: var(--font-h);
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .field-hint {
+      font-size: .78rem;
+      color: var(--text-sec);
+      line-height: 1.5;
+    }
+
+    .btn-help {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text-sec);
+      font-size: .8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      font-family: var(--font-h);
+    }
+
+    .btn-help:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-light);
+    }
+
+    .help-panel {
+      display: none;
+      background: var(--gold-light);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: .83rem;
+      color: #5a4a1e;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .help-panel.open { display: block; animation: fadeIn .25s ease; }
+
+    .help-example {
+      margin-top: 8px;
+      font-style: italic;
+      color: #7a6030;
+      font-size: .8rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: .93rem;
+      font-family: var(--font-b);
+      color: var(--text);
+      background: var(--bg2);
+      transition: var(--transition);
+      outline: none;
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(27,75,133,.06);
+    }
+
+    textarea { min-height: 90px; }
+
+    .optional-badge {
+      display: inline-block;
+      font-size: .68rem;
+      padding: 2px 7px;
+      background: var(--bg);
+      border-radius: 4px;
+      color: var(--text-sec);
+      font-weight: 600;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    /* ── Radio / Checkbox pills ───────────────────────────────── */
+    .pill-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .pill-opt { cursor: pointer; }
+    .pill-opt input { display: none; }
+
+    .pill-opt span {
+      display: inline-block;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      font-size: .84rem;
+      font-family: var(--font-h);
+      font-weight: 600;
+      color: var(--text-sec);
+      background: var(--bg);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .pill-opt span:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .pill-opt input:checked + span {
+      background: var(--blue-light);
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    /* ── Dynamic module list ──────────────────────────────────── */
+    .modulos-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .modulo-card {
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+      animation: cardEnter .35s ease both;
+    }
+
+    .modulo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .modulo-num {
+      font-family: var(--font-h);
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--blue);
+      background: var(--blue-light);
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    .btn-remove-mod {
+      background: none;
+      border: 1px solid #e0c0c0;
+      color: var(--red);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: .75rem;
+      cursor: pointer;
+      font-family: var(--font-h);
+      font-weight: 600;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-remove-mod svg { width: 12px; height: 12px; }
+    .btn-remove-mod:hover { background: var(--red-light); }
+
+    .modulo-fields { display: flex; flex-direction: column; gap: 10px; }
+    .modulo-fields label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-sec);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .btn-add-mod {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      border: 2px dashed var(--blue);
+      border-radius: var(--radius);
+      background: var(--blue-light);
+      color: var(--blue);
+      font-family: var(--font-h);
+      font-size: .88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .btn-add-mod svg { width: 16px; height: 16px; }
+    .btn-add-mod:hover { background: #d4e3f8; }
+
+    /* ── Navigation ───────────────────────────────────────────── */
+    .step-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 32px;
+      gap: 12px;
+    }
+
+    .nav-left, .nav-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 22px;
+      border-radius: var(--radius);
+      font-family: var(--font-h);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1.5px solid transparent;
+    }
+
+    .btn-nav svg { width: 16px; height: 16px; }
+
+    .btn-prev {
+      background: var(--white);
+      border-color: var(--border);
+      color: var(--text-sec);
+    }
+
+    .btn-prev:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .btn-next {
+      background: var(--blue);
+      color: var(--white);
+      box-shadow: 0 3px 12px rgba(27,75,133,.18);
+    }
+
+    .btn-next:hover {
+      background: var(--red);
+      box-shadow: 0 4px 16px rgba(139,47,58,.18);
+      transform: translateY(-1px);
+    }
+
+    .btn-next:active { transform: translateY(0); }
+
+    .btn-skip {
+      background: none;
+      border: none;
+      color: var(--text-sec);
+      font-size: .82rem;
+      cursor: pointer;
+      font-family: var(--font-b);
+      padding: 6px 4px;
+      text-decoration: underline;
+      transition: var(--transition);
+    }
+
+    .btn-skip:hover { color: var(--blue); }
+
+    /* ── Save identity step ───────────────────────────────────── */
+    .identity-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 28px;
+      border: 1.5px solid var(--border);
+      margin-bottom: 18px;
+    }
+
+    .identity-title {
+      font-family: var(--font-h);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 16px;
+    }
+
+    .identity-note {
+      font-size: .85rem;
+      color: var(--text-sec);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    /* ── Preview / Final screen ───────────────────────────────── */
+    .preview-header {
+      text-align: center;
+      padding: 20px 0 36px;
+    }
+
+    .preview-header h2 {
+      font-family: var(--font-h);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--blue-dark);
+      margin-bottom: 8px;
+    }
+
+    .preview-header p {
+      color: var(--text-sec);
+      font-size: .95rem;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      border-radius: var(--radius);
+      font-family: var(--font-h);
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+
+    .btn-action svg { width: 16px; height: 16px; }
+
+    .btn-action:hover { transform: translateY(-1px); }
+    .btn-action:active { transform: translateY(0); }
+
+    .btn-save {
+      background: var(--blue);
+      color: var(--white);
+      box-shadow: 0 3px 16px rgba(27,75,133,.18);
+    }
+
+    .btn-save:hover { background: var(--blue-dark); }
+
+    .btn-pdf {
+      background: var(--red);
+      color: var(--white);
+      box-shadow: 0 3px 16px rgba(139,47,58,.18);
+    }
+
+    .btn-pdf:hover { background: #6d2028; }
+
+    .btn-restart {
+      background: var(--white);
+      color: var(--text-sec);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-restart:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* Preview document styles */
+    .preview-doc {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 40px 48px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .preview-doc h1 {
+      font-family: var(--font-h);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--blue-dark);
+      border-bottom: 3px solid var(--blue);
+      padding-bottom: 12px;
+      margin-bottom: 28px;
+    }
+
+    .preview-doc h2 {
+      font-family: var(--font-h);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin: 28px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-doc h2::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      background: var(--gold);
+      border-radius: 2px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .preview-doc h3 {
+      font-family: var(--font-h);
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 16px 0 6px;
+    }
+
+    .preview-field { margin-bottom: 14px; }
+
+    .preview-field-label {
+      font-size: .73rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text-sec);
+      margin-bottom: 3px;
+    }
+
+    .preview-field-value {
+      font-size: .92rem;
+      color: var(--text);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .preview-field-value.empty {
+      color: #bbb;
+      font-style: italic;
+    }
+
+    .preview-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .preview-tag {
+      background: var(--blue-light);
+      color: var(--blue);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: .78rem;
+      font-family: var(--font-h);
+      font-weight: 600;
+    }
+
+    .modulo-preview {
+      background: var(--bg2);
+      border-left: 3px solid var(--blue);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+
+    .save-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 24px;
+      animation: fadeIn .2s ease;
+    }
+
+    .save-modal-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--shadow-lg);
+      animation: screenIn .3s ease;
+    }
+
+    .save-modal-card h3 {
+      font-family: var(--font-h);
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--blue-dark);
+      margin-bottom: 8px;
+    }
+
+    .save-modal-card p {
+      color: var(--text-sec);
+      font-size: .9rem;
+      margin-bottom: 22px;
+      line-height: 1.6;
+    }
+
+    .save-modal-card label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .save-modal-card input { margin-bottom: 16px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-cancel-modal {
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      color: var(--text-sec);
+      border-radius: var(--radius);
+      font-family: var(--font-h);
+      font-weight: 600;
+      font-size: .88rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-cancel-modal:hover { border-color: var(--blue); color: var(--blue); }
+
+    .btn-confirm-save {
+      flex: 2;
+      padding: 12px;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-h);
+      font-weight: 700;
+      font-size: .88rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-confirm-save:hover { background: var(--red); }
+
+    .toast-container {
+      position: fixed;
+      bottom: 28px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 300;
+    }
+
+    .toast {
+      background: var(--white);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: .88rem;
+      box-shadow: var(--shadow-lg);
+      animation: slideInRight .3s ease both;
+      max-width: 340px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error   { border-color: var(--red); color: var(--red); }
+
+    /* ── Completitud bar ─────────────────────────────────────── */
+    .completitud-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+
+    .completitud-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 2px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Saved success screen ─────────────────────────────────── */
+    .success-screen {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--blue-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      color: var(--blue);
+      animation: popIn .5s cubic-bezier(.17,.67,.39,1.5) both;
+    }
+
+    .success-icon svg { width: 36px; height: 36px; }
+
+    .success-screen h2 {
+      font-family: var(--font-h);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--blue-dark);
+      margin-bottom: 10px;
+    }
+
+    .success-screen p {
+      color: var(--text-sec);
+      font-size: .95rem;
+      max-width: 420px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+    }
+
+    /* ── Print styles ─────────────────────────────────────────── */
+    @media print {
+      .topbar, .progress-bar-wrap, .step-nav, .preview-actions,
+      .btn-admin-link, .toast-container, .save-modal { display: none !important; }
+      .main { padding-top: 0; }
+      body { background: white; }
+      .preview-doc { box-shadow: none; border: none; padding: 0; }
+      .screen { display: none !important; }
+      .screen.print-target { display: block !important; }
+    }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .welcome-cards { grid-template-columns: 1fr; gap: 12px; }
+      .welcome-hero h1 { font-size: 1.8rem; }
+      .welcome-hero { padding: 32px 0 28px; }
+      .preview-doc { padding: 28px 24px; }
+      .wizard-wrap { padding: 32px 16px 80px; }
+      .step-title { font-size: 1.4rem; }
+      .step-nav { flex-direction: column-reverse; gap: 10px; }
+      .nav-left, .nav-right { width: 100%; justify-content: center; }
+      .btn-nav { width: 100%; justify-content: center; }
+      .btn-skip { width: 100%; text-align: center; }
+      .preview-actions { flex-direction: column; align-items: stretch; }
+      .btn-action { justify-content: center; }
+      .topbar { padding: 0 16px; }
+      .progress-bar-wrap { padding: 0 12px; }
+      .field-card { padding: 18px; }
+      .save-modal-card { padding: 28px 20px; }
+    }
+
+    @media (max-width: 480px) {
+      .welcome-hero h1 { font-size: 1.5rem; }
+      .welcome-hero p { font-size: .92rem; }
+      .btn-start { padding: 14px 28px; font-size: .92rem; }
+      .step-title { font-size: 1.2rem; gap: 8px; }
+      .step-subtitle { font-size: .88rem; }
+      .topbar-logo img { height: 28px; }
+      .progress-steps { gap: 0; }
+      .step-pill { padding: 5px 10px 5px 7px; font-size: .65rem; }
+      .step-num { width: 18px; height: 18px; font-size: .6rem; }
+      .step-connector { width: 12px; }
+      .preview-doc h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top bar ───────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <img src="https://repositorio.paincare.mx/public/Logo_TeachJ_PNG.png" alt="Teach & Joy">
+  </div>
+  <div class="topbar-actions">
+    <a href="login.php" class="btn-admin-link" id="admin-link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Admin
+    </a>
+  </div>
+</header>
+
+<!-- ── Background animated shapes ────────────────────── -->
+<div class="bg-shapes">
+  <div class="shape s1"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="shape s4"></div>
+  <div class="shape s5"></div>
+</div>
+
+<!-- ── Progress bar ──────────────────────────────────────── -->
+<nav class="progress-bar-wrap" id="progress-nav" style="display:none;">
+  <div class="progress-steps" id="progress-steps"></div>
+</nav>
+
+<!-- ── Main ──────────────────────────────────────────────── -->
+<main class="main">
+  <div class="wizard-wrap">
+
+    <!-- Completitud bar -->
+    <div class="completitud-bar" id="completitud-bar" style="display:none;">
+      <div class="completitud-fill" id="completitud-fill" style="width:0%"></div>
+    </div>
+
+    <!-- ── Screen: Welcome ──────────────────────────────────── -->
+    <div class="screen active" id="screen-welcome">
+      <div class="welcome-hero">
+        <div class="welcome-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z"/></svg>
+          Diseñador Instruccional
+        </div>
+        <h1>Organiza y da vida<br>a tu <span>curso</span></h1>
+        <p>Te guiamos paso a paso para estructurar tu oferta formativa. Sin tecnicismos, solo las preguntas correctas para que tu curso llegue lejos.</p>
+
+        <!-- Saved designs list -->
+        <div id="designs-list" style="display:none;"></div>
+
+        <div class="welcome-cards">
+          <div class="welcome-card">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            </div>
+            <h3>Guia paso a paso</h3>
+            <p>8 pasos claros con instrucciones y ejemplos en cada campo</p>
+          </div>
+          <div class="welcome-card">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+            </div>
+            <h3>Exporta en PDF</h3>
+            <p>Al terminar descarga tu diseño instruccional listo para compartir</p>
+          </div>
+          <div class="welcome-card">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            </div>
+            <h3>Guardado seguro</h3>
+            <p>Tu avance se guarda mientras escribes, sin perder nada</p>
+          </div>
+        </div>
+        <button class="btn-start" onclick="startWizard()">
+          Comenzar mi diseño
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn-new-design" id="btn-new-design" style="display:none;" onclick="createNewDesign()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+          Nuevo diseño en blanco
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Steps container ──────────────────────────────────── -->
+    <div id="steps-container"></div>
+
+    <!-- ── Screen: Preview ──────────────────────────────────── -->
+    <div class="screen" id="screen-preview">
+      <div class="preview-header">
+        <h2>Tu Diseño Instruccional</h2>
+        <p>Revisa tu diseño completo, guardalo y descargalo en PDF</p>
+      </div>
+      <div class="preview-actions">
+        <button class="btn-action btn-save" onclick="openSaveModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Guardar diseño
+        </button>
+        <button class="btn-action btn-pdf" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="18" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+          Exportar PDF
+        </button>
+        <button class="btn-action btn-restart" onclick="goToStep(0)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Editar
+        </button>
+      </div>
+      <div class="preview-doc" id="preview-doc"></div>
+    </div>
+
+    <!-- ── Screen: Success ──────────────────────────────────── -->
+    <div class="screen" id="screen-success">
+      <div class="success-screen">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h2>Diseño guardado</h2>
+        <p>Tu diseño instruccional ha sido guardado exitosamente. Puedes continuar editando o comenzar uno nuevo.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn-action btn-pdf" onclick="exportPDF(); showScreen('screen-preview')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="18" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+            Descargar PDF
+          </button>
+          <button class="btn-action btn-restart" onclick="resetWizard()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Nuevo diseño
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Save modal ──────────────────────────────────────────── -->
+<div class="save-modal" id="save-modal" style="display:none;">
+  <div class="save-modal-card">
+    <h3>Guardar tu diseño</h3>
+    <p>Opcional: dejanos tu nombre y correo para que podamos hacer seguimiento de tu propuesta.</p>
+    <label for="modal-nombre">Nombre</label>
+    <input type="text" id="modal-nombre" placeholder="Tu nombre (opcional)">
+    <label for="modal-email">Correo electronico</label>
+    <input type="email" id="modal-email" placeholder="tu@correo.com (opcional)">
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" onclick="closeSaveModal()">Cancelar</button>
+      <button class="btn-confirm-save" id="btn-confirm-save" onclick="saveDiseno()">Guardar diseño</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<!-- jsPDF for proper PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+'use strict';
+
+// ── SVG Icons (Lucide-style) ──────────────────────────────────
+var ICO = {
+  tag:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>',
+  users:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  target:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+  bookOpen:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  activity:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+  calendar:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>',
+  wrench:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+  clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>',
+  arrowLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+  arrowRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
+  check:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  plus:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>',
+  trash:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  checkCircle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  alertCircle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>'
+};
+
+function icon(name, w, h) {
+  w = w || 20; h = h || w;
+  var s = ICO[name] || '';
+  return '<span class="step-icon" style="display:inline-flex;width:'+w+'px;height:'+h+'px">' +
+         s.replace('<svg ', '<svg width="'+w+'" height="'+h+'" ') + '</span>';
+}
+
+// ── BASE_PATH & API ───────────────────────────────────────────
+var BASE_PATH = (function() {
+  var p = window.location.pathname;
+  return p.substring(0, p.lastIndexOf('/'));
+})();
+var API = BASE_PATH + '/api.php?route=';
+
+// Fix admin link to use correct base path
+(function() {
+  var link = document.getElementById('admin-link');
+  if (link) link.href = BASE_PATH + '/login.php';
+})();
+
+// ── Multi-design manager ──────────────────────────────────────
+var DESIGNS_KEY = 'tj_diseno_designs';
+var ACTIVE_KEY  = 'tj_diseno_active_id';
+var LEGACY_KEY  = 'tj_diseno_wip';
+
+function generateId() {
+  return 'design_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+}
+
+function getAllDesigns() {
+  try {
+    var raw = localStorage.getItem(DESIGNS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveAllDesigns(designs) {
+  try { localStorage.setItem(DESIGNS_KEY, JSON.stringify(designs)); } catch(e) {}
+}
+
+function getActiveId() {
+  return localStorage.getItem(ACTIVE_KEY) || null;
+}
+
+function setActiveId(id) {
+  localStorage.setItem(ACTIVE_KEY, id);
+}
+
+function migrateLegacy() {
+  var designs = getAllDesigns();
+  if (designs.length > 0) return;
+  try {
+    var raw = localStorage.getItem(LEGACY_KEY);
+    if (raw) {
+      var data = JSON.parse(raw);
+      if (data && Object.keys(data).length > 0) {
+        var id = generateId();
+        designs.push({
+          id: id,
+          title: data.titulo_curso || 'Sin titulo',
+          data: data,
+          updatedAt: new Date().toISOString(),
+          serverId: null
+        });
+        saveAllDesigns(designs);
+        setActiveId(id);
+        localStorage.removeItem(LEGACY_KEY);
+      }
+    }
+  } catch(e) {}
+}
+
+function loadActiveDesign() {
+  var designs = getAllDesigns();
+  var activeId = getActiveId();
+  if (!activeId && designs.length > 0) {
+    activeId = designs[0].id;
+    setActiveId(activeId);
+  }
+  for (var i = 0; i < designs.length; i++) {
+    if (designs[i].id === activeId) return designs[i].data || {};
+  }
+  return {};
+}
+
+function getActiveServerId() {
+  var designs = getAllDesigns();
+  var activeId = getActiveId();
+  for (var i = 0; i < designs.length; i++) {
+    if (designs[i].id === activeId) return designs[i].serverId || null;
+  }
+  return null;
+}
+
+function setActiveServerId(serverId) {
+  var designs = getAllDesigns();
+  var activeId = getActiveId();
+  for (var i = 0; i < designs.length; i++) {
+    if (designs[i].id === activeId) {
+      designs[i].serverId = serverId;
+      saveAllDesigns(designs);
+      return;
+    }
+  }
+}
+
+function saveActiveDesign() {
+  var designs = getAllDesigns();
+  var activeId = getActiveId();
+  if (!activeId) {
+    activeId = generateId();
+    setActiveId(activeId);
+    designs.push({ id: activeId, title: W.titulo_curso || 'Sin titulo', data: W, updatedAt: new Date().toISOString(), serverId: null });
+  } else {
+    var found = false;
+    for (var i = 0; i < designs.length; i++) {
+      if (designs[i].id === activeId) {
+        designs[i].data = W;
+        designs[i].title = W.titulo_curso || 'Sin titulo';
+        designs[i].updatedAt = new Date().toISOString();
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      designs.push({ id: activeId, title: W.titulo_curso || 'Sin titulo', data: W, updatedAt: new Date().toISOString(), serverId: null });
+    }
+  }
+  saveAllDesigns(designs);
+}
+
+function switchToDesign(id) {
+  saveActiveDesign();
+  setActiveId(id);
+  W = loadActiveDesign();
+  showScreen('screen-welcome');
+  document.getElementById('progress-nav').style.display = 'none';
+  document.getElementById('completitud-bar').style.display = 'none';
+  renderDesignsList();
+  scrollToTop();
+}
+
+function createNewDesign() {
+  saveActiveDesign();
+  var id = generateId();
+  var designs = getAllDesigns();
+  designs.push({ id: id, title: 'Nuevo dise\u00f1o', data: {}, updatedAt: new Date().toISOString(), serverId: null });
+  saveAllDesigns(designs);
+  setActiveId(id);
+  W = {};
+  renderDesignsList();
+  startWizard();
+}
+
+function deleteDesign(id) {
+  if (!confirm('Eliminar este dise\u00f1o?')) return;
+  var designs = getAllDesigns();
+  designs = designs.filter(function(d) { return d.id !== id; });
+  saveAllDesigns(designs);
+  if (getActiveId() === id) {
+    if (designs.length > 0) {
+      setActiveId(designs[0].id);
+      W = designs[0].data || {};
+    } else {
+      localStorage.removeItem(ACTIVE_KEY);
+      W = {};
+    }
+  }
+  renderDesignsList();
+}
+
+function renderDesignsList() {
+  var container = document.getElementById('designs-list');
+  var designs = getAllDesigns();
+  var activeId = getActiveId();
+  var btnNew = document.getElementById('btn-new-design');
+
+  if (designs.length === 0) {
+    container.style.display = 'none';
+    if (btnNew) btnNew.style.display = 'none';
+    return;
+  }
+
+  if (btnNew) btnNew.style.display = 'inline-flex';
+  container.style.display = 'block';
+  var html = '<div class="designs-list">';
+  html += '<h4>Tus dise\u00f1os guardados</h4>';
+  designs.forEach(function(d, i) {
+    var isActive = d.id === activeId;
+    var date = d.updatedAt ? new Date(d.updatedAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    html += '<div class="design-item' + (isActive ? ' active-design' : '') + '" style="animation-delay:' + (i * .06) + 's" onclick="switchToDesign(\'' + d.id + '\')">'; 
+    html += '<div class="design-item-info">';
+    html += '<div class="design-item-title">' + (d.title || 'Sin titulo') + '</div>';
+    html += '<div class="design-item-meta">' + date + (isActive ? ' \u2014 Activo' : '') + '</div>';
+    html += '</div>';
+    if (!isActive) {
+      html += '<div class="design-item-actions">';
+      html += '<button onclick="event.stopPropagation(); deleteDesign(\'' + d.id + '\')" title="Eliminar">';
+      html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+      html += '</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ── Auto-save to server ───────────────────────────────────────
+async function autoSaveToServer() {
+  var completitud = calcCompletitud();
+  var titulo = W.titulo_curso || 'Sin titulo';
+  var serverId = getActiveServerId();
+  try {
+    var url = API + '/disenos';
+    var body = {
+      titulo: titulo,
+      autor_nombre: '',
+      autor_email: '',
+      completitud: completitud,
+      datos: W
+    };
+    if (serverId) body.id = serverId;
+    var r = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    var d = await r.json();
+    if (r.ok && d.id) {
+      setActiveServerId(d.id);
+    }
+  } catch(e) {}
+}
+
+// ── Wizard data ───────────────────────────────────────────────
+migrateLegacy();
+var W = loadActiveDesign();
+var currentStep = -1;
+var currentServerId = null;
+
+// ── Step icon map ─────────────────────────────────────────────
+var STEP_ICONS = ['tag','users','target','bookOpen','activity','calendar','wrench','clipboard'];
+
+// ── Step definitions ──────────────────────────────────────────
+var STEPS = [
+  {
+    id: 'identidad',
+    label: 'Paso 1 de 8',
+    title: 'Identidad del curso',
+    subtitle: 'Comenzamos con los datos basicos que identifican tu curso y dan contexto a quienes lo veran.',
+    iconKey: 'tag',
+    fields: [
+      {
+        key: 'titulo_curso',
+        label: 'Nombre del curso',
+        type: 'text',
+        placeholder: 'Ej. Diplomado en Anestesia Regional Guiada por Ultrasonido',
+        required: true,
+        help: 'Para que sirve este campo?',
+        helpText: 'El titulo es la primera impresion de tu curso. Debe ser claro, especifico y reflejar exactamente que aprendera el participante.',
+        helpExample: 'Ejemplo: "Taller Avanzado de Accesos Vasculares Ecoguiados" -- no solo "Taller de Ultrasonido"'
+      },
+      {
+        key: 'autor_institucion',
+        label: 'Autor o institucion responsable',
+        type: 'text',
+        placeholder: 'Ej. PRAVE - Teach & Joy',
+        help: 'Para que sirve este campo?',
+        helpText: 'Identifica quien avala el contenido academico. Puede ser un docente, un equipo academico o la institucion que lo ofrece.',
+        helpExample: 'Ejemplo: "Dr. Juan Lopez / ARMTY" o "Comite Academico PRAVE"'
+      },
+      {
+        key: 'modalidad',
+        label: 'Modalidad',
+        type: 'pills',
+        options: ['Presencial', 'Online', 'B-Learning', 'E-Learning'],
+        help: 'Que significa cada modalidad?',
+        helpText: 'Presencial: en fisico. Online: 100% digital sin sesiones sincronicas. B-Learning: combinacion de ambas. E-Learning: digital con interaccion sincronica.'
+      },
+      {
+        key: 'duracion',
+        label: 'Duracion estimada',
+        type: 'text',
+        placeholder: 'Ej. 40 horas academicas / 8 semanas',
+        help: 'Como la calculo?',
+        helpText: 'Suma el tiempo de videos, lecturas, actividades y evaluaciones. Una regla util: 1 hora academica = 45-60 min de actividad real del estudiante.',
+        helpExample: 'Ejemplo: "24 horas (8 modulos x 3 hrs)" o "6 semanas a 5 hrs/semana"'
+      },
+      {
+        key: 'version_fecha',
+        label: 'Version o fecha de edicion',
+        type: 'text',
+        placeholder: 'Ej. v1.0 -- Enero 2026',
+        optional: true,
+        help: 'Para que sirve?',
+        helpText: 'Permite rastrear actualizaciones del programa. Util cuando el curso se actualiza por cambios en guias clinicas o por retroalimentacion de participantes.'
+      }
+    ]
+  },
+  {
+    id: 'descripcion',
+    label: 'Paso 2 de 8',
+    title: 'Descripcion y audiencia',
+    subtitle: 'Define quien toma tu curso y por que vale la pena hacerlo.',
+    iconKey: 'users',
+    fields: [
+      {
+        key: 'descripcion_breve',
+        label: 'Descripcion breve del curso',
+        type: 'textarea',
+        placeholder: 'Resume en 3-5 oraciones el proposito, enfoque y valor principal del curso...',
+        required: true,
+        help: 'Como escribirla?',
+        helpText: 'Responde: que aprenderan?, para que lo aplicaran?, que los hace competentes al terminar? Evita el lenguaje generico, se especifico.',
+        helpExample: 'Ejemplo: "Este taller intensivo capacita a medicos en la colocacion de accesos vasculares centrales bajo guia ecografica en tiempo real, reduciendo complicaciones y tiempos de procedimiento..."'
+      },
+      {
+        key: 'publico_objetivo',
+        label: 'Publico objetivo',
+        type: 'textarea',
+        placeholder: 'Describe el perfil del participante ideal: especialidad, nivel, experiencia previa...',
+        required: true,
+        help: 'Por que es importante definirlo?',
+        helpText: 'Saber a quien va dirigido define el nivel de lenguaje, los ejemplos, el ritmo del contenido y las evaluaciones. Un curso diseñado para "todos" no conecta con nadie.',
+        helpExample: 'Ejemplo: "Medicos residentes de anestesiologia en 2do o 3er año, con manejo basico de ultrasonido y experiencia en procedimientos invasivos guiados"'
+      },
+      {
+        key: 'requisitos_previos',
+        label: 'Requisitos previos',
+        type: 'textarea',
+        placeholder: 'Conocimientos, habilidades o recursos que el participante debe tener antes de iniciar...',
+        optional: true,
+        help: 'Para que sirven?',
+        helpText: 'Los prerrequisitos protegen la experiencia del participante. Si alguien entra sin la base necesaria, se frustrara. Ser transparente aqui aumenta la satisfaccion del grupo.',
+        helpExample: 'Ejemplo: "Conocimientos basicos de anatomia vascular, haber completado el modulo introductorio de ultrasonido, acceso a equipo de imagen (o participacion presencial)"'
+      }
+    ]
+  },
+  {
+    id: 'proposito',
+    label: 'Paso 3 de 8',
+    title: 'Proposito y competencias',
+    subtitle: 'El corazon de tu curso: que transformacion lograran tus participantes.',
+    iconKey: 'target',
+    fields: [
+      {
+        key: 'proposito_general',
+        label: 'Proposito general del curso',
+        type: 'textarea',
+        placeholder: 'Declara en 1-2 oraciones lo que el estudiante sera capaz de lograr al finalizar...',
+        required: true,
+        help: 'Como redactarlo?',
+        helpText: 'Un buen proposito general describe un desempeño observable y aplicable. Usa verbos de accion: "Realizar...", "Aplicar...", "Diseñar...", "Evaluar...".',
+        helpExample: 'Ejemplo: "Al finalizar el curso, el participante sera capaz de realizar accesos vasculares centrales guiados por ultrasonido con autonomia clinica, reduciendo el riesgo de complicaciones en el paciente critico."'
+      },
+      {
+        key: 'competencias',
+        label: 'Competencias o resultados de aprendizaje',
+        type: 'textarea',
+        placeholder: 'Lista las competencias especificas (una por linea). Usa verbos observables: analizar, diseñar, aplicar, evaluar...',
+        required: true,
+        help: 'Que son las competencias?',
+        helpText: 'Son los "logros pequeños" que en conjunto construyen el proposito general. Redactalas con verbos de la Taxonomia de Bloom: Recordar, Comprender, Aplicar, Analizar, Evaluar, Crear.',
+        helpExample: 'Ejemplo:\n- Identificar las ventanas ecograficas para acceso yugular y subclavio\n- Aplicar la tecnica Seldinger bajo guia en tiempo real\n- Evaluar la posicion del cateter mediante confirmacion ecografica'
+      }
+    ]
+  },
+  {
+    id: 'modulos',
+    label: 'Paso 4 de 8',
+    title: 'Estructura de modulos',
+    subtitle: 'Organiza tu curso en modulos o unidades tematicas. Puedes agregar todos los que necesites.',
+    iconKey: 'bookOpen',
+    type: 'modulos'
+  },
+  {
+    id: 'actividades',
+    label: 'Paso 5 de 8',
+    title: 'Actividades y evaluacion',
+    subtitle: 'Define como aprenderan y como demostraran lo que aprendieron.',
+    iconKey: 'activity',
+    fields: [
+      {
+        key: 'actividades',
+        label: 'Actividades de aprendizaje',
+        type: 'checkpills',
+        options: ['Videos explicativos', 'Lecturas guiadas', 'Casos practicos/clinicos', 'Ejercicios interactivos', 'Simulacion/Role-playing', 'Foros de discusion', 'Tareas aplicadas', 'Quizzes', 'Talleres presenciales', 'Evaluacion entre pares'],
+        help: 'Como elegir las correctas?',
+        helpText: 'Elige actividades alineadas con tus competencias. Si una competencia dice "aplicar", necesitas practica real o simulacion, no solo videos. Varia los formatos para mantener el engagement.'
+      },
+      {
+        key: 'evaluacion_tipos',
+        label: 'Tipos de evaluacion',
+        type: 'checkpills',
+        options: ['Diagnostica (al inicio)', 'Formativa (durante el proceso)', 'Sumativa (al final)'],
+        help: 'Que significa cada una?',
+        helpText: 'Diagnostica: detecta conocimientos previos. Formativa: monitorea el avance durante el curso con retroalimentacion. Sumativa: mide el logro final de competencias.'
+      },
+      {
+        key: 'evidencias',
+        label: 'Productos o evidencias esperadas',
+        type: 'textarea',
+        placeholder: 'Ej. Cuestionario final, resolucion de caso clinico, proyecto integrador, rubrica de habilidad...',
+        optional: true,
+        help: 'Que son las evidencias?',
+        helpText: 'Son los entregables concretos que demuestran que el participante logro las competencias. Un buen diseño define que se entrega, no solo que se hace.',
+        helpExample: 'Ejemplo: "Resolucion de 3 casos clinicos comentados + video de 5 min demostrando posicionamiento ecografico"'
+      },
+      {
+        key: 'nivel_aprobacion',
+        label: 'Nivel minimo de aprobacion',
+        type: 'text',
+        placeholder: 'Ej. 80% en evaluaciones + asistencia del 90%',
+        optional: true,
+        help: 'Por que definirlo?',
+        helpText: 'Establece expectativas claras desde el inicio. Participantes que saben el criterio de aprobacion tienen mayor compromiso con el proceso.'
+      }
+    ]
+  },
+  {
+    id: 'metodologia',
+    label: 'Paso 6 de 8',
+    title: 'Metodologia y cronograma',
+    subtitle: 'El enfoque pedagogico que dara identidad a la experiencia de aprendizaje.',
+    iconKey: 'calendar',
+    fields: [
+      {
+        key: 'metodologia',
+        label: 'Enfoque metodologico principal',
+        type: 'pills',
+        options: ['Microlearning', 'Aprendizaje basado en casos', 'Simulacion', 'Aprendizaje colaborativo', 'Modelo 70-20-10', 'Aula invertida', 'Aprendizaje basado en proyectos'],
+        help: 'Como elegir el enfoque?',
+        helpText: 'El enfoque define como se entrega el aprendizaje. Para habilidades clinicas, simulacion y casos son ideales. Para conceptos complejos, microlearning y aula invertida funcionan bien. Puedes combinar enfoques.'
+      },
+      {
+        key: 'cronograma',
+        label: 'Cronograma general',
+        type: 'textarea',
+        placeholder: 'Describe la distribucion por semanas o fechas. Ej:\nSemana 1: Modulo 1 -- Fundamentos\nSemana 2: Modulo 2 -- Anatomia ecografica\n...',
+        optional: true,
+        help: 'Como estructurarlo?',
+        helpText: 'No necesita ser exacto, un cronograma tentativo ayuda a detectar si el ritmo es realista. Incluye entregas y evaluaciones importantes como hitos clave.',
+        helpExample: 'Ejemplo: "8 semanas. 1-2: Fundamentos. 3-4: Tecnica. 5-6: Practica guiada. 7: Casos. 8: Evaluacion final."'
+      }
+    ]
+  },
+  {
+    id: 'recursos',
+    label: 'Paso 7 de 8',
+    title: 'Recursos y requerimientos',
+    subtitle: 'Todo lo que el participante necesita para poder aprender.',
+    iconKey: 'wrench',
+    fields: [
+      {
+        key: 'recursos_materiales',
+        label: 'Recursos y materiales de apoyo',
+        type: 'textarea',
+        placeholder: 'Lista documentos, PDFs, guias, articulos, bibliografia recomendada...',
+        optional: true,
+        help: 'Que incluir?',
+        helpText: 'Los recursos de apoyo complementan la experiencia. Incluye bibliografia basica, guias clinicas relevantes, plantillas de trabajo y articulos de referencia. No necesitas listar todo, solo lo esencial.',
+        helpExample: 'Ejemplo: "Guia ASE de accesos vasculares (PDF), Atlas ecografico vascular (link), Plantilla de reporte de caso, Bibliografia: Saugel 2022, Troianos 2019"'
+      },
+      {
+        key: 'requerimientos_tecnicos',
+        label: 'Requerimientos tecnicos',
+        type: 'textarea',
+        placeholder: 'Navegador recomendado, conectividad, software necesario, compatibilidad movil...',
+        optional: true,
+        help: 'Para que sirven?',
+        helpText: 'Evitan frustraciones tecnicas que interrumpen el aprendizaje. Un participante que no puede acceder al curso en su dispositivo habitual tiene una mala experiencia que no tiene que ver con el contenido.',
+        helpExample: 'Ejemplo: "Chrome o Firefox actualizado, conexion de 10 Mbps, camara y microfono para sesiones sincronas, compatible con iOS/Android"'
+      }
+    ]
+  },
+  {
+    id: 'politicas',
+    label: 'Paso 8 de 8',
+    title: 'Politicas y contacto',
+    subtitle: 'Las reglas del juego: claras desde el inicio, respetadas por todos.',
+    iconKey: 'clipboard',
+    fields: [
+      {
+        key: 'politicas_entrega',
+        label: 'Politicas de entregas y plazos',
+        type: 'textarea',
+        placeholder: 'Fechas limite, criterios de aceptacion de tareas, penalizaciones por entrega tardia...',
+        optional: true,
+        help: 'Por que documentarlas?',
+        helpText: 'Las politicas claras reducen malentendidos y conflictos. El participante sabe que esperar y el equipo docente tiene un marco consistente para tomar decisiones.',
+        helpExample: 'Ejemplo: "Las tareas se aceptan hasta las 23:59 del dia indicado. Reentregas permitidas hasta 48h despues con descuento del 20%."'
+      },
+      {
+        key: 'politicas_integridad',
+        label: 'Integridad academica',
+        type: 'textarea',
+        placeholder: 'Normas sobre plagio, uso de IA, trabajo en equipo vs individual...',
+        optional: true,
+        help: 'Para que sirve?',
+        helpText: 'En un entorno medico-educativo, la integridad academica es fundamental: los participantes deberan aplicar lo aprendido con pacientes reales.',
+        helpExample: 'Ejemplo: "El trabajo debe ser original. El uso de IA como herramienta de apoyo esta permitido, pero el analisis y la argumentacion deben ser del participante."'
+      },
+      {
+        key: 'canales_comunicacion',
+        label: 'Canales de comunicacion y soporte',
+        type: 'textarea',
+        placeholder: 'Como contactar a tutores, plazos de respuesta, soporte tecnico...',
+        optional: true,
+        help: 'Por que especificarlos?',
+        helpText: 'Define expectativas de respuesta. Un participante que sabe que las dudas se responden en 48h por WhatsApp tiene mejor experiencia que uno que no sabe como comunicarse.',
+        helpExample: 'Ejemplo: "Dudas academicas: canal de Discord del curso (respuesta en 24h). Soporte tecnico: soporte@teachandjoy.com"'
+      }
+    ]
+  }
+];
+
+// ── Init ──────────────────────────────────────────────────────
+renderDesignsList();
+buildProgressBar();
+
+function startWizard() {
+  document.getElementById('progress-nav').style.display = 'block';
+  document.getElementById('completitud-bar').style.display = 'block';
+  goToStep(0);
+}
+
+function buildProgressBar() {
+  var wrap = document.getElementById('progress-steps');
+  STEPS.forEach(function(step, i) {
+    if (i > 0) {
+      var conn = document.createElement('div');
+      conn.className = 'step-connector';
+      conn.id = 'conn-' + i;
+      wrap.appendChild(conn);
+    }
+    var item = document.createElement('div');
+    item.className = 'step-item';
+    item.id = 'step-nav-' + i;
+    item.innerHTML = '<div class="step-pill"><span class="step-num">' + (i+1) + '</span>' +
+                     '<span class="step-icon">' + icon(step.iconKey, 14) + '</span> ' +
+                     step.title + '</div>';
+    item.onclick = (function(idx){ return function(){ if(idx <= currentStep) goToStep(idx); }; })(i);
+    wrap.appendChild(item);
+  });
+}
+
+// ── Render step ───────────────────────────────────────────────
+function goToStep(idx) {
+  currentStep = idx;
+  showScreen('steps-container-screen');
+  document.getElementById('steps-container').innerHTML = '';
+
+  var step = STEPS[idx];
+  var div = document.createElement('div');
+  div.className = 'screen active';
+  div.id = 'screen-step-' + idx;
+
+  var html = '<div class="step-header">';
+  html += '<div class="step-label">' + step.label + '</div>';
+  html += '<div class="step-title"><span class="step-title-icon">' + icon(step.iconKey, 24) + '</span> ' + step.title + '</div>';
+  html += '<div class="step-subtitle">' + step.subtitle + '</div>';
+  html += '</div>';
+
+  if (step.type === 'modulos') {
+    html += renderModulosStep();
+  } else {
+    step.fields.forEach(function(f) {
+      html += renderField(f);
+    });
+  }
+
+  // Navigation
+  html += '<div class="step-nav">';
+  html += '<div class="nav-left">';
+  if (idx > 0) {
+    html += '<button class="btn-nav btn-prev" onclick="goToStep(' + (idx-1) + ')">' + icon('arrowLeft',16) + ' Anterior</button>';
+  }
+  html += '</div>';
+  html += '<div class="nav-right">';
+  html += '<button class="btn-skip" onclick="skipStep()">Omitir</button>';
+  if (idx < STEPS.length - 1) {
+    html += '<button class="btn-nav btn-next" onclick="nextStep()">Siguiente ' + icon('arrowRight',16) + '</button>';
+  } else {
+    html += '<button class="btn-nav btn-next" onclick="finishWizard()">Ver mi diseño ' + icon('check',16) + '</button>';
+  }
+  html += '</div>';
+  html += '</div>';
+
+  div.innerHTML = html;
+  document.getElementById('steps-container').appendChild(div);
+
+  restoreStep(idx);
+  updateProgressBar(idx);
+  updateCompletitud();
+  scrollToTop();
+}
+
+function renderField(f) {
+  var html = '<div class="field-card" id="fc-' + f.key + '">';
+  html += '<div class="field-top">';
+  html += '<div class="field-label-wrap">';
+  html += '<div class="field-label">' + f.label;
+  if (f.optional) html += '<span class="optional-badge">Opcional</span>';
+  html += '</div>';
+  if (f.hint) html += '<div class="field-hint">' + f.hint + '</div>';
+  html += '</div>';
+  if (f.help) {
+    html += '<button class="btn-help" onclick="toggleHelp(\'' + f.key + '\')" title="' + f.help + '">?</button>';
+  }
+  html += '</div>';
+
+  if (f.helpText) {
+    html += '<div class="help-panel" id="help-' + f.key + '">';
+    html += f.helpText;
+    if (f.helpExample) html += '<div class="help-example">' + f.helpExample.replace(/\n/g,'<br>') + '</div>';
+    html += '</div>';
+  }
+
+  if (f.type === 'text') {
+    html += '<input type="text" id="field-' + f.key + '" placeholder="' + (f.placeholder||'') + '" oninput="saveField(\'' + f.key + '\',this.value)">';
+  } else if (f.type === 'email') {
+    html += '<input type="email" id="field-' + f.key + '" placeholder="' + (f.placeholder||'') + '" oninput="saveField(\'' + f.key + '\',this.value)">';
+  } else if (f.type === 'textarea') {
+    html += '<textarea id="field-' + f.key + '" placeholder="' + (f.placeholder||'') + '" oninput="saveField(\'' + f.key + '\',this.value)"></textarea>';
+  } else if (f.type === 'pills') {
+    html += '<div class="pill-options" id="pills-' + f.key + '">';
+    f.options.forEach(function(opt) {
+      var eid = 'pill-' + f.key + '-' + opt.replace(/[^a-z0-9]/gi,'');
+      html += '<label class="pill-opt"><input type="radio" name="pill-' + f.key + '" value="' + opt + '" id="' + eid + '" onchange="saveField(\'' + f.key + '\',this.value)"><span>' + opt + '</span></label>';
+    });
+    html += '</div>';
+  } else if (f.type === 'checkpills') {
+    html += '<div class="pill-options" id="pills-' + f.key + '">';
+    f.options.forEach(function(opt) {
+      var eid = 'cpill-' + f.key + '-' + opt.replace(/[^a-z0-9]/gi,'');
+      html += '<label class="pill-opt"><input type="checkbox" name="cpill-' + f.key + '" value="' + opt + '" id="' + eid + '" onchange="saveCheckField(\'' + f.key + '\')"><span>' + opt + '</span></label>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function renderModulosStep() {
+  var modulos = W.modulos || [{ nombre:'', objetivo:'', contenidos:'', actividades:'' }];
+  var html = '<div class="modulos-list" id="modulos-list">';
+  modulos.forEach(function(m, i) {
+    html += renderModuloCard(m, i);
+  });
+  html += '</div>';
+  html += '<button class="btn-add-mod" onclick="addModulo()">' + icon('plus',16) + ' Agregar modulo</button>';
+  return html;
+}
+
+function renderModuloCard(m, i) {
+  return '<div class="modulo-card" id="modulo-' + i + '">' +
+    '<div class="modulo-header">' +
+    '<span class="modulo-num">Modulo ' + (i+1) + '</span>' +
+    (i > 0 ? '<button class="btn-remove-mod" onclick="removeModulo(' + i + ')">' + icon('trash',12) + ' Eliminar</button>' : '') +
+    '</div>' +
+    '<div class="modulo-fields">' +
+    '<label>Nombre del modulo</label>' +
+    '<input type="text" id="mod-nombre-' + i + '" value="' + esc(m.nombre||'') + '" placeholder="Ej. Fundamentos de ultrasonido vascular" oninput="saveModulo()">' +
+    '<label>Objetivo del modulo</label>' +
+    '<input type="text" id="mod-objetivo-' + i + '" value="' + esc(m.objetivo||'') + '" placeholder="Ej. Identificar ventanas ecograficas para acceso yugular..." oninput="saveModulo()">' +
+    '<label>Contenidos (temas y subtemas)</label>' +
+    '<textarea id="mod-contenidos-' + i + '" placeholder="Lista los temas principales..." oninput="saveModulo()" style="min-height:70px">' + esc(m.contenidos||'') + '</textarea>' +
+    '<label>Actividades y evidencias de este modulo <span class="optional-badge">Opcional</span></label>' +
+    '<input type="text" id="mod-actividades-' + i + '" value="' + esc(m.actividades||'') + '" placeholder="Ej. Video + caso clinico + quiz" oninput="saveModulo()">' +
+    '</div></div>';
+}
+
+function esc(s) {
+  return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addModulo() {
+  var modulos = W.modulos || [];
+  modulos.push({ nombre:'', objetivo:'', contenidos:'', actividades:'' });
+  W.modulos = modulos;
+  var list = document.getElementById('modulos-list');
+  var i = modulos.length - 1;
+  var div = document.createElement('div');
+  div.innerHTML = renderModuloCard(modulos[i], i);
+  list.appendChild(div.firstChild);
+  saveToStorage();
+}
+
+function removeModulo(i) {
+  var modulos = W.modulos || [];
+  modulos.splice(i, 1);
+  W.modulos = modulos;
+  goToStep(currentStep);
+}
+
+function saveModulo() {
+  var list = document.getElementById('modulos-list');
+  var cards = list.querySelectorAll('.modulo-card');
+  var modulos = [];
+  cards.forEach(function(card, i) {
+    modulos.push({
+      nombre:      (document.getElementById('mod-nombre-' + i) || {}).value || '',
+      objetivo:    (document.getElementById('mod-objetivo-' + i) || {}).value || '',
+      contenidos:  (document.getElementById('mod-contenidos-' + i) || {}).value || '',
+      actividades: (document.getElementById('mod-actividades-' + i) || {}).value || ''
+    });
+  });
+  W.modulos = modulos;
+  saveToStorage();
+  updateCompletitud();
+}
+
+// ── Field helpers ─────────────────────────────────────────────
+function saveField(key, val) {
+  W[key] = val;
+  saveToStorage();
+  updateCompletitud();
+}
+
+function saveCheckField(key) {
+  var checked = [];
+  document.querySelectorAll('input[name="cpill-' + key + '"]:checked').forEach(function(el) {
+    checked.push(el.value);
+  });
+  W[key] = checked;
+  saveToStorage();
+  updateCompletitud();
+}
+
+function toggleHelp(key) {
+  var panel = document.getElementById('help-' + key);
+  if (panel) panel.classList.toggle('open');
+}
+
+function restoreStep(idx) {
+  var step = STEPS[idx];
+  if (step.type === 'modulos') return;
+
+  (step.fields || []).forEach(function(f) {
+    var val = W[f.key];
+    if (val === undefined || val === null) return;
+
+    if (f.type === 'text' || f.type === 'email' || f.type === 'textarea') {
+      var el = document.getElementById('field-' + f.key);
+      if (el) el.value = val;
+    } else if (f.type === 'pills') {
+      var radio = document.querySelector('input[name="pill-' + f.key + '"][value="' + val + '"]');
+      if (radio) radio.checked = true;
+    } else if (f.type === 'checkpills' && Array.isArray(val)) {
+      val.forEach(function(v) {
+        var cb = document.querySelector('input[name="cpill-' + f.key + '"][value="' + v + '"]');
+        if (cb) cb.checked = true;
+      });
+    }
+  });
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function nextStep() {
+  if (STEPS[currentStep].type === 'modulos') saveModulo();
+  if (currentStep < STEPS.length - 1) goToStep(currentStep + 1);
+}
+
+function skipStep() {
+  if (currentStep < STEPS.length - 1) goToStep(currentStep + 1);
+  else finishWizard();
+}
+
+function finishWizard() {
+  if (STEPS[currentStep].type === 'modulos') saveModulo();
+  buildPreview();
+  showScreen('screen-preview');
+  document.getElementById('progress-nav').style.display = 'none';
+  document.getElementById('completitud-bar').style.display = 'none';
+  scrollToTop();
+  autoSaveToServer();
+}
+
+// ── Preview ───────────────────────────────────────────────────
+function buildPreview() {
+  var doc = document.getElementById('preview-doc');
+  var titulo = W.titulo_curso || 'Diseño Instruccional';
+
+  var html = '<h1>' + esc(titulo) + '</h1>';
+
+  html += '<h2>1. Identidad del Curso</h2>';
+  html += pf('Nombre del curso', W.titulo_curso);
+  html += pf('Autor / Institucion', W.autor_institucion);
+  html += pf('Modalidad', W.modalidad);
+  html += pf('Duracion', W.duracion);
+  html += pf('Version / Fecha', W.version_fecha);
+
+  html += '<h2>2. Descripcion y Audiencia</h2>';
+  html += pf('Descripcion del curso', W.descripcion_breve);
+  html += pf('Publico objetivo', W.publico_objetivo);
+  html += pf('Requisitos previos', W.requisitos_previos);
+
+  html += '<h2>3. Proposito y Competencias</h2>';
+  html += pf('Proposito general', W.proposito_general);
+  html += pf('Competencias de aprendizaje', W.competencias);
+
+  html += '<h2>4. Estructura de Modulos</h2>';
+  var modulos = W.modulos || [];
+  if (modulos.length === 0 || !modulos[0].nombre) {
+    html += '<p style="color:#bbb;font-style:italic;font-size:.9rem">No se definieron modulos.</p>';
+  } else {
+    modulos.forEach(function(m, i) {
+      if (!m.nombre) return;
+      html += '<div class="modulo-preview">';
+      html += '<h3>Modulo ' + (i+1) + ': ' + esc(m.nombre) + '</h3>';
+      if (m.objetivo) html += pf('Objetivo', m.objetivo);
+      if (m.contenidos) html += pf('Contenidos', m.contenidos);
+      if (m.actividades) html += pf('Actividades / Evidencias', m.actividades);
+      html += '</div>';
+    });
+  }
+
+  html += '<h2>5. Actividades y Evaluacion</h2>';
+  html += pfTags('Actividades de aprendizaje', W.actividades);
+  html += pfTags('Tipos de evaluacion', W.evaluacion_tipos);
+  html += pf('Evidencias esperadas', W.evidencias);
+  html += pf('Nivel minimo de aprobacion', W.nivel_aprobacion);
+
+  html += '<h2>6. Metodologia y Cronograma</h2>';
+  html += pf('Enfoque metodologico', W.metodologia);
+  html += pf('Cronograma general', W.cronograma);
+
+  html += '<h2>7. Recursos y Requerimientos</h2>';
+  html += pf('Recursos y materiales', W.recursos_materiales);
+  html += pf('Requerimientos tecnicos', W.requerimientos_tecnicos);
+
+  html += '<h2>8. Politicas y Contacto</h2>';
+  html += pf('Politicas de entregas', W.politicas_entrega);
+  html += pf('Integridad academica', W.politicas_integridad);
+  html += pf('Comunicacion y soporte', W.canales_comunicacion);
+
+  html += '<p style="margin-top:40px;font-size:.75rem;color:#bbb;text-align:center;border-top:1px solid #eee;padding-top:16px;">Generado con Teach & Joy - Diseñador Instruccional - ' + new Date().toLocaleDateString('es-MX', {year:'numeric',month:'long',day:'numeric'}) + '</p>';
+
+  doc.innerHTML = html;
+}
+
+function pf(label, val) {
+  var empty = !val || (Array.isArray(val) && val.length === 0);
+  return '<div class="preview-field">' +
+    '<div class="preview-field-label">' + label + '</div>' +
+    '<div class="preview-field-value' + (empty ? ' empty' : '') + '">' +
+    (empty ? 'No especificado' : esc(String(val)).replace(/\n/g,'<br>')) +
+    '</div></div>';
+}
+
+function pfTags(label, val) {
+  if (!val || !Array.isArray(val) || val.length === 0) return pf(label, null);
+  var tags = val.map(function(v){ return '<span class="preview-tag">' + esc(v) + '</span>'; }).join('');
+  return '<div class="preview-field">' +
+    '<div class="preview-field-label">' + label + '</div>' +
+    '<div class="preview-tags">' + tags + '</div></div>';
+}
+
+// ── Save ──────────────────────────────────────────────────────
+function openSaveModal() {
+  document.getElementById('save-modal').style.display = 'flex';
+}
+
+function closeSaveModal() {
+  document.getElementById('save-modal').style.display = 'none';
+}
+
+async function saveDiseno() {
+  var nombre = document.getElementById('modal-nombre').value.trim();
+  var email  = document.getElementById('modal-email').value.trim();
+  var btn    = document.getElementById('btn-confirm-save');
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+
+  var completitud = calcCompletitud();
+  var titulo      = W.titulo_curso || 'Sin titulo';
+  var serverId    = getActiveServerId();
+
+  try {
+    var payload = {
+      titulo:       titulo,
+      autor_nombre: nombre,
+      autor_email:  email,
+      completitud:  completitud,
+      datos:        W
+    };
+    if (serverId) payload.id = serverId;
+    var r = await fetch(API + '/disenos', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Error al guardar');
+    if (d.id) setActiveServerId(d.id);
+    closeSaveModal();
+    showToast('Dise\u00f1o guardado exitosamente', 'success');
+    showScreen('screen-success');
+    document.getElementById('progress-nav').style.display = 'none';
+    document.getElementById('completitud-bar').style.display = 'none';
+    scrollToTop();
+  } catch(e) {
+    showToast('Error al guardar: ' + e.message, 'error');
+  } finally {
+    btn.textContent = 'Guardar dise\u00f1o';
+    btn.disabled = false;
+  }
+}
+
+// ── PDF Export (jsPDF — Letter size) ──────────────────────────
+function exportPDF() {
+  buildPreview();
+
+  var jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if (!jsPDF) {
+    showToast('Error: libreria de PDF no cargada. Reintenta.', 'error');
+    return;
+  }
+
+  var doc = new jsPDF({ unit: 'mm', format: 'letter' });
+  var pageW = 215.9, pageH = 279.4;
+  var marginL = 20, marginR = 20, marginT = 25, marginB = 25;
+  var contentW = pageW - marginL - marginR;
+  var y = marginT;
+  var pageNum = 1;
+
+  var BLUE = [27, 75, 133];
+  var RED = [139, 47, 58];
+  var GOLD = [197, 170, 111];
+  var TEXT = [42, 42, 50];
+  var TEXT_SEC = [107, 107, 120];
+  var BG_LIGHT = [232, 240, 251];
+
+  function checkPage(needed) {
+    if (y + needed > pageH - marginB) {
+      addFooter();
+      doc.addPage();
+      pageNum++;
+      y = marginT;
+    }
+  }
+
+  function addFooter() {
+    doc.setFontSize(7);
+    doc.setTextColor(180, 180, 180);
+    doc.text('Teach & Joy - Diseñador Instruccional', pageW / 2, pageH - 12, { align: 'center' });
+    doc.text('Pagina ' + pageNum, pageW - marginR, pageH - 12, { align: 'right' });
+    doc.setDrawColor(220, 220, 220);
+    doc.line(marginL, pageH - 16, pageW - marginR, pageH - 16);
+  }
+
+  // ── Header
+  doc.setFillColor(BLUE[0], BLUE[1], BLUE[2]);
+  doc.rect(0, 0, pageW, 28, 'F');
+  doc.setFontSize(16);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Teach & Joy', marginL, 14);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Diseñador Instruccional', marginL, 21);
+  y = 38;
+
+  // ── Title
+  var titulo = W.titulo_curso || 'Diseño Instruccional';
+  doc.setFontSize(18);
+  doc.setTextColor(BLUE[0], BLUE[1], BLUE[2]);
+  doc.setFont('helvetica', 'bold');
+  var titleLines = doc.splitTextToSize(titulo, contentW);
+  doc.text(titleLines, marginL, y);
+  y += titleLines.length * 8 + 2;
+
+  doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.setLineWidth(1);
+  doc.line(marginL, y, marginL + 50, y);
+  y += 6;
+
+  doc.setFontSize(8);
+  doc.setTextColor(TEXT_SEC[0], TEXT_SEC[1], TEXT_SEC[2]);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Generado el ' + new Date().toLocaleDateString('es-MX', {year:'numeric',month:'long',day:'numeric'}), marginL, y);
+  y += 10;
+
+  // ── Sections
+  var sections = [
+    {
+      title: '1. Identidad del Curso',
+      fields: [
+        ['Nombre del curso', W.titulo_curso],
+        ['Autor / Institucion', W.autor_institucion],
+        ['Modalidad', W.modalidad],
+        ['Duracion', W.duracion],
+        ['Version / Fecha', W.version_fecha]
+      ]
+    },
+    {
+      title: '2. Descripcion y Audiencia',
+      fields: [
+        ['Descripcion del curso', W.descripcion_breve],
+        ['Publico objetivo', W.publico_objetivo],
+        ['Requisitos previos', W.requisitos_previos]
+      ]
+    },
+    {
+      title: '3. Proposito y Competencias',
+      fields: [
+        ['Proposito general', W.proposito_general],
+        ['Competencias', W.competencias]
+      ]
+    },
+    {
+      title: '5. Actividades y Evaluacion',
+      fields: [
+        ['Actividades', W.actividades ? (Array.isArray(W.actividades) ? W.actividades.join(', ') : W.actividades) : null],
+        ['Tipos de evaluacion', W.evaluacion_tipos ? (Array.isArray(W.evaluacion_tipos) ? W.evaluacion_tipos.join(', ') : W.evaluacion_tipos) : null],
+        ['Evidencias esperadas', W.evidencias],
+        ['Nivel de aprobacion', W.nivel_aprobacion]
+      ]
+    },
+    {
+      title: '6. Metodologia y Cronograma',
+      fields: [
+        ['Enfoque metodologico', W.metodologia],
+        ['Cronograma', W.cronograma]
+      ]
+    },
+    {
+      title: '7. Recursos y Requerimientos',
+      fields: [
+        ['Recursos y materiales', W.recursos_materiales],
+        ['Requerimientos tecnicos', W.requerimientos_tecnicos]
+      ]
+    },
+    {
+      title: '8. Politicas y Contacto',
+      fields: [
+        ['Politicas de entregas', W.politicas_entrega],
+        ['Integridad academica', W.politicas_integridad],
+        ['Comunicacion y soporte', W.canales_comunicacion]
+      ]
+    }
+  ];
+
+  sections.forEach(function(sec) {
+    checkPage(20);
+
+    // Section header
+    doc.setFillColor(BG_LIGHT[0], BG_LIGHT[1], BG_LIGHT[2]);
+    doc.roundedRect(marginL, y - 4, contentW, 10, 2, 2, 'F');
+    doc.setFontSize(11);
+    doc.setTextColor(BLUE[0], BLUE[1], BLUE[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text(sec.title, marginL + 4, y + 3);
+    y += 12;
+
+    sec.fields.forEach(function(pair) {
+      var label = pair[0], val = pair[1];
+      if (!val || (typeof val === 'string' && !val.trim())) return;
+
+      checkPage(14);
+      doc.setFontSize(7.5);
+      doc.setTextColor(TEXT_SEC[0], TEXT_SEC[1], TEXT_SEC[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.text(label.toUpperCase(), marginL + 2, y);
+      y += 4;
+
+      doc.setFontSize(9);
+      doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+      doc.setFont('helvetica', 'normal');
+      var valStr = String(val);
+      var lines = doc.splitTextToSize(valStr, contentW - 4);
+      lines.forEach(function(line) {
+        checkPage(5);
+        doc.text(line, marginL + 2, y);
+        y += 4.5;
+      });
+      y += 3;
+    });
+    y += 4;
+  });
+
+  // ── Modules section
+  var modulos = W.modulos || [];
+  var hasModules = modulos.length > 0 && modulos[0].nombre;
+  if (hasModules) {
+    checkPage(20);
+    doc.setFillColor(BG_LIGHT[0], BG_LIGHT[1], BG_LIGHT[2]);
+    doc.roundedRect(marginL, y - 4, contentW, 10, 2, 2, 'F');
+    doc.setFontSize(11);
+    doc.setTextColor(BLUE[0], BLUE[1], BLUE[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text('4. Estructura de Modulos', marginL + 4, y + 3);
+    y += 14;
+
+    modulos.forEach(function(m, i) {
+      if (!m.nombre) return;
+      checkPage(25);
+
+      // Module card
+      doc.setDrawColor(BLUE[0], BLUE[1], BLUE[2]);
+      doc.setLineWidth(0.5);
+      doc.line(marginL + 2, y - 2, marginL + 2, y + 18);
+
+      doc.setFontSize(10);
+      doc.setTextColor(BLUE[0], BLUE[1], BLUE[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Modulo ' + (i+1) + ': ' + m.nombre, marginL + 6, y + 2);
+      y += 7;
+
+      var modFields = [
+        ['Objetivo', m.objetivo],
+        ['Contenidos', m.contenidos],
+        ['Actividades', m.actividades]
+      ];
+
+      modFields.forEach(function(mf) {
+        if (!mf[1]) return;
+        checkPage(10);
+        doc.setFontSize(7.5);
+        doc.setTextColor(TEXT_SEC[0], TEXT_SEC[1], TEXT_SEC[2]);
+        doc.setFont('helvetica', 'bold');
+        doc.text(mf[0].toUpperCase(), marginL + 6, y);
+        y += 4;
+
+        doc.setFontSize(8.5);
+        doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+        doc.setFont('helvetica', 'normal');
+        var mlines = doc.splitTextToSize(mf[1], contentW - 10);
+        mlines.forEach(function(line) {
+          checkPage(5);
+          doc.text(line, marginL + 6, y);
+          y += 4;
+        });
+        y += 2;
+      });
+      y += 6;
+    });
+  }
+
+  addFooter();
+  doc.save((W.titulo_curso || 'Diseño_Instruccional') .replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_') + '.pdf');
+  showToast('PDF descargado', 'success');
+}
+
+// ── Reset ─────────────────────────────────────────────────────
+function resetWizard() {
+  createNewDesign();
+}
+
+// ── Progress & completitud ────────────────────────────────────
+function updateProgressBar(activeIdx) {
+  STEPS.forEach(function(step, i) {
+    var item = document.getElementById('step-nav-' + i);
+    if (!item) return;
+    item.className = 'step-item';
+    if (i < activeIdx) item.className += ' done';
+    else if (i === activeIdx) item.className += ' active';
+
+    var conn = document.getElementById('conn-' + i);
+    if (conn) {
+      conn.className = 'step-connector';
+      if (i <= activeIdx) conn.className += ' done';
+    }
+  });
+}
+
+function calcCompletitud() {
+  var filled = 0, total = 0;
+  var requiredKeys = ['titulo_curso','descripcion_breve','publico_objetivo','proposito_general','competencias'];
+  requiredKeys.forEach(function(k) {
+    total++;
+    if (W[k] && String(W[k]).trim().length > 0) filled++;
+  });
+  total++;
+  if (W.modulos && W.modulos.length > 0 && W.modulos[0].nombre) filled++;
+  return Math.round((filled / total) * 100);
+}
+
+function updateCompletitud() {
+  var pct = calcCompletitud();
+  var fill = document.getElementById('completitud-fill');
+  if (fill) fill.style.width = pct + '%';
+}
+
+// ── Persistence (multi-design) ───────────────────────────────
+function saveToStorage() {
+  saveActiveDesign();
+}
+
+function loadFromStorage() {
+  W = loadActiveDesign();
+}
+
+// ── Screen helpers ────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  if (id === 'steps-container-screen') {
+    document.getElementById('screen-welcome').classList.remove('active');
+    document.getElementById('screen-preview').classList.remove('active');
+    document.getElementById('screen-success').classList.remove('active');
+    return;
+  }
+  var el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function scrollToTop() {
+  window.scrollTo(0, 0);
+}
+
+function showToast(msg, type) {
+  var container = document.getElementById('toasts');
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + (type || '');
+  var toastIcon = type === 'success' ? ICO.checkCircle : ICO.alertCircle;
+  toast.innerHTML = '<span style="display:flex;width:18px;height:18px;flex-shrink:0">' +
+    toastIcon.replace('<svg ', '<svg width="18" height="18" ') + '</span>' +
+    '<span>' + msg + '</span>';
+  container.appendChild(toast);
+  setTimeout(function() {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity .3s';
+    setTimeout(function(){ container.removeChild(toast); }, 300);
+  }, 3500);
+}
+</script>
+
+</body>
+</html>
