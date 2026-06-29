@@ -1566,7 +1566,7 @@ function renderMedia(url, scenarioId) {
   } else if (isVideo(url)) {
     mediaHtml = '<div class="scenario-media"><video src="' + url + '" controls preload="metadata"></video></div>';
   } else {
-    mediaHtml = '<div class="scenario-media"><img src="' + url + '" alt="Imagen del escenario" loading="lazy" onclick="openLightbox(\'' + url.replace(/'/g,"\\'") + '\')" onerror="this.parentElement.innerHTML=\'<p style=\\\"padding:1rem;color:var(--text-muted);font-size:.85rem;\\\">No se pudo cargar el recurso visual.</p>\'"></div>';
+    mediaHtml = '<div class="scenario-media"><img src="' + url + '" alt="Imagen del escenario" loading="lazy" onclick="openLightbox(\'' + url.replace(/'/g,"\\'") + '\')" onerror="this.parentElement.style.cssText=\'padding:1rem;color:var(--text-muted);font-size:.85rem;text-align:center;\';this.parentElement.textContent=\'No se pudo cargar el recurso visual.\';"></div>';
   }
   return '<button class="media-toggle-btn" id="media-toggle-btn-' + scenarioId + '" onclick="toggleMedia(\'' + scenarioId + '\')">' + iconSvg('eye','width:13px;height:13px;fill:currentColor;vertical-align:middle;') + ' Ocultar recurso visual</button>' +
          '<div id="media-wrap-' + scenarioId + '">' + mediaHtml + '</div>';
@@ -1659,6 +1659,11 @@ window.startCase = function() {
   showScreen('screen-clinical', 'forward');
 };
 
+window.startInteractive = function() {
+  playClick();
+  showScreen('screen-' + scenarios[0].id, 'forward');
+};
+
 /* ═══ CLINICAL ════════════════════════════════════════════════ */
 function renderClinical() {
   var fields = ['presentacionClinica','antecedentes','exploracion','estudiosComplementarios','contextoClinico'];
@@ -1686,7 +1691,7 @@ function renderClinical() {
       '</div>' +
       '<div class="clinical-timeline">' + cards + '</div>' +
       '<div class="clinical-footer">' +
-        '<button class="btn btn-accent" onclick="playClick(); showScreen(\'screen-' + scenarios[0].id + '\',\'forward\')">Iniciar caso interactivo &#8594;</button>' +
+        '<button class="btn btn-accent" onclick="startInteractive()">Iniciar caso interactivo &#8594;</button>' +
       '</div>' +
     '</div>' +
     '<div class="footer">' + (IDENTITY.footerText || '') + '</div>' +
