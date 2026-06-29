@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Caso Clínico Interactivo</title>
+<!-- ═══════════════════════════════════════════════════════════
+     CASO CLÍNICO INTERACTIVO — PLANTILLA INMERSIVA
+     ═══════════════════════════════════════════════════════════
+     Para cambiar la identidad visual, modifique SOLO el objeto
+     IDENTITY al inicio del <script>.  Todas las variables CSS
+     se generan automáticamente desde ese JSON.
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* ═══ RESET & BASE ═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* --- Identity-driven (overridden by JS) --- */
+  --primary:        #003049;
+  --primary-hover:  #274E75;
+  --secondary:      #274E75;
+  --accent:         #FF6F4C;
+  --bg:             #FAFAFA;
+  --surface:        #ffffff;
+  --text:           #003049;
+  --text-muted:     #4A6B82;
+  --btn-color:      #003049;
+  --btn-hover:      #274E75;
+  --border:         #4A6B82;
+  --badge:          #3AC2CA;
+  --radius:         8px;
+  --spacing:        16px;
+  --font-heading:   'Spectral', serif;
+  --font-body:      'Lato', sans-serif;
+
+  /* --- Derived & fixed --- */
+  --primary-10:     color-mix(in srgb, var(--primary) 10%, transparent);
+  --primary-15:     color-mix(in srgb, var(--primary) 15%, transparent);
+  --primary-20:     color-mix(in srgb, var(--primary) 20%, transparent);
+  --primary-30:     color-mix(in srgb, var(--primary) 30%, transparent);
+  --accent-15:      color-mix(in srgb, var(--accent) 15%, transparent);
+  --accent-20:      color-mix(in srgb, var(--accent) 20%, transparent);
+  --green:          #16a34a;
+  --green-bg:       #dcfce7;
+  --gold:           #b8963e;
+  --gold-bg:        #fef3c7;
+  --red:            #991b1b;
+  --red-bg:         #fee2e2;
+  --purple:         #7c3aed;
+  --purple-bg:      #ede9fe;
+  --orange:         #9a3412;
+  --orange-bg:      #fed7aa;
+  --shadow:         0 2px 16px rgba(0,0,0,0.08);
+  --shadow-lg:      0 12px 48px rgba(0,0,0,0.14);
+  --shadow-glow:    0 0 30px var(--primary-20);
+  --topbar-h:       60px;
+  --sidebar-w:      340px;
+  --transition:     all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ═══ DARK MODE ══════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg:          #0f1520;
+  --surface:     #1a2235;
+  --text:        #e8ecf4;
+  --text-muted:  #8a9ab8;
+  --border:      #2a3a55;
+  --green:       #4ade80;
+  --green-bg:    #0d2a1a;
+  --gold:        #d4aa5a;
+  --gold-bg:     #2a2010;
+  --red:         #f87171;
+  --red-bg:      #2a0d0d;
+  --purple:      #a78bfa;
+  --purple-bg:   #1a0d2a;
+  --orange:      #fb923c;
+  --orange-bg:   #2a1505;
+  --shadow:      0 4px 24px rgba(0,0,0,0.4);
+  --shadow-lg:   0 12px 48px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 40px rgba(100,160,255,0.15);
+}
+
+/* ═══ BODY ═══════════════════════════════════════════════════ */
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.65;
+  overflow-x: hidden;
+  transition: background 0.4s, color 0.4s;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, h5 { font-family: var(--font-heading); line-height: 1.3; }
+
+/* ═══ BACKGROUND CANVAS ═════════════════════════════════════ */
+#neural-bg {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; opacity: 0.15;
+  transition: opacity 0.4s;
+}
+[data-theme="dark"] #neural-bg { opacity: 0.12; }
+#confetti-canvas {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 50;
+}
+
+/* ═══ SCREENS & TRANSITIONS ═════════════════════════════════ */
+#app { position: relative; overflow: hidden; }
+.screen {
+  display: none; min-height: 100vh;
+  position: relative; z-index: 1;
+}
+.screen.active { display: flex; flex-direction: column; }
+.screen.slide-in-right {
+  display: flex; flex-direction: column;
+  animation: slideInRight 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+.screen.slide-in-left {
+  display: flex; flex-direction: column;
+  animation: slideInLeft 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes slideInRight { from { opacity:0; transform:translateX(60px); } to { opacity:1; transform:translateX(0); } }
+@keyframes slideInLeft  { from { opacity:0; transform:translateX(-60px); } to { opacity:1; transform:translateX(0); } }
+@keyframes fadeUp       { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn       { from { opacity:0; } to { opacity:1; } }
+@keyframes pulse        { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes float        { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes shimmer      { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes heartbeat    { 0%,100% { transform:scale(1); } 14% { transform:scale(1.08); } 28% { transform:scale(1); } 42% { transform:scale(1.05); } 56% { transform:scale(1); } }
+@keyframes ripple       { to { transform:scale(4); opacity:0; } }
+@keyframes shake        { 10%,90% { transform:translateX(-1px); } 20%,80% { transform:translateX(2px); } 30%,50%,70% { transform:translateX(-3px); } 40%,60% { transform:translateX(3px); } }
+@keyframes countUp      { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* ═══ TOPBAR ═════════════════════════════════════════════════ */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.25rem; height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+  gap: 0.5rem;
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  transition: var(--transition);
+}
+.topbar-logo { height: 34px; object-fit: contain; flex-shrink: 0; }
+.topbar-title {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 0.85rem; color: var(--text-muted); flex: 1;
+  text-align: center; padding: 0 0.5rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar-btns { display: flex; gap: 0.4rem; flex-shrink: 0; align-items: center; }
+.topbar-btn {
+  background: none; border: 1.5px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: var(--radius); padding: 0.4rem 0.75rem;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--primary); cursor: pointer;
+  transition: var(--transition); white-space: nowrap;
+  font-family: var(--font-body); line-height: 1.3;
+  display: flex; align-items: center; gap: 0.35rem;
+  position: relative; overflow: hidden;
+}
+.topbar-btn:hover { background: var(--primary-10); border-color: var(--primary); }
+.topbar-btn.muted { color: var(--text-muted); }
+.topbar-btn.muted:hover { background: var(--primary-10); color: var(--primary); }
+.btn-icon {
+  background: none; border: 1.5px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: var(--radius); padding: 0.4rem 0.55rem;
+  font-size: 1rem; line-height: 1; cursor: pointer;
+  transition: var(--transition); color: var(--text-muted);
+}
+.btn-icon:hover { background: var(--primary-10); border-color: var(--primary); color: var(--primary); }
+
+/* ═══ RIPPLE EFFECT ══════════════════════════════════════════ */
+.ripple {
+  position: absolute; border-radius: 50%;
+  background: var(--primary-20);
+  transform: scale(0); animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+/* ═══ SIDEBAR (decisions) ════════════════════════════════════ */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200; backdrop-filter: blur(4px);
+}
+.sidebar-overlay.open { display: block; }
+.sidebar {
+  position: fixed; top: 0; right: -100%;
+  width: min(var(--sidebar-w), 92vw); height: 100%;
+  background: var(--surface); z-index: 201;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.18);
+  transition: right 0.4s cubic-bezier(0.16,1,0.3,1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.sidebar.open { right: 0; }
+.sidebar-header {
+  padding: 1.1rem 1.25rem; background: var(--primary);
+  color: white; display: flex; align-items: center;
+  justify-content: space-between;
+}
+.sidebar-header h3 { font-family: var(--font-body); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.sidebar-close { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; line-height: 1; padding: 0.2rem; }
+.sidebar-body { flex: 1; overflow-y: auto; padding: 1rem; }
+.sidebar-empty { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 2rem 1rem; line-height: 1.65; }
+.decision-item {
+  border-radius: var(--radius); padding: 0.9rem 1rem;
+  margin-bottom: 0.65rem; border-left: 4px solid var(--border);
+  background: var(--bg); animation: fadeUp 0.3s ease both;
+  transition: var(--transition);
+}
+.decision-item:hover { transform: translateX(3px); }
+.decision-item.correcta  { border-color: var(--green); background: var(--green-bg); }
+.decision-item.incorrecta{ border-color: var(--red); background: var(--red-bg); }
+.decision-item.parcial   { border-color: var(--gold); background: var(--gold-bg); }
+.decision-item.critica   { border-color: var(--purple); background: var(--purple-bg); }
+.decision-scenario { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+.decision-choice { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+.decision-type-pill {
+  display: inline-block; font-size: 0.68rem; font-weight: 700;
+  padding: 0.18rem 0.6rem; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.decision-type-pill.correcta  { background: var(--green-bg); color: var(--green); }
+.decision-type-pill.incorrecta{ background: var(--red-bg); color: var(--red); }
+.decision-type-pill.parcial   { background: var(--gold-bg); color: var(--gold); }
+.decision-type-pill.critica   { background: var(--purple-bg); color: var(--purple); }
+
+/* ═══ COVER ══════════════════════════════════════════════════ */
+.cover {
+  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, color-mix(in srgb, var(--primary) 80%, black) 100%);
+  background-size: 300% 300%;
+  animation: gradientShift 12s ease infinite;
+  color: white;
+  justify-content: center; align-items: center;
+  text-align: center;
+  padding: 3rem 2rem 5rem;
+  position: relative; overflow: hidden;
+  min-height: 100vh;
+}
+.cover-particles {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.cover-particle {
+  position: absolute;
+  width: 4px; height: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+.cover-accent {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse at 80% 15%, rgba(255,255,255,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 85%, var(--accent-20) 0%, transparent 50%);
+}
+.cover-logo {
+  max-width: 180px; margin-bottom: 2.5rem; position: relative;
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));
+  animation: float 4s ease-in-out infinite;
+}
+.cover h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: 0.6rem;
+  font-weight: 700; letter-spacing: -0.02em; position: relative;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+.cover h2 {
+  font-size: clamp(0.95rem, 2.5vw, 1.2rem); font-family: var(--font-body);
+  font-weight: 400; opacity: 0.85; margin-bottom: 1.8rem; position: relative;
+}
+.cover-meta {
+  display: flex; gap: 0.65rem; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 2rem; position: relative;
+}
+.cover-badge {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 0.3rem 1.1rem; border-radius: 20px;
+  font-size: 0.8rem; font-weight: 500;
+  font-family: var(--font-body);
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(8px);
+  transition: var(--transition);
+}
+.cover-badge:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+.cover-summary {
+  max-width: 560px; margin: 0 auto 2.5rem;
+  font-size: 0.97rem; opacity: 0.85; line-height: 1.85; position: relative;
+}
+.btn-cover {
+  font-family: var(--font-heading); font-weight: 700;
+  font-size: 1.05rem; padding: 1.1rem 3.5rem;
+  background: white; color: var(--primary);
+  border: none; border-radius: 50px; cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  transition: var(--transition);
+  letter-spacing: 0.02em;
+  position: relative; overflow: hidden;
+}
+.btn-cover:hover {
+  background: var(--accent);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.3);
+}
+.btn-cover:active { transform: translateY(0); }
+
+/* Heartbeat icon on cover */
+.cover-heartbeat {
+  display: inline-block; margin-bottom: 1.5rem;
+  animation: heartbeat 2s ease-in-out infinite;
+  position: relative;
+}
+.cover-heartbeat svg { width: 56px; height: 56px; fill: var(--accent); filter: drop-shadow(0 4px 16px rgba(255,111,76,0.4)); }
+
+/* ═══ BUTTONS ════════════════════════════════════════════════ */
+.btn {
+  font-family: var(--font-heading);
+  padding: 0.85rem 2.3rem; font-size: 0.96rem; font-weight: 700;
+  border: none; cursor: pointer; transition: var(--transition);
+  background: var(--primary); color: white;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px var(--primary-20);
+  letter-spacing: 0.01em;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  position: relative; overflow: hidden;
+}
+.btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 8px 24px var(--primary-30); }
+.btn:active { transform: translateY(0); }
+.btn-outline {
+  background: transparent; border: 2px solid var(--primary); color: var(--primary); box-shadow: none;
+}
+.btn-outline:hover { background: var(--primary-10); box-shadow: none; }
+.btn-accent {
+  background: var(--accent); box-shadow: 0 4px 16px var(--accent-20);
+}
+.btn-accent:hover { filter: brightness(1.1); }
+
+/* ═══ LAYOUT ═════════════════════════════════════════════════ */
+.page-wrap { flex: 1; max-width: 880px; width: 100%; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* ═══ CLINICAL INFO ══════════════════════════════════════════ */
+.clinical-header { text-align: center; margin-bottom: 2.5rem; }
+.clinical-header h2 { color: var(--primary); font-size: 1.9rem; margin-bottom: 0.35rem; }
+.clinical-header p { color: var(--text-muted); font-size: 0.9rem; }
+.section-divider {
+  width: 50px; height: 3px;
+  background: var(--accent); border-radius: 2px;
+  margin: 0.85rem auto 0;
+}
+
+.clinical-timeline {
+  position: relative; padding-left: 2.2rem;
+}
+.clinical-timeline::before {
+  content: '';
+  position: absolute;
+  left: 14px; top: 6px; bottom: 6px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--primary), var(--accent));
+  border-radius: 2px;
+}
+.clinical-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 1.5rem 1.6rem 1.5rem 1.8rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  cursor: default;
+  opacity: 0;
+  animation: fadeUp 0.5s ease both;
+}
+.clinical-card:nth-child(1) { animation-delay: 0.1s; }
+.clinical-card:nth-child(2) { animation-delay: 0.2s; }
+.clinical-card:nth-child(3) { animation-delay: 0.3s; }
+.clinical-card:nth-child(4) { animation-delay: 0.4s; }
+.clinical-card:nth-child(5) { animation-delay: 0.5s; }
+.clinical-card:hover { box-shadow: var(--shadow-lg); transform: translateX(4px); }
+.clinical-card::before {
+  content: '';
+  position: absolute;
+  left: -1.85rem; top: 1.6rem;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--primary), 0 0 12px var(--primary-30);
+  z-index: 1;
+  transition: var(--transition);
+}
+.clinical-card:hover::before { box-shadow: 0 0 0 2px var(--accent), 0 0 16px var(--accent-20); background: var(--accent); }
+.clinical-card-header {
+  display: flex; align-items: center; gap: 0.8rem;
+  margin-bottom: 0.8rem; padding-bottom: 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
+}
+.clinical-card-icon {
+  width: 36px; height: 36px; border-radius: calc(var(--radius) - 1px);
+  background: var(--primary-10);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.clinical-card:hover .clinical-card-icon { background: var(--accent-15); }
+.clinical-card-icon svg { width: 17px; height: 17px; fill: var(--primary); transition: fill 0.3s; }
+.clinical-card:hover .clinical-card-icon svg { fill: var(--accent); }
+.clinical-card-label {
+  font-family: var(--font-body);
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--primary);
+}
+.clinical-card-body {
+  font-size: 0.93rem; line-height: 1.8;
+  color: var(--text); white-space: pre-wrap;
+}
+.clinical-footer { text-align: center; margin-top: 2.5rem; }
+
+/* ═══ SCENARIO LAYOUT ════════════════════════════════════════ */
+.screen.scenario-screen {
+  height: 100vh; overflow: hidden;
+}
+.scenario-layout {
+  display: flex;
+  height: calc(100vh - var(--topbar-h));
+  overflow: hidden;
+}
+.scenario-case-panel {
+  width: 300px; flex-shrink: 0;
+  border-right: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+  background: var(--surface);
+  height: 100%; overflow-y: auto;
+  transition: width 0.4s cubic-bezier(0.16,1,0.3,1), var(--transition);
+}
+.scenario-case-panel.collapsed { width: 0; overflow: hidden; border-right-color: transparent; }
+.panel-inner { min-width: 300px; padding: 1.25rem; }
+.panel-case-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem; padding-bottom: 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+}
+.panel-case-title {
+  font-family: var(--font-body);
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--primary);
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.panel-collapse-btn {
+  background: none; border: 1.5px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: var(--radius); padding: 0.3rem 0.5rem;
+  cursor: pointer; color: var(--text-muted);
+  font-size: 0.75rem; transition: var(--transition);
+}
+.panel-collapse-btn:hover { background: var(--primary-10); border-color: var(--primary); color: var(--primary); }
+.panel-section { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid color-mix(in srgb, var(--border) 20%, transparent); }
+.panel-section:last-child { border-bottom: none; margin-bottom: 0; }
+.panel-section-label {
+  font-family: var(--font-body);
+  font-size: 0.64rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--primary); margin-bottom: 0.4rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.panel-section-label svg { width: 11px; height: 11px; fill: var(--primary); }
+.panel-section p {
+  font-size: 0.82rem; line-height: 1.7;
+  color: var(--text); white-space: pre-wrap;
+}
+.scenario-main {
+  flex: 1; min-width: 0;
+  height: 100%; overflow-y: auto;
+  padding: 1.75rem 1.5rem;
+  scroll-behavior: smooth;
+}
+
+/* Panel toggle */
+.panel-toggle-pill {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: none; border: 1.5px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: var(--radius); padding: 0.4rem 0.75rem;
+  font-size: 0.78rem; font-weight: 600; color: var(--primary);
+  cursor: pointer; transition: var(--transition); white-space: nowrap;
+  font-family: var(--font-body);
+}
+.panel-toggle-pill:hover { background: var(--primary-10); border-color: var(--primary); }
+.panel-toggle-pill.active { background: var(--primary-10); border-color: var(--primary); }
+
+/* ═══ PROGRESS ═══════════════════════════════════════════════ */
+.progress-wrap { margin-bottom: 1.5rem; }
+.progress-label {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.5rem;
+}
+.progress-label span { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.progress-bar {
+  width: 100%; height: 6px; background: color-mix(in srgb, var(--border) 30%, transparent);
+  border-radius: 3px; overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute; right: 0; top: -2px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ═══ SCENARIO CARD ══════════════════════════════════════════ */
+.scenario-card {
+  background: var(--surface);
+  border-radius: calc(var(--radius) + 6px);
+  padding: 2.2rem;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  border: 1px solid color-mix(in srgb, var(--border) 20%, transparent);
+}
+.scenario-badge {
+  font-family: var(--font-body);
+  font-size: 0.68rem; font-weight: 700;
+  color: var(--badge); text-transform: uppercase;
+  letter-spacing: 0.12em; display: inline-block;
+  margin-bottom: 0.6rem;
+  padding: 0.2rem 0.7rem;
+  background: color-mix(in srgb, var(--badge) 12%, transparent);
+  border-radius: 20px;
+}
+.scenario-card h2 { color: var(--text); font-size: 1.35rem; margin-bottom: 0.8rem; }
+.desc { color: var(--text-muted); font-size: 0.95rem; line-height: 1.8; margin-bottom: 1.3rem; }
+
+/* ═══ MEDIA ══════════════════════════════════════════════════ */
+.scenario-media { margin: 1.25rem 0; border-radius: var(--radius); overflow: hidden; }
+.scenario-media img { width: 100%; display: block; border-radius: var(--radius); transition: transform 0.3s; }
+.scenario-media img:hover { transform: scale(1.02); }
+.scenario-media iframe, .scenario-media video {
+  width: 100%; aspect-ratio: 16/9; border: none; border-radius: var(--radius);
+}
+.media-toggle-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: none; border: 1.5px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: var(--radius); padding: 0.38rem 0.85rem;
+  font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; transition: var(--transition); margin-bottom: 0.5rem;
+  font-family: var(--font-body);
+}
+.media-toggle-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-10); }
+
+/* ═══ ANSWERS ════════════════════════════════════════════════ */
+.answers-label {
+  font-family: var(--font-body);
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-muted); margin-bottom: 0.8rem;
+  padding-top: 0.25rem;
+}
+.answers { display: flex; flex-direction: column; gap: 0.7rem; }
+.answer-btn {
+  display: flex; align-items: flex-start; gap: 0.9rem;
+  width: 100%; padding: 1rem 1.2rem;
+  background: var(--bg); border: 2px solid color-mix(in srgb, var(--border) 35%, transparent);
+  border-radius: calc(var(--radius) + 2px); cursor: pointer;
+  transition: var(--transition);
+  text-align: left; font-family: var(--font-body);
+  font-size: 0.94rem; color: var(--text);
+  position: relative; overflow: hidden;
+}
+.answer-btn:not([disabled]):hover {
+  border-color: var(--primary);
+  background: var(--primary-10);
+  transform: translateX(6px);
+  box-shadow: 0 4px 16px var(--primary-15);
+}
+.answer-btn[disabled] { cursor: not-allowed; opacity: 0.8; }
+.answer-btn.selected-correct   { border-color: var(--green); background: var(--green-bg); animation: fadeUp 0.3s ease; }
+.answer-btn.selected-incorrect { border-color: var(--red); background: var(--red-bg); animation: shake 0.5s ease; }
+.answer-btn.selected-partial   { border-color: var(--gold); background: var(--gold-bg); animation: fadeUp 0.3s ease; }
+.answer-btn.selected-critica   { border-color: var(--purple); background: var(--purple-bg); animation: shake 0.5s ease; }
+.answer-label {
+  min-width: 34px; height: 34px; border-radius: 50%;
+  background: var(--primary); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+  transition: var(--transition); font-family: var(--font-heading);
+}
+.answer-btn.selected-correct   .answer-label { background: var(--green); }
+.answer-btn.selected-incorrect .answer-label { background: var(--red); }
+.answer-btn.selected-partial   .answer-label { background: var(--gold); }
+.answer-btn.selected-critica   .answer-label { background: var(--purple); }
+
+/* ═══ FEEDBACK ═══════════════════════════════════════════════ */
+.feedback-card {
+  background: var(--surface); border-radius: calc(var(--radius) + 2px);
+  padding: 1.5rem 1.6rem; margin-top: 1.25rem;
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--accent);
+  animation: feedbackIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes feedbackIn { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.feedback-label {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; padding: 0.25rem 0.8rem;
+  border-radius: 20px; margin-bottom: 0.75rem;
+  font-family: var(--font-body);
+}
+.feedback-label svg { width: 12px; height: 12px; fill: currentColor; }
+.feedback-label.correct   { background: var(--green-bg); color: var(--green); }
+.feedback-label.partial   { background: var(--gold-bg); color: var(--gold); }
+.feedback-label.incorrect { background: var(--red-bg); color: var(--red); }
+.feedback-label.critica   { background: var(--purple-bg); color: var(--purple); }
+.feedback-card p { font-size: 0.93rem; line-height: 1.75; color: var(--text); }
+.feedback-actions { text-align: center; margin-top: 1.3rem; }
+
+/* ═══ ACHIEVEMENT TOAST ══════════════════════════════════════ */
+.achievement-toast {
+  position: fixed; top: 80px; right: 20px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 1rem 1.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  z-index: 500;
+  display: flex; align-items: center; gap: 0.8rem;
+  animation: slideInRight 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  max-width: 320px;
+}
+.achievement-toast.hide {
+  animation: slideOutRight 0.4s ease-in both;
+}
+@keyframes slideOutRight { to { opacity:0; transform:translateX(100px); } }
+.achievement-icon {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--accent-15);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.achievement-icon svg { width: 20px; height: 20px; fill: var(--accent); }
+.achievement-text h4 { font-family: var(--font-heading); font-size: 0.85rem; color: var(--text); margin-bottom: 0.1rem; }
+.achievement-text p { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ═══ SOUND TOGGLE ═══════════════════════════════════════════ */
+.sound-indicator {
+  font-size: 0.65rem; color: var(--text-muted); margin-left: 0.25rem;
+}
+
+/* ═══ CONFIRM MODAL ══════════════════════════════════════════ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 300;
+  backdrop-filter: blur(6px); align-items: center;
+  justify-content: center; padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface); border-radius: calc(var(--radius) + 8px);
+  padding: 2.5rem 2rem; max-width: 520px; width: 100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+  animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes modalIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+.modal-box h3 { font-size: 1.35rem; color: var(--primary); margin-bottom: 0.45rem; }
+.modal-box p  { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.65; }
+.modal-decisions { margin-bottom: 1.5rem; max-height: 240px; overflow-y: auto; }
+.modal-decision-row {
+  display: flex; align-items: flex-start; gap: 0.7rem;
+  padding: 0.75rem; border-radius: var(--radius); margin-bottom: 0.45rem;
+  background: var(--bg); font-size: 0.88rem;
+}
+.modal-decision-row strong { display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.15rem; }
+.modal-actions { display: flex; gap: 0.65rem; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ═══ ENDING ═════════════════════════════════════════════════ */
+.ending-screen {
+  justify-content: center; align-items: center;
+  text-align: center; padding: 3rem 1.5rem 5rem; min-height: 100vh;
+}
+.ending-card {
+  background: var(--surface); border-radius: calc(var(--radius) + 12px);
+  padding: 3rem 2.5rem; max-width: 680px; width: 100%;
+  box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+}
+.ending-card-accent {
+  position: absolute; top: 0; left: 0; right: 0; height: 5px;
+}
+.ending-card-accent.optimo    { background: linear-gradient(90deg, var(--green), #4ade80); }
+.ending-card-accent.aceptable { background: linear-gradient(90deg, var(--gold), #fbbf24); }
+.ending-card-accent.riesgoso  { background: linear-gradient(90deg, var(--orange), #fb923c); }
+.ending-card-accent.adverso,
+.ending-card-accent.critico   { background: linear-gradient(90deg, var(--red), #f87171); }
+
+.ending-reveal { animation: endingReveal 0.7s cubic-bezier(0.34,1.2,0.64,1) both; }
+@keyframes endingReveal { from { opacity:0; transform:translateY(30px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+.ending-reveal-delay-1 { animation: endingReveal 0.7s 0.1s cubic-bezier(0.34,1.2,0.64,1) both; }
+.ending-reveal-delay-2 { animation: endingReveal 0.7s 0.2s cubic-bezier(0.34,1.2,0.64,1) both; }
+.ending-reveal-delay-3 { animation: endingReveal 0.7s 0.3s cubic-bezier(0.34,1.2,0.64,1) both; }
+.ending-reveal-delay-4 { animation: endingReveal 0.7s 0.4s cubic-bezier(0.34,1.2,0.64,1) both; }
+.ending-reveal-delay-5 { animation: endingReveal 0.7s 0.5s cubic-bezier(0.34,1.2,0.64,1) both; }
+
+.ending-icon-ring {
+  width: 96px; height: 96px; border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  box-shadow: 0 0 30px currentColor;
+}
+.ending-icon-ring svg.icon-main { width: 38px; height: 38px; }
+.ending-icon-ring.optimo    { background: var(--green-bg); color: var(--green); }
+.ending-icon-ring.aceptable { background: var(--gold-bg); color: var(--gold); }
+.ending-icon-ring.riesgoso  { background: var(--orange-bg); color: var(--orange); }
+.ending-icon-ring.adverso,
+.ending-icon-ring.critico   { background: var(--red-bg); color: var(--red); }
+.ending-icon-ring svg.icon-main { fill: currentColor; }
+
+.ending-card h2 { color: var(--primary); font-size: 1.9rem; margin-bottom: 0.5rem; }
+.ending-type-badge {
+  display: inline-block; padding: 0.3rem 1.2rem;
+  border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+  margin-bottom: 1.5rem; letter-spacing: 0.05em; text-transform: uppercase;
+  font-family: var(--font-body);
+}
+.ending-type-badge.optimo    { background: var(--green-bg); color: var(--green); }
+.ending-type-badge.aceptable { background: var(--gold-bg); color: var(--gold); }
+.ending-type-badge.riesgoso  { background: var(--orange-bg); color: var(--orange); }
+.ending-type-badge.adverso,
+.ending-type-badge.critico   { background: var(--red-bg); color: var(--red); }
+
+.ending-description { margin-bottom: 1.5rem; line-height: 1.85; white-space: pre-wrap; font-size: 0.95rem; }
+
+/* Score ring */
+.score-ring {
+  margin: 0 auto 1.75rem;
+  width: 120px; height: 120px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.score-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+.score-ring circle { fill: none; stroke-width: 8; }
+.score-ring .track { stroke: color-mix(in srgb, var(--border) 30%, transparent); }
+.score-ring .fill  { stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset 1.6s cubic-bezier(0.16,1,0.3,1); }
+.score-text  { font-family: var(--font-heading); font-size: 1.9rem; color: var(--primary); line-height: 1; font-weight: 700; }
+.score-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; margin-top: 0.2rem; }
+
+/* JOY Feedback */
+.joy-feedback { text-align: left; margin-bottom: 1.5rem; }
+.joy-card {
+  border-radius: calc(var(--radius) + 4px);
+  border: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
+  overflow: hidden; margin-bottom: 0.9rem;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+.joy-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.joy-card-header {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 1rem 1.3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 20%, transparent);
+  background: var(--bg);
+}
+.joy-letter {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 1.1rem; font-weight: 800;
+  flex-shrink: 0; color: white;
+}
+.joy-letter.j { background: var(--primary); }
+.joy-letter.o { background: var(--accent); }
+.joy-letter.y { background: var(--purple); }
+.joy-card-title {
+  font-family: var(--font-heading);
+  font-size: 0.85rem; font-weight: 700; color: var(--text);
+}
+.joy-card-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.67rem; color: var(--text-muted); letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.joy-card-body {
+  padding: 1.1rem 1.3rem; font-size: 0.9rem;
+  line-height: 1.75; color: var(--text);
+  background: var(--surface);
+}
+
+.ending-actions {
+  display: flex; gap: 0.75rem; justify-content: center;
+  flex-wrap: wrap; margin-top: 1.75rem;
+}
+
+/* ═══ REVIEW MODE ════════════════════════════════════════════ */
+.review-screen { padding-bottom: 4rem; }
+.review-header {
+  text-align: center; padding: 2.25rem 1.5rem 1.5rem;
+  max-width: 880px; margin: 0 auto; width: 100%;
+}
+.review-header h2 { color: var(--primary); font-size: 1.8rem; margin-bottom: 0.35rem; }
+.review-header p  { color: var(--text-muted); font-size: 0.88rem; }
+.review-scenario { max-width: 880px; margin: 0 auto 1.5rem; width: 100%; padding: 0 1.5rem; }
+.review-card {
+  background: var(--surface); border-radius: calc(var(--radius) + 6px);
+  padding: 1.85rem; box-shadow: var(--shadow);
+  border-top: 4px solid color-mix(in srgb, var(--border) 30%, transparent);
+  transition: var(--transition);
+}
+.review-card.review-correct   { border-color: var(--green); }
+.review-card.review-incorrect { border-color: var(--red); }
+.review-card.review-partial   { border-color: var(--gold); }
+.review-card.review-critica   { border-color: var(--purple); }
+.review-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+.review-scenario-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+.review-outcome-pill { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.22rem 0.75rem; border-radius: 20px; }
+.review-outcome-pill.correcta   { background: var(--green-bg); color: var(--green); }
+.review-outcome-pill.incorrecta { background: var(--red-bg); color: var(--red); }
+.review-outcome-pill.parcial    { background: var(--gold-bg); color: var(--gold); }
+.review-outcome-pill.critica    { background: var(--purple-bg); color: var(--purple); }
+.review-card h3 { color: var(--primary); font-size: 1.15rem; margin-bottom: 0.65rem; }
+.review-desc { font-size: 0.93rem; line-height: 1.75; color: var(--text); margin-bottom: 1.1rem; white-space: pre-wrap; }
+.review-answers { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1.1rem; }
+.review-answer-row {
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.75rem 1rem; border-radius: var(--radius);
+  border: 1.5px solid color-mix(in srgb, var(--border) 30%, transparent);
+  background: var(--bg); font-size: 0.88rem; color: var(--text);
+  transition: var(--transition);
+}
+.review-answer-row.chosen-correct   { border-color: var(--green); background: var(--green-bg); }
+.review-answer-row.chosen-incorrect { border-color: var(--red); background: var(--red-bg); }
+.review-answer-row.chosen-partial   { border-color: var(--gold); background: var(--gold-bg); }
+.review-answer-row.chosen-critica   { border-color: var(--purple); background: var(--purple-bg); }
+.review-answer-label {
+  min-width: 28px; height: 28px; border-radius: 50%;
+  background: color-mix(in srgb, var(--border) 40%, transparent);
+  color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 800; flex-shrink: 0;
+  font-family: var(--font-heading);
+}
+.review-answer-row.chosen-correct   .review-answer-label { background: var(--green); color: white; }
+.review-answer-row.chosen-incorrect .review-answer-label { background: var(--red); color: white; }
+.review-answer-row.chosen-partial   .review-answer-label { background: var(--gold); color: white; }
+.review-answer-row.chosen-critica   .review-answer-label { background: var(--purple); color: white; }
+.review-feedback {
+  background: var(--bg); border-radius: var(--radius);
+  padding: 1rem 1.2rem; border-left: 3px solid var(--accent);
+  font-size: 0.88rem; line-height: 1.7; color: var(--text);
+}
+.review-feedback strong { display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); margin-bottom: 0.3rem; }
+.review-footer-actions { text-align: center; padding: 1.5rem; display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+.review-change-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: none; border: 1.5px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: var(--radius); padding: 0.38rem 0.85rem;
+  font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; transition: var(--transition); font-family: var(--font-body);
+  margin-top: 0.75rem;
+}
+.review-change-btn:hover { background: var(--primary-10); border-color: var(--primary); color: var(--primary); }
+
+/* ═══ LIGHTBOX ═══════════════════════════════════════════════ */
+.lightbox-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92); z-index: 500;
+  align-items: center; justify-content: center;
+  padding: 1rem; cursor: zoom-out;
+}
+.lightbox-overlay.open { display: flex; animation: fadeIn 0.25s ease; }
+.lightbox-overlay img { max-width: 100%; max-height: 90vh; border-radius: var(--radius); box-shadow: 0 24px 80px rgba(0,0,0,0.6); object-fit: contain; cursor: default; }
+.lightbox-close { position: fixed; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.15); border: none; color: white; font-size: 1.5rem; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); transition: background 0.2s; }
+.lightbox-close:hover { background: rgba(255,255,255,0.3); }
+.scenario-media img { cursor: zoom-in; }
+
+/* ═══ FOOTER ═════════════════════════════════════════════════ */
+.footer {
+  text-align: center; padding: 1rem; font-size: 0.75rem;
+  color: var(--text-muted); background: var(--surface);
+  border-top: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
+  position: relative; z-index: 1;
+}
+
+/* ═══ STREAK INDICATOR ═══════════════════════════════════════ */
+.streak-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1rem; padding: 0.6rem 1rem;
+  background: var(--primary-10);
+  border-radius: var(--radius);
+  font-size: 0.78rem; font-weight: 600; color: var(--primary);
+}
+.streak-bar .streak-fire { font-size: 1.1rem; }
+.streak-bar.hot {
+  background: linear-gradient(90deg, var(--accent-15), var(--primary-10));
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ═══ RESPONSIVE ═════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .scenario-case-panel { width: 260px; }
+  .panel-inner { min-width: 260px; }
+}
+@media (max-width: 768px) {
+  .scenario-case-panel { display: none; }
+  .scenario-main { padding: 1.25rem; }
+  .panel-toggle-pill { display: none; }
+  .ending-card { padding: 2rem 1.5rem; }
+  .scenario-card { padding: 1.5rem; }
+  .achievement-toast { right: 10px; left: 10px; max-width: none; }
+}
+@media (max-width: 640px) {
+  :root { --topbar-h: 52px; }
+  .cover h1 { font-size: 1.7rem; }
+  .cover { padding: 2.5rem 1.5rem 4rem; }
+  .cover-logo { max-width: 130px; }
+  .page-wrap { padding: 1.25rem 1rem; }
+  .scenario-card { padding: 1.25rem; }
+  .ending-card { padding: 1.75rem 1.25rem; }
+  .topbar-title { display: none; }
+  .topbar { padding: 0 0.75rem; }
+  .modal-actions { flex-direction: column; }
+  .modal-actions .btn { width: 100%; text-align: center; justify-content: center; }
+  .btn-cover { padding: 0.95rem 2.5rem; font-size: 0.95rem; }
+  .clinical-timeline { padding-left: 1.5rem; }
+  .clinical-card { padding: 1.1rem 1.2rem 1.1rem 1.4rem; }
+  .answer-btn { padding: 0.85rem 1rem; font-size: 0.9rem; }
+  .answer-label { min-width: 30px; height: 30px; font-size: 0.8rem; }
+  .joy-card-body { padding: 0.85rem 1rem; font-size: 0.85rem; }
+}
+@media (max-width: 400px) {
+  .cover h1 { font-size: 1.45rem; }
+  .cover h2 { font-size: 0.85rem; }
+  .topbar-btns .topbar-btn span.btn-text { display: none; }
+  .ending-card h2 { font-size: 1.45rem; }
+  .score-ring { width: 100px; height: 100px; }
+  .score-text { font-size: 1.5rem; }
+}
+
+/* ═══ SCROLLBAR STYLING ══════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--border) 50%, transparent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ═══ ACCESSIBILITY ══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="neural-bg"></canvas>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- Sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Decisions sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h3>Mis decisiones</h3>
+    <button class="sidebar-close" onclick="closeSidebar()" aria-label="Cerrar panel">&#10005;</button>
+  </div>
+  <div class="sidebar-body" id="sidebarBody">
+    <p class="sidebar-empty">Aqui veras un registro de las decisiones que tomes a lo largo del caso.</p>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <h3>Confirmar y avanzar</h3>
+    <p>Estas a punto de ver el resultado final. Revisa tus decisiones antes de continuar.</p>
+    <div class="modal-decisions" id="modalDecisions"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">&#8592; Revisar</button>
+      <button class="btn" id="modalConfirmBtn">Ver resultado &#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Cerrar">&#10005;</button>
+  <img id="lightboxImg" src="" alt="Vista ampliada" onclick="event.stopPropagation()">
+</div>
+
+<!-- Achievement toast container -->
+<div id="achievementContainer"></div>
+
+<div id="app"></div>
+
+<script>
+(function() {
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   IDENTITY CONFIG
+   ═══════════════════════════════════════════════════════════════
+   Para cambiar la identidad visual de todo el caso clinico,
+   reemplace SOLO este objeto JSON.  El sistema mapeara todos
+   los colores, fuentes, logos y estilos automaticamente.
+
+   Campos disponibles:
+   - logoUrl / logoNegativeUrl  : logos (positivo y negativo)
+   - colorPrimary..colorBadges  : paleta de colores
+   - fontPrimaryFamily/fontSecondaryFamily  : tipografia
+   - fontPrimaryImportUrl/fontSecondaryImportUrl : Google Fonts
+   - buttonStyle: "rounded" | "semi-rounded" | "square"
+   - borderRadius, spacing      : dimensiones
+   - shadowEnabled              : sombras activas
+   - animationsEnabled          : animaciones activas
+   - darkMode                   : iniciar en modo oscuro
+   - footerText                 : texto del pie de pagina
+   ═══════════════════════════════════════════════════════════════ */
+const IDENTITY = {
+  "id": "default-pca",
+  "name": "Pain Care Academy",
+  "description": "Identidad corporativa principal de Pain Care Academy",
+  "logoUrl": "https://repositorio.paincare.mx/public/Logo_PCA_Horizontal.png",
+  "logoNegativeUrl": "https://repositorio.paincare.mx/public/Logo_PCA_Horizontal_Negativo.png",
+  "faviconUrl": "",
+  "bannerUrl": "",
+  "colorPrimary": "#003049",
+  "colorSecondary": "#274E75",
+  "colorTertiary": "#FF6F4C",
+  "colorBackground": "#FAFAFA",
+  "colorTextPrimary": "#003049",
+  "colorTextSecondary": "#4A6B82",
+  "colorButtons": "#003049",
+  "colorButtonsHover": "#274E75",
+  "colorBorders": "#4A6B82",
+  "colorBadges": "#3AC2CA",
+  "fontPrimaryName": "Spectral",
+  "fontPrimaryFamily": "'Spectral', serif",
+  "fontPrimaryImportUrl": "https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&display=swap",
+  "fontSecondaryName": "Lato",
+  "fontSecondaryFamily": "'Lato', sans-serif",
+  "fontSecondaryImportUrl": "https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&display=swap",
+  "iconLibraryUrl": "",
+  "iconPrimaryUrl": "",
+  "iconSecondaryUrl": "",
+  "iconBadgeUrl": "",
+  "buttonStyle": "semi-rounded",
+  "cardStyle": "shadow",
+  "borderRadius": "8px",
+  "shadowEnabled": true,
+  "spacing": "16px",
+  "animationsEnabled": true,
+  "darkMode": false,
+  "footerText": "Pain Care Academy - Educacion medica en manejo del dolor",
+  "isDefault": false,
+  "isActive": true
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   CASE DATA — Clinical content (no modificar el formato)
+   ═══════════════════════════════════════════════════════════════ */
+const scenarios = [{"id":"25d81234-8f0a-4528-b133-21e883d28f4f","title":"Escenario 1","description":"Descripcion escenario 1","level":1,"order":1,"answers":[{"id":"717d4871-6287-44d1-b540-ddd72054f7fd","label":"A","text":"Correcta","destination":"943fca10-c239-4cf7-91dc-c5d4e87cbd49","destinationType":"scenario","feedback":"Retro correcta","score":10,"type":"correcta"},{"id":"07a7053b-8909-4701-b86d-50d49bd5d887","label":"B","text":"Incorrecta","destination":"84de48e9-0714-4209-abab-46a792386dba","destinationType":"scenario","feedback":"Retro incorrecta","score":0,"type":"incorrecta"},{"id":"422ef790-0e57-49f2-b555-7ba2d82d6989","label":"C","text":"Parcial","destination":"66d31672-8522-44b8-a83a-b93df887d601","destinationType":"scenario","feedback":"Retro parcial","score":5,"type":"parcial"},{"id":"c89b4d2b-6033-45a1-9640-4c370fb78a63","label":"D","text":"Critica","destination":"a86f997a-937f-4c33-9832-a9eb48cd5f34","destinationType":"scenario","feedback":"Retro critica","score":0,"type":"critica"}],"imageUrl":"https://repositorio.paincare.mx/public/Banner_1.png"},{"id":"943fca10-c239-4cf7-91dc-c5d4e87cbd49","title":"Escenario 2A","description":"Descripcion escenario 2A","level":2,"order":2,"answers":[{"id":"a03bfb71-7c5f-4eae-965c-e6cd36d1c088","label":"A","text":"Correcta","destination":"f524a86d-4160-4b9b-ad65-7bc9769f65eb","destinationType":"ending","feedback":"Retro correcta","score":10,"type":"correcta"},{"id":"7419c855-eb5f-4c99-b836-e05737fa4afa","label":"B","text":"Incorrecta","destination":"8a718802-1270-4ea0-bfa3-8cc3e36b9421","destinationType":"ending","feedback":"Retro incorrecta","score":0,"type":"incorrecta"}],"imageUrl":"https://repositorio.paincare.mx/public/Banner_1.png"},{"id":"84de48e9-0714-4209-abab-46a792386dba","title":"Escenario 2B","description":"Descripcion escenario 2B","level":2,"order":3,"answers":[{"id":"f79c81c9-db67-4770-9be0-99ca24f68374","label":"A","text":"Correcta","destination":"f524a86d-4160-4b9b-ad65-7bc9769f65eb","destinationType":"ending","feedback":"Retro correcta","score":10,"type":"correcta"},{"id":"2a2ced9e-0af3-40a1-a9ee-9b75f8c55d6c","label":"B","text":"Incorrecta","destination":"8a718802-1270-4ea0-bfa3-8cc3e36b9421","destinationType":"ending","feedback":"Retro incorrecta","score":0,"type":"incorrecta"}],"imageUrl":""},{"id":"66d31672-8522-44b8-a83a-b93df887d601","title":"Escenario 2C","description":"Descripcion escenario 2C","level":2,"order":4,"answers":[{"id":"17da1eff-ee56-4e4e-9f89-ccd88a7b1edc","label":"A","text":"Correcta","destination":"f524a86d-4160-4b9b-ad65-7bc9769f65eb","destinationType":"ending","feedback":"Retro correcta","score":10,"type":"correcta"},{"id":"57b34cb1-cc89-47dd-8640-d62d2e0bc00a","label":"B","text":"Incorrecta","destination":"8a718802-1270-4ea0-bfa3-8cc3e36b9421","destinationType":"ending","feedback":"Retro incorrecta","score":0,"type":"incorrecta"}],"imageUrl":""},{"id":"a86f997a-937f-4c33-9832-a9eb48cd5f34","title":"Escenario 2D","description":"Descripcion escenario 2D","level":2,"order":5,"answers":[{"id":"d2e0b97d-16e1-4ea1-9f9e-d22e0e8e0e1e","label":"A","text":"Correcta","destination":"f524a86d-4160-4b9b-ad65-7bc9769f65eb","destinationType":"ending","feedback":"Retro correcta","score":10,"type":"correcta"},{"id":"e3f1c08e-27f2-5fb2-a0ae-e33f1f9f1f2f","label":"B","text":"Incorrecta","destination":"8a718802-1270-4ea0-bfa3-8cc3e36b9421","destinationType":"ending","feedback":"Retro incorrecta","score":0,"type":"incorrecta"}],"imageUrl":""}];
+const endings = [{"id":"f524a86d-4160-4b9b-ad65-7bc9769f65eb","title":"Final 1","description":"Descripcion final 1","type":"optimo","summary":"Descripcion final 1","recommendations":"Descripcion final 1","joyJ":"El razonamiento fue solido y las decisiones tomadas se alinearon con la evidencia clinica. El orden de prioridades fue adecuado y la seguridad del paciente no se comprometio en ningun punto.","joyO":"Falto considerar el contexto socioeconomico del paciente y los posibles sesgos de confirmacion al interpretar los estudios de laboratorio. Algunos datos de exploracion fisica fueron subestimados.","joyY":"La proxima vez, ante este perfil clinico, inicia siempre con la estratificacion de riesgo antes de seleccionar la intervencion. Aplica el principio de primum non nocere al elegir entre opciones diagnosticas invasivas.","score":0,"order":1},{"id":"8a718802-1270-4ea0-bfa3-8cc3e36b9421","title":"Final 2","description":"Descripcion final 2","type":"riesgoso","summary":"Descripcion final 2","recommendations":"Descripcion final 2","joyJ":"Algunas decisiones representaron riesgo para el paciente. El razonamiento clinico presento lagunas en la integracion de datos, resultando en una eleccion que pudo haber escalado la gravedad del cuadro.","joyO":"Se ignoraron datos centinela en la presentacion inicial. Hubo un sesgo de disponibilidad que llevo a anclar el diagnostico prematuramente sin considerar diagnosticos diferenciales importantes.","joyY":"En este caso, aplica la regla de oro: si algo no encaja, busca el diagnostico que explique todo. Revisa el protocolo de triage de urgencias y practica la desestabilizacion de hipotesis diagnosticas tempranas.","score":0,"order":2}];
+const clinical = {"presentacionClinica":"Presentacion clinica","antecedentes":"Antecedentes","exploracion":"Exploracion","estudiosComplementarios":"Estudios complementarios","contextoClinico":"Contexto clinico"};
+const caseData = {"title":"Nuevo Caso Clinico","subtitle":"Subtitulo de caso","module":"Modulo","areaTematica":"Area tematica","resumenBreve":"Resumen breve","urlPortada":"","identidadCorporativa":"default-pca"};
+
+/* ═══════════════════════════════════════════════════════════════
+   APPLY IDENTITY — Maps JSON fields to CSS custom properties
+   ═══════════════════════════════════════════════════════════════ */
+function applyIdentity(id) {
+  var root = document.documentElement;
+
+  // Load fonts dynamically
+  if (id.fontPrimaryImportUrl) {
+    var link1 = document.createElement('link');
+    link1.rel = 'stylesheet';
+    link1.href = id.fontPrimaryImportUrl;
+    document.head.appendChild(link1);
+  }
+  if (id.fontSecondaryImportUrl) {
+    var link2 = document.createElement('link');
+    link2.rel = 'stylesheet';
+    link2.href = id.fontSecondaryImportUrl;
+    document.head.appendChild(link2);
+  }
+
+  // Map colors
+  if (id.colorPrimary)       root.style.setProperty('--primary', id.colorPrimary);
+  if (id.colorButtonsHover)  root.style.setProperty('--primary-hover', id.colorButtonsHover);
+  if (id.colorSecondary)     root.style.setProperty('--secondary', id.colorSecondary);
+  if (id.colorTertiary)      root.style.setProperty('--accent', id.colorTertiary);
+  if (id.colorBackground)    root.style.setProperty('--bg', id.colorBackground);
+  if (id.colorTextPrimary)   root.style.setProperty('--text', id.colorTextPrimary);
+  if (id.colorTextSecondary) root.style.setProperty('--text-muted', id.colorTextSecondary);
+  if (id.colorButtons)       root.style.setProperty('--btn-color', id.colorButtons);
+  if (id.colorBorders)       root.style.setProperty('--border', id.colorBorders);
+  if (id.colorBadges)        root.style.setProperty('--badge', id.colorBadges);
+
+  // Map fonts
+  if (id.fontPrimaryFamily)   root.style.setProperty('--font-heading', id.fontPrimaryFamily);
+  if (id.fontSecondaryFamily) root.style.setProperty('--font-body', id.fontSecondaryFamily);
+
+  // Map dimensions
+  if (id.borderRadius) root.style.setProperty('--radius', id.borderRadius);
+  if (id.spacing)      root.style.setProperty('--spacing', id.spacing);
+
+  // Button style
+  if (id.buttonStyle === 'rounded')      root.style.setProperty('--radius', '50px');
+  else if (id.buttonStyle === 'square')  root.style.setProperty('--radius', '4px');
+
+  // Shadow toggle
+  if (id.shadowEnabled === false) {
+    root.style.setProperty('--shadow', 'none');
+    root.style.setProperty('--shadow-lg', 'none');
+  }
+
+  // Dark mode initial
+  if (id.darkMode) {
+    darkMode = true;
+    root.setAttribute('data-theme', 'dark');
+  }
+
+  // Update page title
+  if (id.name) document.title = caseData.title + ' \u2014 ' + id.name;
+
+  // Favicon
+  if (id.faviconUrl) {
+    var fav = document.querySelector("link[rel='icon']") || document.createElement('link');
+    fav.rel = 'icon'; fav.href = id.faviconUrl;
+    document.head.appendChild(fav);
+  }
+
+  // Store for render functions
+  window._identity = id;
+}
+
+/* ═══ SVG ICONS ═══════════════════════════════════════════════ */
+var ICONS = {
+  heartbeat: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+  user:      '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  search:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  flask:     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 3h6M9 3v10l-4 8h14l-4-8V3"/><line x1="9" y1="9" x2="15" y2="9"/></svg>',
+  globe:     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  check:     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:         '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  alert:     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  zap:       '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  trophy:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="8 2 12 6 16 2"/><path d="M4 6h16v2a8 8 0 0 1-16 0V6z"/><path d="M12 16v4"/><path d="M8 20h8"/><line x1="4" y1="6" x2="4" y2="10"/><line x1="20" y1="6" x2="20" y2="10"/></svg>',
+  clipboard: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
+  eye:       '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeoff:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+  sun:       '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+  moon:      '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+  panel:     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>',
+  refresh:   '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+  arrow_l:   '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
+  arrow_r:   '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+  edit:      '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  brain:     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14z"/></svg>',
+  target:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+  compass:   '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+  volume:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+  volumeoff: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
+  star:      '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  fire:      '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 23c-3.87 0-7-3.13-7-7 0-2.38 1.18-4.56 3-6 0 2 1 3 2.5 4.5C12 13 13 11 13 8c2.5 2 4.5 5 4.5 8 0 3.87-2.13 6-5.5 7z"/></svg>',
+};
+
+function iconSvg(name, extraStyle) {
+  var raw = ICONS[name] || '';
+  if (!raw) return '';
+  return raw.replace('<svg ', '<svg style="' + (extraStyle || 'width:16px;height:16px;fill:currentColor;vertical-align:middle;') + '" ');
+}
+
+/* ═══ CONSTANTS ═══════════════════════════════════════════════ */
+var clinicIcons = {
+  presentacionClinica:    'heartbeat',
+  antecedentes:           'user',
+  exploracion:            'search',
+  estudiosComplementarios:'flask',
+  contextoClinico:        'globe',
+};
+var clinicTitles = {
+  presentacionClinica:    'Presentacion Clinica',
+  antecedentes:           'Antecedentes',
+  exploracion:            'Exploracion Fisica',
+  estudiosComplementarios:'Estudios Complementarios',
+  contextoClinico:        'Contexto Clinico',
+};
+var endingLabels   = { optimo:'Optimo', aceptable:'Aceptable', riesgoso:'Riesgoso', adverso:'Adverso', critico:'Critico' };
+var endingIconName = { optimo:'trophy', aceptable:'check', riesgoso:'alert', adverso:'x', critico:'zap' };
+
+/* ═══ STATE ═══════════════════════════════════════════════════ */
+var totalScore = 0;
+var maxScore   = 0;
+var decisions  = [];
+var pendingNav = null;
+var screenHistory = [];
+var panelOpen  = true;
+var darkMode   = IDENTITY.darkMode || false;
+var soundEnabled = true;
+var streak = 0;
+var achievements = [];
+
+scenarios.forEach(function(s) {
+  var scores = s.answers.map(function(a) { return a.score || 0; });
+  maxScore += Math.max.apply(null, scores);
+});
+
+/* ═══ SOUND SYSTEM (Web Audio API) ════════════════════════════ */
+var audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { audioCtx = null; }
+  }
+}
+
+function playTone(freq, duration, type, vol) {
+  if (!soundEnabled || !audioCtx) return;
+  try {
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    osc.type = type || 'sine';
+    gain.gain.setValueAtTime(vol || 0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.3));
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + (duration || 0.3));
+  } catch(e) {}
+}
+
+function playCorrect() {
+  playTone(523.25, 0.12, 'sine', 0.07);
+  setTimeout(function() { playTone(659.25, 0.12, 'sine', 0.07); }, 100);
+  setTimeout(function() { playTone(783.99, 0.2, 'sine', 0.07); }, 200);
+}
+function playIncorrect() {
+  playTone(311.13, 0.15, 'square', 0.05);
+  setTimeout(function() { playTone(261.63, 0.25, 'square', 0.05); }, 120);
+}
+function playPartial() {
+  playTone(440, 0.12, 'sine', 0.06);
+  setTimeout(function() { playTone(523.25, 0.2, 'sine', 0.06); }, 120);
+}
+function playClick() {
+  playTone(800, 0.04, 'sine', 0.03);
+}
+function playSuccess() {
+  var notes = [523.25, 659.25, 783.99, 1046.50];
+  notes.forEach(function(n, i) {
+    setTimeout(function() { playTone(n, 0.15, 'sine', 0.06); }, i * 120);
+  });
+}
+function playAchievement() {
+  playTone(880, 0.08, 'sine', 0.05);
+  setTimeout(function() { playTone(1108.73, 0.08, 'sine', 0.05); }, 80);
+  setTimeout(function() { playTone(1318.51, 0.2, 'sine', 0.05); }, 160);
+}
+
+/* ═══ ACHIEVEMENTS ════════════════════════════════════════════ */
+var ACHIEVEMENT_DEFS = [
+  { id: 'first_correct', title: 'Primera correcta', desc: 'Acertaste en tu primera decision', check: function() { return decisions.length >= 1 && decisions[0].type === 'correcta'; } },
+  { id: 'streak_2', title: 'Racha x2', desc: 'Dos respuestas correctas seguidas', check: function() { return streak >= 2; } },
+  { id: 'streak_3', title: 'Racha x3', desc: 'Tres respuestas correctas seguidas', check: function() { return streak >= 3; } },
+  { id: 'all_done', title: 'Caso completo', desc: 'Terminaste todas las decisiones', check: function() { return decisions.length >= 2; } },
+];
+
+function checkAchievements() {
+  ACHIEVEMENT_DEFS.forEach(function(a) {
+    if (achievements.indexOf(a.id) === -1 && a.check()) {
+      achievements.push(a.id);
+      showAchievement(a);
+    }
+  });
+}
+
+function showAchievement(a) {
+  playAchievement();
+  var container = document.getElementById('achievementContainer');
+  var toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.innerHTML =
+    '<div class="achievement-icon">' + iconSvg('star','width:20px;height:20px;fill:var(--accent);') + '</div>' +
+    '<div class="achievement-text"><h4>' + a.title + '</h4><p>' + a.desc + '</p></div>';
+  container.appendChild(toast);
+  setTimeout(function() {
+    toast.classList.add('hide');
+    setTimeout(function() { toast.remove(); }, 400);
+  }, 3500);
+}
+
+/* ═══ SCREEN NAV ══════════════════════════════════════════════ */
+function showScreen(id, direction) {
+  var prev = document.querySelector('.screen.active');
+  if (prev) prev.classList.remove('active', 'slide-in-right', 'slide-in-left');
+  var el = document.getElementById(id);
+  if (!el) return;
+  var animClass = direction === 'back' ? 'slide-in-left' : 'slide-in-right';
+  el.classList.add('active', animClass);
+  el.addEventListener('animationend', function() { el.classList.remove(animClass); }, { once: true });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  var inner = el.querySelector('.scenario-main');
+  if (inner) inner.scrollTop = 0;
+  if (direction !== 'back') screenHistory.push(id);
+}
+
+/* ═══ DARK MODE ═══════════════════════════════════════════════ */
+window.toggleDark = function() {
+  darkMode = !darkMode;
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : '');
+  document.querySelectorAll('.dark-toggle-icon').forEach(function(el) {
+    el.innerHTML = darkMode ? iconSvg('sun') : iconSvg('moon');
+  });
+  document.querySelectorAll('.topbar-logo-light').forEach(function(el) { el.style.display = darkMode ? 'none' : ''; });
+  document.querySelectorAll('.topbar-logo-dark').forEach(function(el) { el.style.display = darkMode ? '' : 'none'; });
+  playClick();
+};
+
+/* ═══ SOUND TOGGLE ════════════════════════════════════════════ */
+window.toggleSound = function() {
+  initAudio();
+  soundEnabled = !soundEnabled;
+  document.querySelectorAll('.sound-toggle-icon').forEach(function(el) {
+    el.innerHTML = soundEnabled ? iconSvg('volume') : iconSvg('volumeoff');
+  });
+  if (soundEnabled) playClick();
+};
+
+/* ═══ SIDEBAR ═════════════════════════════════════════════════ */
+window.openSidebar = function() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+  playClick();
+};
+window.closeSidebar = function() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+};
+
+/* ═══ CASE PANEL ══════════════════════════════════════════════ */
+window.toggleCasePanel = function() {
+  panelOpen = !panelOpen;
+  document.querySelectorAll('.scenario-case-panel').forEach(function(el) {
+    el.classList.toggle('collapsed', !panelOpen);
+  });
+  document.querySelectorAll('.panel-toggle-pill').forEach(function(el) {
+    el.classList.toggle('active', panelOpen);
+    el.querySelector('.panel-toggle-label').textContent = panelOpen ? 'Ocultar caso' : 'Ver caso clinico';
+  });
+  playClick();
+};
+
+/* ═══ MODAL ═══════════════════════════════════════════════════ */
+window.closeModal = function() {
+  document.getElementById('confirmModal').classList.remove('open');
+  pendingNav = null;
+};
+
+function showConfirmModal(dest, destType) {
+  pendingNav = { dest: dest, destType: destType };
+  var dec = document.getElementById('modalDecisions');
+  dec.innerHTML = decisions.length > 0
+    ? '<p style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:.07em;margin-bottom:.55rem;">Decisiones tomadas</p>' +
+      decisions.map(function(d) {
+        return '<div class="modal-decision-row">' +
+          '<span class="decision-type-pill ' + d.type + '">' + d.choiceLabel + '</span>' +
+          '<div><strong>' + d.scenarioTitle + '</strong>' + d.choiceText + '</div>' +
+        '</div>';
+      }).join('')
+    : '';
+  document.getElementById('confirmModal').classList.add('open');
+  document.getElementById('modalConfirmBtn').onclick = function() {
+    var nav = pendingNav;
+    document.getElementById('confirmModal').classList.remove('open');
+    pendingNav = null;
+    if (nav) doNavigate(nav.dest, nav.destType);
+  };
+}
+
+/* ═══ NAVIGATE ════════════════════════════════════════════════ */
+function doNavigate(dest, destType) {
+  if (destType === 'ending') {
+    var ending = endings.find(function(e) { return e.id === dest; });
+    if (ending) {
+      if (!document.getElementById('screen-' + ending.id)) {
+        document.getElementById('app').insertAdjacentHTML('beforeend', renderEnding(ending));
+        setTimeout(function() {
+          animateRing(ending.id);
+          if (ending.type === 'optimo' || ending.type === 'aceptable') {
+            launchConfetti();
+            playSuccess();
+          }
+        }, 500);
+      }
+      window._lastEndingId = 'screen-' + ending.id;
+      showScreen('screen-' + ending.id, 'forward');
+      checkAchievements();
+    }
+  } else {
+    showScreen('screen-' + dest, 'forward');
+  }
+}
+
+window._doNav = function(dest, destType) {
+  if (destType === 'ending') showConfirmModal(dest, destType);
+  else doNavigate(dest, destType);
+};
+
+window.goBack = function(prevId) {
+  showScreen('screen-' + prevId, 'back');
+  playClick();
+};
+
+/* ═══ SCORE RING ANIMATION ════════════════════════════════════ */
+function animateRing(endingId) {
+  var fill = document.getElementById('ring-fill-' + endingId);
+  var scoreTxt = document.getElementById('score-text-' + endingId);
+  if (!fill) return;
+  var pct = maxScore > 0 ? (totalScore / maxScore) : 0;
+  var circ = 2 * Math.PI * 50;
+  fill.style.strokeDashoffset = circ * (1 - pct);
+  if (scoreTxt) {
+    var current = 0;
+    var target = Math.round(pct * 100);
+    var step = function() {
+      current = Math.min(current + Math.ceil(target / 40), target);
+      scoreTxt.textContent = current + '%';
+      if (current < target) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+}
+
+/* ═══ CONFETTI ════════════════════════════════════════════════ */
+function launchConfetti() {
+  var canvas = document.getElementById('confetti-canvas');
+  var ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  var id = IDENTITY;
+  var colors = [id.colorPrimary || '#003049', id.colorTertiary || '#FF6F4C', '#22c55e', '#7c3aed', id.colorBadges || '#3AC2CA', '#fbbf24'];
+  var pieces = Array.from({length: 120}, function() {
+    return {
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 100,
+      w: 6 + Math.random() * 10,
+      h: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      r: Math.random() * Math.PI * 2,
+      rSpd: (Math.random() - 0.5) * 0.14,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 4,
+      alpha: 1,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle',
+    };
+  });
+  var done = false;
+  function drawConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var allGone = true;
+    pieces.forEach(function(p) {
+      p.x += p.vx; p.y += p.vy; p.r += p.rSpd;
+      p.vy += 0.03;
+      if (p.y < canvas.height + 30) { allGone = false; p.alpha = Math.max(0, p.alpha - 0.005); }
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.r);
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      if (p.shape === 'circle') {
+        ctx.beginPath(); ctx.arc(0, 0, p.w/2, 0, Math.PI*2); ctx.fill();
+      } else {
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      }
+      ctx.restore();
+    });
+    if (!allGone && !done) requestAnimationFrame(drawConfetti);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  drawConfetti();
+  setTimeout(function() { done = true; ctx.clearRect(0, 0, canvas.width, canvas.height); }, 5000);
+}
+
+/* ═══ LIGHTBOX ════════════════════════════════════════════════ */
+window.openLightbox = function(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightboxOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+window.closeLightbox = function() {
+  document.getElementById('lightboxOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+};
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeLightbox(); closeSidebar(); closeModal(); }
+});
+
+/* ═══ SIDEBAR UPDATE ══════════════════════════════════════════ */
+function updateSidebar() {
+  var body = document.getElementById('sidebarBody');
+  if (!body) return;
+  if (decisions.length === 0) {
+    body.innerHTML = '<p class="sidebar-empty">Aqui veras un registro de las decisiones que tomes a lo largo del caso.</p>';
+    return;
+  }
+  var pillLabel = { correcta:'Correcta', incorrecta:'Incorrecta', parcial:'Parcial', critica:'Critica' };
+  body.innerHTML = decisions.map(function(d, i) {
+    return '<div class="decision-item ' + d.type + '">' +
+      '<div class="decision-scenario">Decision ' + (i+1) + ' \u00B7 ' + d.scenarioTitle + '</div>' +
+      '<div class="decision-choice">' + d.choiceLabel + '. ' + d.choiceText + '</div>' +
+      '<span class="decision-type-pill ' + d.type + '">' + (pillLabel[d.type] || d.type) + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+/* ═══ MEDIA HELPERS ═══════════════════════════════════════════ */
+function isYouTube(url) { return url && (url.indexOf('youtube.com') !== -1 || url.indexOf('youtu.be') !== -1); }
+function isVimeo(url)   { return url && url.indexOf('vimeo.com') !== -1; }
+function isVideo(url)   { return url && /\.(mp4|webm|ogg)(\?|$)/i.test(url); }
+
+function toEmbedUrl(url) {
+  if (!url) return url;
+  var yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (yt) return 'https://www.youtube.com/embed/' + yt[1];
+  var vm = url.match(/vimeo\.com\/(\d+)/);
+  if (vm) return 'https://player.vimeo.com/video/' + vm[1];
+  return url;
+}
+
+function renderMedia(url, scenarioId) {
+  if (!url) return '';
+  var embedUrl = toEmbedUrl(url);
+  var mediaHtml = '';
+  if (isYouTube(url) || isVimeo(url)) {
+    mediaHtml = '<div class="scenario-media"><iframe src="' + embedUrl + '" allowfullscreen loading="lazy"></iframe></div>';
+  } else if (isVideo(url)) {
+    mediaHtml = '<div class="scenario-media"><video src="' + url + '" controls preload="metadata"></video></div>';
+  } else {
+    mediaHtml = '<div class="scenario-media"><img src="' + url + '" alt="Imagen del escenario" loading="lazy" onclick="openLightbox(\'' + url.replace(/'/g,"\\'") + '\')" onerror="this.parentElement.style.cssText=\'padding:1rem;color:var(--text-muted);font-size:.85rem;text-align:center;\';this.parentElement.textContent=\'No se pudo cargar el recurso visual.\';"></div>';
+  }
+  return '<button class="media-toggle-btn" id="media-toggle-btn-' + scenarioId + '" onclick="toggleMedia(\'' + scenarioId + '\')">' + iconSvg('eye','width:13px;height:13px;fill:currentColor;vertical-align:middle;') + ' Ocultar recurso visual</button>' +
+         '<div id="media-wrap-' + scenarioId + '">' + mediaHtml + '</div>';
+}
+window.toggleMedia = function(id) {
+  var wrap = document.getElementById('media-wrap-' + id);
+  var btn  = document.getElementById('media-toggle-btn-' + id);
+  if (!wrap || !btn) return;
+  var hidden = wrap.style.display === 'none';
+  wrap.style.display = hidden ? 'block' : 'none';
+  btn.innerHTML = hidden
+    ? iconSvg('eye','width:13px;height:13px;fill:currentColor;vertical-align:middle;') + ' Ocultar recurso visual'
+    : iconSvg('eyeoff','width:13px;height:13px;fill:currentColor;vertical-align:middle;') + ' Ver recurso visual';
+  playClick();
+};
+
+/* ═══ CASE PANEL HTML ═════════════════════════════════════════ */
+function renderCasePanelBody() {
+  var fields = ['presentacionClinica','antecedentes','exploracion','estudiosComplementarios','contextoClinico'];
+  return fields.filter(function(f) { return clinical[f]; }).map(function(f) {
+    return '<div class="panel-section">' +
+      '<div class="panel-section-label">' + iconSvg(clinicIcons[f],'width:11px;height:11px;fill:var(--primary);') + ' ' + clinicTitles[f] + '</div>' +
+      '<p>' + clinical[f] + '</p>' +
+    '</div>';
+  }).join('');
+}
+
+/* ═══ TOPBAR ══════════════════════════════════════════════════ */
+function renderTopbar(opts) {
+  opts = opts || {};
+  var showBack  = opts.showBack && opts.prevId;
+  var showPanel = opts.showPanel;
+  var id = IDENTITY;
+  var logoMain = id.logoUrl || '';
+  var logoNeg  = id.logoNegativeUrl || '';
+
+  var backBtn = showBack
+    ? '<button class="topbar-btn muted" onclick="goBack(\'' + opts.prevId + '\')">' + iconSvg('arrow_l','width:13px;height:13px;fill:currentColor;') + ' <span class="btn-text">Anterior</span></button>'
+    : '';
+  var panelBtn = showPanel
+    ? '<button class="panel-toggle-pill active" onclick="toggleCasePanel()">' + iconSvg('panel','width:13px;height:13px;fill:var(--primary);') + '<span class="panel-toggle-label">Ocultar caso</span></button>'
+    : '';
+  return '<div class="topbar">' +
+    (logoMain ? '<img src="' + logoMain + '" class="topbar-logo topbar-logo-light" alt="Logo" onerror="this.style.display=\'none\'">' : '') +
+    (logoNeg ? '<img src="' + logoNeg + '" class="topbar-logo topbar-logo-dark" alt="Logo" style="display:none" onerror="this.style.display=\'none\'">' : '') +
+    '<span class="topbar-title">' + caseData.title + '</span>' +
+    '<div class="topbar-btns">' +
+      backBtn +
+      panelBtn +
+      '<button class="topbar-btn" onclick="openSidebar()">' + iconSvg('clipboard','width:13px;height:13px;fill:currentColor;') + ' <span class="btn-text">Decisiones</span></button>' +
+      '<button class="btn-icon" onclick="toggleSound()" title="Sonido"><span class="sound-toggle-icon">' + iconSvg('volume') + '</span></button>' +
+      '<button class="btn-icon" onclick="toggleDark()" title="Modo oscuro/claro"><span class="dark-toggle-icon">' + (darkMode ? iconSvg('sun') : iconSvg('moon')) + '</span></button>' +
+    '</div>' +
+  '</div>';
+}
+
+/* ═══ COVER ═══════════════════════════════════════════════════ */
+function renderCover() {
+  var id = IDENTITY;
+  var logo = id.logoNegativeUrl || id.logoUrl || '';
+
+  var particles = '';
+  for (var i = 0; i < 20; i++) {
+    var left = Math.random() * 100;
+    var top = Math.random() * 100;
+    var delay = Math.random() * 6;
+    var size = 2 + Math.random() * 4;
+    particles += '<div class="cover-particle" style="left:' + left + '%;top:' + top + '%;width:' + size + 'px;height:' + size + 'px;animation-delay:' + delay + 's;opacity:' + (0.15 + Math.random()*0.25) + ';"></div>';
+  }
+
+  return '<div id="screen-cover" class="screen cover active">' +
+    '<div class="cover-accent"></div>' +
+    '<div class="cover-particles">' + particles + '</div>' +
+    '<div class="cover-heartbeat">' + iconSvg('heartbeat','width:56px;height:56px;fill:' + (id.colorTertiary || '#FF6F4C') + ';') + '</div>' +
+    (logo ? '<img src="' + logo + '" class="cover-logo" alt="Logo" onerror="this.style.display=\'none\'">' : '') +
+    '<h1>' + caseData.title + '</h1>' +
+    (caseData.subtitle ? '<h2>' + caseData.subtitle + '</h2>' : '') +
+    '<div class="cover-meta">' +
+      (caseData.module ? '<span class="cover-badge">' + caseData.module + '</span>' : '') +
+      (caseData.areaTematica ? '<span class="cover-badge">' + caseData.areaTematica + '</span>' : '') +
+    '</div>' +
+    (caseData.resumenBreve ? '<p class="cover-summary">' + caseData.resumenBreve + '</p>' : '') +
+    '<button class="btn-cover" onclick="startCase()">Comenzar caso &#8594;</button>' +
+  '</div>';
+}
+
+window.startCase = function() {
+  initAudio();
+  playClick();
+  showScreen('screen-clinical', 'forward');
+};
+
+window.startInteractive = function() {
+  playClick();
+  showScreen('screen-' + scenarios[0].id, 'forward');
+};
+
+/* ═══ CLINICAL ════════════════════════════════════════════════ */
+function renderClinical() {
+  var fields = ['presentacionClinica','antecedentes','exploracion','estudiosComplementarios','contextoClinico'];
+  var cards = '';
+  fields.forEach(function(f) {
+    if (clinical[f]) {
+      var iconName = clinicIcons[f] || 'heartbeat';
+      cards +=
+        '<div class="clinical-card">' +
+          '<div class="clinical-card-header">' +
+            '<div class="clinical-card-icon">' + iconSvg(iconName,'width:17px;height:17px;fill:var(--primary);') + '</div>' +
+            '<span class="clinical-card-label">' + clinicTitles[f] + '</span>' +
+          '</div>' +
+          '<div class="clinical-card-body">' + clinical[f] + '</div>' +
+        '</div>';
+    }
+  });
+  return '<div id="screen-clinical" class="screen">' +
+    renderTopbar() +
+    '<div class="page-wrap">' +
+      '<div class="clinical-header">' +
+        '<h2>Informacion Clinica</h2>' +
+        '<p>Revisa cuidadosamente el caso antes de tomar decisiones</p>' +
+        '<div class="section-divider"></div>' +
+      '</div>' +
+      '<div class="clinical-timeline">' + cards + '</div>' +
+      '<div class="clinical-footer">' +
+        '<button class="btn btn-accent" onclick="startInteractive()">Iniciar caso interactivo &#8594;</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="footer">' + (IDENTITY.footerText || '') + '</div>' +
+  '</div>';
+}
+
+/* ═══ STREAK BAR ══════════════════════════════════════════════ */
+function renderStreakBar() {
+  if (streak <= 0) return '';
+  var isHot = streak >= 3;
+  return '<div class="streak-bar' + (isHot ? ' hot' : '') + '">' +
+    '<span class="streak-fire">' + iconSvg('fire','width:18px;height:18px;fill:' + (isHot ? 'var(--accent)' : 'var(--primary)') + ';') + '</span>' +
+    '<span>Racha: ' + streak + ' correcta' + (streak > 1 ? 's' : '') + ' seguida' + (streak > 1 ? 's' : '') + '</span>' +
+  '</div>';
+}
+
+/* ═══ SCENARIO ════════════════════════════════════════════════ */
+function renderScenario(scenario, index) {
+  var progressPct = Math.round(((index + 1) / scenarios.length) * 100);
+  var showBack = index > 0;
+  var prevId = showBack ? scenarios[index - 1].id : '';
+
+  var answersHtml = scenario.answers.map(function(a) {
+    return '<button class="answer-btn" data-scenario="' + scenario.id + '" data-answer="' + a.id + '" ' +
+      'data-dest="' + a.destination + '" data-desttype="' + a.destinationType + '" ' +
+      'data-feedback="' + (a.feedback||'').replace(/"/g,'&quot;') + '" ' +
+      'data-score="' + (a.score||0) + '" data-type="' + a.type + '" ' +
+      'data-label="' + a.label + '" data-text="' + a.text.replace(/"/g,'&quot;') + '">' +
+      '<span class="answer-label">' + a.label + '</span>' +
+      '<span>' + a.text + '</span>' +
+    '</button>';
+  }).join('');
+
+  var mediaHtml = scenario.imageUrl ? renderMedia(scenario.imageUrl, scenario.id) : '';
+  var casePanelBody = renderCasePanelBody();
+
+  return '<div id="screen-' + scenario.id + '" class="screen scenario-screen">' +
+    renderTopbar({ showBack: showBack, prevId: prevId, showPanel: true }) +
+    '<div class="scenario-layout">' +
+      '<div class="scenario-case-panel" id="case-panel-' + scenario.id + '">' +
+        '<div class="panel-inner">' +
+          '<div class="panel-case-header">' +
+            '<span class="panel-case-title">' + iconSvg('clipboard','width:11px;height:11px;fill:var(--primary);') + ' Caso clinico</span>' +
+            '<button class="panel-collapse-btn" onclick="toggleCasePanel()">' + iconSvg('eyeoff','width:11px;height:11px;fill:currentColor;') + '</button>' +
+          '</div>' +
+          casePanelBody +
+        '</div>' +
+      '</div>' +
+      '<div class="scenario-main">' +
+        '<div class="progress-wrap">' +
+          '<div class="progress-label">' +
+            '<span>Progreso del caso</span>' +
+            '<span>' + progressPct + '%</span>' +
+          '</div>' +
+          '<div class="progress-bar"><div class="progress-fill" style="width:' + progressPct + '%;"></div></div>' +
+        '</div>' +
+        '<div id="streak-' + scenario.id + '"></div>' +
+        '<div class="scenario-card">' +
+          '<span class="scenario-badge">Escenario ' + (index + 1) + ' / ' + scenarios.length + '</span>' +
+          '<h2>' + scenario.title + '</h2>' +
+          '<p class="desc">' + scenario.description + '</p>' +
+          mediaHtml +
+          '<p class="answers-label">Selecciona la mejor opcion</p>' +
+          '<div class="answers" id="answers-' + scenario.id + '">' + answersHtml + '</div>' +
+          '<div id="feedback-' + scenario.id + '"></div>' +
+        '</div>' +
+        '<div class="footer" style="margin-top:2rem;">' + (IDENTITY.footerText || '') + '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+/* ═══ ENDING ══════════════════════════════════════════════════ */
+function renderEnding(ending) {
+  var iconName = endingIconName[ending.type] || 'clipboard';
+  var label    = endingLabels[ending.type] || ending.type;
+  var circ     = 2 * Math.PI * 50;
+
+  var joyHtml =
+    '<div class="joy-feedback ending-reveal-delay-3">' +
+      '<div class="joy-card">' +
+        '<div class="joy-card-header">' +
+          '<div class="joy-letter j">J</div>' +
+          '<div class="joy-card-header-text">' +
+            '<div class="joy-card-title">Juicio clinico</div>' +
+            '<div class="joy-card-subtitle">Calidad de la decision</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="joy-card-body">' + (ending.joyJ || 'Informacion no disponible.') + '</div>' +
+      '</div>' +
+      '<div class="joy-card">' +
+        '<div class="joy-card-header">' +
+          '<div class="joy-letter o">O</div>' +
+          '<div class="joy-card-header-text">' +
+            '<div class="joy-card-title">Oportunidades de mejora</div>' +
+            '<div class="joy-card-subtitle">Errores y sesgos identificados</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="joy-card-body">' + (ending.joyO || 'Informacion no disponible.') + '</div>' +
+      '</div>' +
+      '<div class="joy-card">' +
+        '<div class="joy-card-header">' +
+          '<div class="joy-letter y">Y</div>' +
+          '<div class="joy-card-header-text">' +
+            '<div class="joy-card-title">Y si te encuentras este caso otra vez...</div>' +
+            '<div class="joy-card-subtitle">Aprendizaje para el futuro</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="joy-card-body">' + (ending.joyY || 'Informacion no disponible.') + '</div>' +
+      '</div>' +
+    '</div>';
+
+  return '<div id="screen-' + ending.id + '" class="screen ending-screen">' +
+    renderTopbar() +
+    '<div class="ending-card">' +
+      '<div class="ending-card-accent ' + ending.type + '"></div>' +
+      '<div class="ending-icon-ring ' + ending.type + ' ending-reveal">' + iconSvg(iconName,'width:38px;height:38px;fill:currentColor;') + '</div>' +
+      '<h2 class="ending-reveal-delay-1">' + ending.title + '</h2>' +
+      '<span class="ending-type-badge ' + ending.type + ' ending-reveal-delay-1">' + label + '</span>' +
+      '<div class="score-ring ending-reveal-delay-2">' +
+        '<svg width="120" height="120" viewBox="0 0 120 120">' +
+          '<circle class="track" cx="60" cy="60" r="50"/>' +
+          '<circle class="fill" id="ring-fill-' + ending.id + '" cx="60" cy="60" r="50" ' +
+            'stroke-dasharray="' + circ + '" stroke-dashoffset="' + circ + '"/>' +
+        '</svg>' +
+        '<div>' +
+          '<div class="score-text" id="score-text-' + ending.id + '">0%</div>' +
+          '<div class="score-label">' + totalScore + '/' + maxScore + ' pts</div>' +
+        '</div>' +
+      '</div>' +
+      '<p class="ending-description ending-reveal-delay-2">' + ending.description + '</p>' +
+      joyHtml +
+      '<div class="ending-actions ending-reveal-delay-4">' +
+        '<button class="btn btn-outline" onclick="openReview()">' + iconSvg('eye','width:13px;height:13px;fill:currentColor;') + ' Revisar caso</button>' +
+        '<button class="btn btn-outline" onclick="openSidebar()">' + iconSvg('clipboard','width:13px;height:13px;fill:currentColor;') + ' Mis decisiones</button>' +
+        '<button class="btn btn-accent" onclick="location.reload()">' + iconSvg('refresh','width:13px;height:13px;fill:currentColor;') + ' Reiniciar</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="footer">' + (IDENTITY.footerText || '') + '</div>' +
+  '</div>';
+}
+
+/* ═══ REVIEW MODE ═════════════════════════════════════════════ */
+window.openReview = function() {
+  var existing = document.getElementById('screen-review');
+  if (existing) existing.remove();
+
+  var typeClassMap   = { correcta:'correct', incorrecta:'incorrect', parcial:'partial', critica:'critica' };
+  var chosenRowClass = { correcta:'chosen-correct', incorrecta:'chosen-incorrect', parcial:'chosen-partial', critica:'chosen-critica' };
+  var pillLabel      = { correcta:'Correcta', incorrecta:'Incorrecta', parcial:'Parcial', critica:'Critica' };
+
+  var scenariosHtml = decisions.map(function(d, idx) {
+    var answersHtml = d.answers.map(function(a) {
+      var isChosen = a.label === d.choiceLabel;
+      var rowClass = isChosen ? chosenRowClass[d.type] || '' : '';
+      return '<div class="review-answer-row ' + rowClass + '">' +
+        '<div class="review-answer-label">' + a.label + '</div>' +
+        '<span>' + a.text + (isChosen ? '<em style="color:var(--text-muted);font-style:italic;margin-left:.4rem;font-size:.85em;">\u2190 tu respuesta</em>' : '') + '</span>' +
+      '</div>';
+    }).join('');
+
+    var feedbackHtml = d.choiceFeedback
+      ? '<div class="review-feedback"><strong>Retroalimentacion</strong>' + d.choiceFeedback + '</div>'
+      : '';
+
+    var changeBtn =
+      '<button class="review-change-btn" onclick="changeAnswer(\'' + d.scenarioId + '\')">' +
+        iconSvg('edit','width:12px;height:12px;fill:currentColor;') + ' Cambiar respuesta' +
+      '</button>';
+
+    var cardClass = 'review-card review-' + (typeClassMap[d.type] || 'incorrect');
+
+    return '<div class="review-scenario">' +
+      '<div class="' + cardClass + '">' +
+        '<div class="review-card-header">' +
+          '<span class="review-scenario-badge">Decision ' + (idx + 1) + ' \u00B7 ' + d.scenarioTitle + '</span>' +
+          '<span class="review-outcome-pill ' + d.type + '">' + (pillLabel[d.type] || d.type) + '</span>' +
+        '</div>' +
+        '<h3>' + d.scenarioTitle + '</h3>' +
+        (d.scenarioDesc ? '<p class="review-desc">' + d.scenarioDesc + '</p>' : '') +
+        '<div class="review-answers">' + answersHtml + '</div>' +
+        feedbackHtml +
+        changeBtn +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var pct = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+  var reviewHtml =
+    '<div id="screen-review" class="screen review-screen">' +
+      renderTopbar() +
+      '<div class="review-header">' +
+        '<h2>Revision del caso</h2>' +
+        '<p>Todas tus decisiones con retroalimentacion &nbsp;\u00B7&nbsp; ' + pct + '% &nbsp;\u00B7&nbsp; ' + totalScore + '/' + maxScore + ' pts</p>' +
+        '<div class="section-divider"></div>' +
+      '</div>' +
+      scenariosHtml +
+      '<div class="review-footer-actions">' +
+        '<button class="btn btn-outline" onclick="showScreen(window._lastEndingId,\'back\')">' + iconSvg('arrow_l','width:13px;height:13px;fill:currentColor;') + ' Volver al resultado</button>' +
+        '<button class="btn btn-accent" onclick="location.reload()">' + iconSvg('refresh','width:13px;height:13px;fill:currentColor;') + ' Reiniciar caso</button>' +
+      '</div>' +
+      '<div class="footer">' + (IDENTITY.footerText || '') + '</div>' +
+    '</div>';
+
+  document.getElementById('app').insertAdjacentHTML('beforeend', reviewHtml);
+  showScreen('screen-review', 'forward');
+  playClick();
+};
+
+/* ═══ CHANGE ANSWER ═══════════════════════════════════════════ */
+window.changeAnswer = function(scenarioId) {
+  var dIdx = decisions.findIndex(function(d) { return d.scenarioId === scenarioId; });
+  if (dIdx === -1) return;
+
+  decisions.splice(dIdx);
+  totalScore = decisions.reduce(function(acc, d) {
+    var scen = scenarios.find(function(s) { return s.id === d.scenarioId; });
+    if (!scen) return acc;
+    var ans = scen.answers.find(function(a) { return a.label === d.choiceLabel; });
+    return acc + (ans ? (ans.score || 0) : 0);
+  }, 0);
+
+  streak = 0;
+  for (var i = decisions.length - 1; i >= 0; i--) {
+    if (decisions[i].type === 'correcta') streak++;
+    else break;
+  }
+
+  updateSidebar();
+
+  var ansContainer = document.getElementById('answers-' + scenarioId);
+  if (ansContainer) {
+    ansContainer.querySelectorAll('.answer-btn').forEach(function(btn) {
+      btn.disabled = false;
+      btn.removeAttribute('disabled');
+      btn.classList.remove('selected-correct','selected-incorrect','selected-partial','selected-critica');
+    });
+  }
+  var fbEl = document.getElementById('feedback-' + scenarioId);
+  if (fbEl) fbEl.innerHTML = '';
+
+  showScreen('screen-' + scenarioId, 'back');
+  playClick();
+};
+
+/* ═══ ANSWER HANDLER ══════════════════════════════════════════ */
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.answer-btn');
+  if (!btn || btn.disabled) return;
+
+  initAudio();
+
+  var scenarioId = btn.dataset.scenario;
+  var dest       = btn.dataset.dest;
+  var destType   = btn.dataset.desttype;
+  var feedback   = btn.dataset.feedback;
+  var score      = parseInt(btn.dataset.score) || 0;
+  var ansType    = btn.dataset.type;
+  var label      = btn.dataset.label;
+  var text       = btn.dataset.text;
+
+  document.querySelectorAll('[data-scenario="' + scenarioId + '"]').forEach(function(b) {
+    b.disabled = true; b.setAttribute('disabled', '');
+  });
+
+  var typeClass = { correcta:'selected-correct', incorrecta:'selected-incorrect', parcial:'selected-partial', critica:'selected-critica' }[ansType] || 'selected-incorrect';
+  btn.classList.add(typeClass);
+
+  totalScore += score;
+
+  // Streak tracking
+  if (ansType === 'correcta') { streak++; }
+  else { streak = 0; }
+
+  // Sound feedback
+  if (ansType === 'correcta') playCorrect();
+  else if (ansType === 'incorrecta' || ansType === 'critica') playIncorrect();
+  else if (ansType === 'parcial') playPartial();
+
+  var scenario = scenarios.find(function(s) { return s.id === scenarioId; });
+  decisions.push({
+    scenarioId: scenarioId,
+    scenarioTitle:  scenario ? scenario.title : scenarioId,
+    scenarioDesc:   scenario ? scenario.description : '',
+    answers:        scenario ? scenario.answers : [],
+    choiceLabel:    label,
+    choiceText:     text,
+    choiceFeedback: feedback,
+    type:           ansType,
+  });
+  updateSidebar();
+  checkAchievements();
+
+  // Update streak bar for next scenario
+  var streakEl = document.getElementById('streak-' + scenarioId);
+  if (streakEl) streakEl.innerHTML = renderStreakBar();
+
+  var fbEl = document.getElementById('feedback-' + scenarioId);
+  if (feedback) {
+    var fbClass   = { correcta:'correct', incorrecta:'incorrect', parcial:'partial', critica:'critica' }[ansType] || 'incorrect';
+    var fbIconMap = { correcta:'check', incorrecta:'x', parcial:'alert', critica:'zap' };
+    var fbTitle   = { correcta:'Decision correcta', incorrecta:'Decision incorrecta', parcial:'Parcialmente correcto', critica:'Decision critica' }[ansType] || 'Retroalimentacion';
+    fbEl.innerHTML =
+      '<div class="feedback-card">' +
+        '<span class="feedback-label ' + fbClass + '">' + iconSvg(fbIconMap[ansType]||'alert','width:12px;height:12px;fill:currentColor;') + ' ' + fbTitle + '</span>' +
+        '<p>' + feedback + '</p>' +
+        '<div class="feedback-actions">' +
+          '<button class="btn" style="font-size:.9rem;padding:.75rem 2rem;" onclick="window._doNav(\'' + dest + '\',\'' + destType + '\')">' +
+            'Continuar &#8594;' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+  } else {
+    fbEl.innerHTML =
+      '<div class="feedback-actions" style="margin-top:1rem">' +
+        '<button class="btn" style="font-size:.9rem;padding:.75rem 2rem;" onclick="window._doNav(\'' + dest + '\',\'' + destType + '\')">' +
+          'Continuar &#8594;' +
+        '</button>' +
+      '</div>';
+  }
+
+  var mainEl = fbEl.closest('.scenario-main');
+  if (mainEl) {
+    setTimeout(function() {
+      mainEl.scrollTo({ top: mainEl.scrollHeight, behavior: 'smooth' });
+    }, 120);
+  } else {
+    fbEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+});
+
+/* ═══ BUILD APP ═══════════════════════════════════════════════ */
+applyIdentity(IDENTITY);
+var html = renderCover() + renderClinical();
+scenarios.forEach(function(s, i) { html += renderScenario(s, i); });
+document.getElementById('app').innerHTML = html;
+window.showScreen = showScreen;
+
+/* ═══ NEURAL CANVAS (animated background) ═════════════════════ */
+(function initNeural() {
+  var canvas = document.getElementById('neural-bg');
+  var ctx = canvas.getContext('2d');
+  var W, H, nodes;
+  var id = IDENTITY;
+  var nodeColor = id.colorPrimary || '#003049';
+
+  function hexToRgb(hex) {
+    var r = parseInt(hex.slice(1,3), 16);
+    var g = parseInt(hex.slice(3,5), 16);
+    var b = parseInt(hex.slice(5,7), 16);
+    return r + ',' + g + ',' + b;
+  }
+  var rgb = hexToRgb(nodeColor);
+
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function initNodes() {
+    nodes = Array.from({ length: 30 }, function() {
+      return {
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
+        r: 1.5 + Math.random() * 2.5,
+      };
+    });
+  }
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    nodes.forEach(function(n) {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+    });
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 220) {
+          var mx = (nodes[i].x + nodes[j].x) / 2 + (Math.random() - 0.5) * 25;
+          var my = (nodes[i].y + nodes[j].y) / 2 + (Math.random() - 0.5) * 25;
+          ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.quadraticCurveTo(mx, my, nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = 'rgba(' + rgb + ',' + ((1 - dist/220) * 0.4) + ')';
+          ctx.lineWidth = 0.7; ctx.stroke();
+        }
+      }
+    }
+    nodes.forEach(function(n) {
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + rgb + ',0.45)'; ctx.fill();
+    });
+    requestAnimationFrame(loop);
+  }
+  resize(); initNodes(); loop();
+  window.addEventListener('resize', function() { resize(); initNodes(); });
+})();
+
+})();
+</script>
+</body>
+</html>
