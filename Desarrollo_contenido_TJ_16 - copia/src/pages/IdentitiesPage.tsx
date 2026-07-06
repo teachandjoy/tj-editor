@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { sanitizeHtml } from '../lib/sanitize';
 import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
 import { Plus, X, Trash2, Edit, Check, Upload, Download, FileJson } from 'lucide-react';
@@ -528,7 +529,7 @@ export default function IdentitiesPage() {
                           <div className="p-3" style={{ background: '#fafafa' }}>
                             <p className="text-xs font-semibold mb-2" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Vista previa:</p>
                             <div className="p-3 bg-white rounded-lg border" style={{ borderColor: TJ.border }}
-                              dangerouslySetInnerHTML={{ __html: block.html }} />
+                              dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.html) }} />
                           </div>
                         )}
                         {block.detectedTypes && block.detectedTypes.length > 0 && (

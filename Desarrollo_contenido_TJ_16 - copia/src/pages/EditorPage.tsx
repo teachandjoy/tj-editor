@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { sanitizeHtml } from '../lib/sanitize';
+import { cleanExportHTML } from '../lib/export-cleanup';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../store/context';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -221,11 +223,15 @@ export default function EditorPage() {
     onUpdate: ({ editor: ed }) => {
       // Autosave debounced — 2s for API persistence
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-      autosaveTimer.current = setTimeout(() => {
+      autosaveTimer.current = setTimeout(async () => {
         if (topic) {
-          updateTopic(topic.id, { content: ed.getHTML() });
-          setAutoSaved(true);
-          setTimeout(() => setAutoSaved(false), 2000);
+          try {
+            await updateTopic(topic.id, { content: ed.getHTML() });
+            setAutoSaved(true);
+            setTimeout(() => setAutoSaved(false), 2000);
+          } catch {
+            // Toast is already emitted by the store
+          }
         }
       }, 2000);
     },
@@ -343,7 +349,8 @@ export default function EditorPage() {
 
   const handleExport = useCallback((withSnippet: boolean) => {
     if (!topic) return;
-    const content = editor?.getHTML() || topic.content;
+    const rawContent = editor?.getHTML() || topic.content;
+    const content = cleanExportHTML(rawContent);
     const html = buildExportHTML({ ...topic, content }, topicRefs, withSnippet ? identity?.snippet : undefined, identity);
     downloadFile(html, `${topic.title.replace(/[^a-z0-9]/gi, '_')}.html`);
     setShowExportMenu(false);
@@ -468,7 +475,8 @@ export default function EditorPage() {
 
   const handlePublicationPreview = useCallback(() => {
     if (!topic) return;
-    const content = editor?.getHTML() || topic.content;
+    const rawContent = editor?.getHTML() || topic.content;
+    const content = cleanExportHTML(rawContent);
     const html = buildExportHTML({ ...topic, content }, topicRefs, identity?.snippet, identity);
     setPublicationPreviewHtml(html);
     setShowPublicationPreview(true);
@@ -486,7 +494,8 @@ export default function EditorPage() {
   );
 
   const TbBtn = ({ onClick, active, title, children, disabled }: { onClick: () => void; active?: boolean; title?: string; children: React.ReactNode; disabled?: boolean }) => (
-    <button onClick={onClick} title={title} disabled={disabled}
+    <button onClick={onClick} title={title} aria-label={title} aria-pressed={active} disabled={disabled}
+      role="button" tabIndex={0}
       className="flex items-center justify-center rounded transition-all flex-shrink-0"
       style={{ width: 28, height: 28, background: active ? 'rgba(27,75,133,0.12)' : 'transparent', color: active ? TJ.primary : '#555', opacity: disabled ? 0.35 : 1 }}
       onMouseEnter={e => { if (!active && !disabled) e.currentTarget.style.background = '#f0ece6'; }}
@@ -669,8 +678,10 @@ export default function EditorPage() {
                   { type: 'I', label: 'I, II, III...' },
                 ].map(opt => (
                   <button key={opt.type} onClick={() => {
-                    const listEl = editor.view.dom.querySelector('ol');
-                    if (listEl) listEl.style.listStyleType = opt.type === '1' ? 'decimal' : opt.type === 'a' ? 'lower-alpha' : opt.type === 'A' ? 'upper-alpha' : opt.type === 'i' ? 'lower-roman' : 'upper-roman';
+                    const styleType = opt.type === '1' ? 'decimal' : opt.type === 'a' ? 'lower-alpha' : opt.type === 'A' ? 'upper-alpha' : opt.type === 'i' ? 'lower-roman' : 'upper-roman';
+                    editor.chain().focus().updateAttributes('orderedList', {
+                      style: `list-style-type: ${styleType}`,
+                    }).run();
                   }}
                     className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {opt.label}
@@ -811,7 +822,7 @@ export default function EditorPage() {
                         </div>
                         {block.html && (
                           <div className="text-xs rounded p-2 overflow-hidden" style={{ background: '#f8f8f8', border: `1px solid ${TJ.border}`, maxHeight: blockPreviewId === block.id ? 200 : 48 }}
-                            dangerouslySetInnerHTML={{ __html: block.html }} />
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.html) }} />
                         )}
                       </button>
                       {block.html && (
@@ -966,7 +977,7 @@ export default function EditorPage() {
                             {generateInTextCitation(ref, idx + 1)}
                             {topic.referenceIds.includes(ref.id) && <span style={{ color: '#276749', fontWeight: 400 }}>✓ Asociada</span>}
                           </div>
-                          <div className="text-xs" style={{ color: '#555' }} dangerouslySetInnerHTML={{ __html: formatReference(ref, idx + 1) }} />
+                          <div className="text-xs" style={{ color: '#555' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatReference(ref, idx + 1)) }} />
                         </div>
                         <div className="flex gap-1 flex-shrink-0">
                           <button onClick={() => { openEditRef(ref); setShowRefNew(true); }}

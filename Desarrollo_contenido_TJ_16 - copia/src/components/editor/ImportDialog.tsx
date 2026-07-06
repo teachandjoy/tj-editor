@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { sanitizeHtml } from '../../lib/sanitize';
 import { X, Upload, FileText, FileCode, Eye, AlertCircle } from 'lucide-react';
 import { TJ } from '../../constants/theme';
 import ModalPortal from '../ui/ModalPortal';
@@ -253,7 +254,7 @@ export default function ImportDialog({ onClose, onImport }: ImportDialogProps) {
                 <div
                   className="p-6 text-sm"
                   style={{ fontFamily: 'Open Sans, sans-serif', lineHeight: 1.7 }}
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewHtml) }}
                 />
               </div>
               <div className="flex items-center gap-2 text-xs" style={{ color: '#a8b8d8' }}>

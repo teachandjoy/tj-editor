@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { sanitizeHtml } from '../lib/sanitize';
 import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
 import { Plus, BookOpen, Trash2, X, ChevronDown, Search, Globe, Loader2 } from 'lucide-react';
@@ -167,7 +168,7 @@ export default function BibliographyPage() {
                           <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#f0ece6', color: '#666' }}>{ref.type}</span>
                           {ref.moduleTag && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(197,170,111,0.15)', color: '#8b6914' }}>{ref.moduleTag}</span>}
                         </div>
-                        <div className="text-sm" style={{ color: TJ.text }} dangerouslySetInnerHTML={{ __html: formatReference(ref, grouped[key].indexOf(ref) + 1) }} />
+                        <div className="text-sm" style={{ color: TJ.text }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatReference(ref, grouped[key].indexOf(ref) + 1)) }} />
                       </div>
                       {canDelete && (
                         <button onClick={() => deleteReference(ref.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0" style={{ color: '#c53030' }}>
@@ -287,7 +288,7 @@ export default function BibliographyPage() {
               {authors && title && year && (
                 <div className="mt-4 p-3 rounded-xl text-sm" style={{ background: '#f8f7f5', border: `1px solid ${TJ.border}` }}>
                   <p className="text-xs font-semibold mb-1" style={{ color: '#a8b8d8', fontFamily: 'Montserrat, sans-serif' }}>VISTA PREVIA</p>
-                  <div style={{ color: TJ.text }} dangerouslySetInnerHTML={{ __html: formatReference({ id: 'preview', style, type: refType, authors, title, year, journal, volume, issue, pages, publisher, city, doi, url, edition }, 1) }} />
+                  <div style={{ color: TJ.text }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatReference({ id: 'preview', style, type: refType, authors, title, year, journal, volume, issue, pages, publisher, city, doi, url, edition }, 1)) }} />
                 </div>
               )}
             </div>

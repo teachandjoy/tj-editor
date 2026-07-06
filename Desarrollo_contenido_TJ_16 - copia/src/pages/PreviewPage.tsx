@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { sanitizeHtml } from '../lib/sanitize';
 import { useApp } from '../store/context';
 import { ArrowLeft, Monitor, Smartphone, Edit, Download } from 'lucide-react';
 import { useState } from 'react';
@@ -150,7 +151,7 @@ export default function PreviewPage() {
                   <div style={{ fontSize: 12, color: '#888', marginBottom: 20, paddingBottom: 14, borderBottom: `1px solid ${TJ.border}` }}>
                     {topic.offerName && <><strong>{topic.offerName}</strong> · </>}{topic.author}
                   </div>
-                  <div dangerouslySetInnerHTML={{ __html: buildMoodleHTML() }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(buildMoodleHTML()) }} />
                 </div>
               </div>
             </div>
@@ -175,12 +176,12 @@ export default function PreviewPage() {
                   {topic.offerName && <><strong style={{ color: cp }}>{topic.offerName}</strong> · </>}
                   {topic.author} · {topic.version} · {topic.date}
                 </div>
-                <div className="tiptap prose max-w-none" dangerouslySetInnerHTML={{ __html: editorContent }} />
+                <div className="tiptap prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(editorContent) }} />
                 {topicRefs.length > 0 && (
                   <div className="mt-8 pt-6 border-t" style={{ borderColor: TJ.border }}>
                     <h3 style={{ color: cp, fontFamily: `'${fm}', sans-serif`, marginBottom: 12 }}>Referencias</h3>
                     {topicRefs.map((ref, idx) => (
-                      <div key={ref.id} className="text-sm mb-2" style={{ color: '#555' }} dangerouslySetInnerHTML={{ __html: formatReference(ref, idx + 1) }} />
+                      <div key={ref.id} className="text-sm mb-2" style={{ color: '#555' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatReference(ref, idx + 1)) }} />
                     ))}
                   </div>
                 )}

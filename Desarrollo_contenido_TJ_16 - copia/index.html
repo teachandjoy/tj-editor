@@ -2,33 +2,27 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/desarrollo-de-contenido/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="tj-api-base" content="/desarrollo-de-contenido/api.php" />
+    <meta name="tj-api-base" content="/api" />
     <title>Teach &amp; Joy — Contenido Académico</title>
-    <link rel="stylesheet" crossorigin href="/desarrollo-de-contenido/assets/index-Cy1CU6Ic.css">
     <style>
       @media (max-width: 768px) {
         table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100vw; }
       }
       .editor-fullscreen .doi-autocomplete-panel,
       .editor-fullscreen [data-doi-panel] { display: none !important; }
-      /* A1: Hide DOI panel in fullscreen via data attribute */
       [data-tj-fullscreen="true"] [data-doi-panel="true"] { display: none !important; }
-      /* B6: Mobile modals min-width fix */
       @media (max-width: 480px) {
         [class*="min-w-[4"] { min-width: calc(100vw - 32px) !important; }
         [class*="min-w-[5"] { min-width: calc(100vw - 32px) !important; }
         .fixed.inset-0 > div { max-width: calc(100vw - 16px) !important; }
       }
-      /* B7: Toolbar overflow visible for dropdowns */
       .editor-toolbar-wrap { overflow: visible !important; }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <script src="/desarrollo-de-contenido/tj-fixes-v2.js"></script>
-    <script type="module" crossorigin src="/desarrollo-de-contenido/assets/index-C5PerHqE.js"></script>
-    <script defer src="/desarrollo-de-contenido/tj-hotfix-permisos-editor.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
