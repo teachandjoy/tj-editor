@@ -1,6 +1,25 @@
 // API client with retry logic, heartbeat, localStorage fallback, and auth token support
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001/api';
+// Production: read from meta tag or env var; dev fallback to localhost
+const API_BASE = (() => {
+  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  if (typeof document !== 'undefined') {
+    const meta = document.querySelector('meta[name="tj-api-base"]');
+    if (meta?.getAttribute('content')) return meta.getAttribute('content')!;
+  }
+  return 'http://localhost:3001/api';
+})();
+
+// PHP backend uses ?r=path format; Node.js uses /api/path format
+const IS_PHP = API_BASE.includes('api.php');
+
+function apiUrl(path: string): string {
+  if (IS_PHP) {
+    const cleanPath = path.replace(/^\//, '');
+    return `${API_BASE}?r=${encodeURIComponent(cleanPath)}`;
+  }
+  return apiUrl(path);
+}
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline';
 
@@ -146,7 +165,7 @@ export function startHeartbeat() {
   if (heartbeatInterval) return;
   heartbeatInterval = setInterval(async () => {
     try {
-      const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) });
+      const res = await fetch(apiUrl('/health'), { signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         notifyConnection(true);
         await syncPendingRequests();
@@ -166,11 +185,24 @@ export function stopHeartbeat() {
   }
 }
 
+// ── 401 handler ─────────────────────────────────────────────────────────────
+
+const BASE_PATH = import.meta.env.VITE_BASE_PATH || '/desarrollo-de-contenido';
+
+function handle401(res: Response): void {
+  if (res.status === 401) {
+    localStorage.removeItem('tj_session_token');
+    localStorage.removeItem('tj_user_id');
+    window.location.href = BASE_PATH;
+  }
+}
+
 // ── API methods ─────────────────────────────────────────────────────────────
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetchWithRetry(`${API_BASE}${path}`, { headers: getHeaders() });
+  const res = await fetchWithRetry(apiUrl(path), { headers: getHeaders() });
   if (!res.ok) {
+    handle401(res);
     const err = await res.json().catch(() => ({ error: 'Error de red' }));
     throw new Error(err.error || `HTTP ${res.status}`);
   }
@@ -180,12 +212,13 @@ export async function apiGet<T>(path: string): Promise<T> {
 export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   notifySaveStatus('saving');
   try {
-    const res = await fetchWithRetry(`${API_BASE}${path}`, {
+    const res = await fetchWithRetry(apiUrl(path), {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
     if (!res.ok) {
+      handle401(res);
       const err = await res.json().catch(() => ({ error: 'Error de red' }));
       throw new Error(err.error || `HTTP ${res.status}`);
     }
@@ -195,7 +228,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   } catch (err) {
     savePendingRequest({
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      url: `${API_BASE}${path}`,
+      url: apiUrl(path),
       method: 'POST',
       body: JSON.stringify(data),
       timestamp: Date.now(),
@@ -208,12 +241,13 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
 export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   notifySaveStatus('saving');
   try {
-    const res = await fetchWithRetry(`${API_BASE}${path}`, {
+    const res = await fetchWithRetry(apiUrl(path), {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
     if (!res.ok) {
+      handle401(res);
       const err = await res.json().catch(() => ({ error: 'Error de red' }));
       throw new Error(err.error || `HTTP ${res.status}`);
     }
@@ -223,7 +257,7 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   } catch (err) {
     savePendingRequest({
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      url: `${API_BASE}${path}`,
+      url: apiUrl(path),
       method: 'PUT',
       body: JSON.stringify(data),
       timestamp: Date.now(),
@@ -236,11 +270,12 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
 export async function apiDelete(path: string): Promise<void> {
   notifySaveStatus('saving');
   try {
-    const res = await fetchWithRetry(`${API_BASE}${path}`, {
+    const res = await fetchWithRetry(apiUrl(path), {
       method: 'DELETE',
       headers: getHeaders(),
     });
     if (!res.ok) {
+      handle401(res);
       const err = await res.json().catch(() => ({ error: 'Error de red' }));
       throw new Error(err.error || `HTTP ${res.status}`);
     }
