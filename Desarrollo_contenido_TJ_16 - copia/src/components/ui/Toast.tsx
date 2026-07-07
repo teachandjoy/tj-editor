@@ -1,64 +1,131 @@
-import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { useState, useCallback, useEffect, createContext, useContext } from 'react';
+import { AlertCircle, CheckCircle, X, WifiOff } from 'lucide-react';
+import { onToast } from '../../lib/toast-bus';
 
-export type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'error' | 'success' | 'warning';
 
 interface ToastItem {
-  id: number;
+  id: string;
   message: string;
   type: ToastType;
+  timestamp: number;
 }
 
-let toastId = 0;
-let addToastFn: ((msg: string, type: ToastType) => void) | null = null;
-
-export function showToast(message: string, type: ToastType = 'info') {
-  if (addToastFn) addToastFn(message, type);
+interface ToastContextType {
+  showToast: (message: string, type?: ToastType) => void;
 }
 
-const icons = { success: CheckCircle, error: AlertTriangle, info: Info };
-const colors = {
-  success: { bg: '#f0fff4', border: '#c6f6d5', text: '#276749' },
-  error: { bg: '#fff5f5', border: '#fed7d7', text: '#c53030' },
-  info: { bg: '#ebf8ff', border: '#bee3f8', text: '#2b6cb0' },
-};
+const ToastContext = createContext<ToastContextType>({ showToast: () => {} });
 
+export function useToast() {
+  return useContext(ToastContext);
+}
+
+// Standalone toast container for use without provider pattern
 export default function ToastContainer() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const addToast = useCallback((message: string, type: ToastType) => {
-    const id = ++toastId;
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  const dismiss = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  useEffect(() => { addToastFn = addToast; return () => { addToastFn = null; }; }, [addToast]);
+  useEffect(() => {
+    return onToast((message, type) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setToasts(prev => {
+        const recent = prev.find(t => t.message === message && Date.now() - t.timestamp < 3000);
+        if (recent) return prev;
+        return [...prev, { id, message, type, timestamp: Date.now() }];
+      });
+    });
+  }, []);
 
-  if (toasts.length === 0) return null;
+  useEffect(() => {
+    if (toasts.length === 0) return;
+    const timer = setInterval(() => {
+      setToasts(prev => prev.filter(t => Date.now() - t.timestamp < 5000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [toasts.length]);
 
   return (
-    <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 99999, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {toasts.map(t => {
-        const Icon = icons[t.type];
-        const c = colors[t.type];
-        return (
-          <div key={t.id}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px',
-              background: c.bg, border: `1px solid ${c.border}`, borderRadius: 12,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)', minWidth: 280, maxWidth: 400,
-              animation: 'slideIn .25s ease-out',
-            }}>
-            <Icon size={16} style={{ color: c.text, flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: c.text, flex: 1, fontFamily: 'Open Sans, sans-serif' }}>{t.message}</span>
-            <button onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.text, padding: 2, flexShrink: 0 }}>
+    <div className="fixed bottom-4 right-4 z-[10000] flex flex-col gap-2 max-w-sm">
+      {toasts.map(toast => (
+        <div
+          key={toast.id}
+          className={`flex items-start gap-2 p-3 rounded-lg shadow-lg border text-sm animate-slide-in ${
+            toast.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+            toast.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+            'bg-green-50 border-green-200 text-green-800'
+          }`}
+        >
+          {toast.type === 'error' ? <AlertCircle size={16} className="flex-shrink-0 mt-0.5" /> :
+           toast.type === 'warning' ? <WifiOff size={16} className="flex-shrink-0 mt-0.5" /> :
+           <CheckCircle size={16} className="flex-shrink-0 mt-0.5" />}
+          <span className="flex-1">{toast.message}</span>
+          <button onClick={() => dismiss(toast.id)} className="flex-shrink-0 hover:opacity-70">
+            <X size={14} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const showToast = useCallback((message: string, type: ToastType = 'error') => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setToasts(prev => {
+      // Deduplicate identical messages within 3s
+      const recent = prev.find(t => t.message === message && Date.now() - t.timestamp < 3000);
+      if (recent) return prev;
+      return [...prev, { id, message, type, timestamp: Date.now() }];
+    });
+  }, []);
+
+  // Bridge toast-bus events from non-React code (store, api)
+  useEffect(() => {
+    return onToast((message, type) => showToast(message, type));
+  }, [showToast]);
+
+  const dismiss = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // Auto-dismiss after 5s
+  useEffect(() => {
+    if (toasts.length === 0) return;
+    const timer = setInterval(() => {
+      setToasts(prev => prev.filter(t => Date.now() - t.timestamp < 5000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [toasts.length]);
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      <div className="fixed bottom-4 right-4 z-[10000] flex flex-col gap-2 max-w-sm">
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            className={`flex items-start gap-2 p-3 rounded-lg shadow-lg border text-sm animate-slide-in ${
+              toast.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+              toast.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+              'bg-green-50 border-green-200 text-green-800'
+            }`}
+          >
+            {toast.type === 'error' ? <AlertCircle size={16} className="flex-shrink-0 mt-0.5" /> :
+             toast.type === 'warning' ? <WifiOff size={16} className="flex-shrink-0 mt-0.5" /> :
+             <CheckCircle size={16} className="flex-shrink-0 mt-0.5" />}
+            <span className="flex-1">{toast.message}</span>
+            <button onClick={() => dismiss(toast.id)} className="flex-shrink-0 hover:opacity-70">
               <X size={14} />
             </button>
           </div>
-        );
-      })}
-      <style>{`@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
-    </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
   );
 }

@@ -8,6 +8,7 @@ import {
   setSaveStatusCallback, setConnectionCallback,
   startHeartbeat, stopHeartbeat, syncPendingRequests,
 } from '../lib/api';
+import { emitToast } from '../lib/toast-bus';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline';
 
@@ -116,27 +117,27 @@ export function useAppStore() {
 
   const addOffer = useCallback(async (offer: Offer) => {
     setOffers(prev => [...prev, offer]);
-    try { await apiPost('/offers', offer); } catch { /* fallback */ }
+    try { await apiPost('/offers', offer); } catch { emitToast('Error al guardar oferta. Se reintentará cuando haya conexión.', 'warning'); }
   }, []);
 
   const updateOffer = useCallback(async (id: string, updates: Partial<Offer>) => {
     setOffers(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
-    try { await apiPut(`/offers/${id}`, updates); } catch { /* fallback */ }
+    try { await apiPut(`/offers/${id}`, updates); } catch { emitToast('Error al actualizar oferta. Se reintentará.', 'warning'); }
   }, []);
 
   const deleteOffer = useCallback(async (id: string) => {
     setOffers(prev => prev.filter(o => o.id !== id));
-    try { await apiDelete(`/offers/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/offers/${id}`); } catch { emitToast('Error al eliminar oferta.', 'error'); }
   }, []);
 
   const reorderOffers = useCallback(async (newOrder: Offer[]) => {
     setOffers(newOrder);
-    try { await apiPut('/offers', newOrder.map((o, i) => ({ id: o.id, order: i }))); } catch { /* fallback */ }
+    try { await apiPut('/offers', newOrder.map((o, i) => ({ id: o.id, order: i }))); } catch { emitToast('Error al reordenar. Se reintentará.', 'warning'); }
   }, []);
 
   const reorderModules = useCallback(async (offerId: string, newModules: Offer['modules']) => {
     setOffers(prev => prev.map(o => o.id === offerId ? { ...o, modules: newModules } : o));
-    try { await apiPut(`/offers/${offerId}`, { modules: newModules }); } catch { /* fallback */ }
+    try { await apiPut(`/offers/${offerId}`, { modules: newModules }); } catch { emitToast('Error al reordenar módulos.', 'warning'); }
   }, []);
 
   const addModule = useCallback(async (offerId: string, mod: Offer['modules'][0]) => {
@@ -145,7 +146,7 @@ export function useAppStore() {
       if (o.id === offerId) { updatedModules = [...o.modules, mod]; return { ...o, modules: updatedModules }; }
       return o;
     }));
-    try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { /* fallback */ }
+    try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { emitToast('Error al guardar módulo.', 'warning'); }
   }, []);
 
   const updateModule = useCallback(async (offerId: string, moduleId: string, updates: Partial<Offer['modules'][0]>) => {
@@ -157,7 +158,7 @@ export function useAppStore() {
       }
       return o;
     }));
-    try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { /* fallback */ }
+    try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { emitToast('Error al actualizar módulo.', 'warning'); }
   }, []);
 
   const deleteModule = useCallback(async (offerId: string, moduleId: string) => {
@@ -169,108 +170,108 @@ export function useAppStore() {
       }
       return o;
     }));
-    try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { /* fallback */ }
+    try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { emitToast('Error al eliminar módulo.', 'warning'); }
   }, []);
 
   const addTopic = useCallback(async (topic: Topic) => {
     setTopics(prev => [...prev, topic]);
-    try { await apiPost('/topics', topic); } catch { /* fallback */ }
+    try { await apiPost('/topics', topic); } catch { emitToast('Error al crear tema. Se reintentará.', 'warning'); }
   }, []);
 
   const updateTopic = useCallback(async (id: string, updates: Partial<Topic>) => {
     setTopics(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-    try { await apiPut(`/topics/${id}`, updates); } catch { /* fallback */ }
+    try { await apiPut(`/topics/${id}`, updates); } catch { emitToast('Error al guardar tema. Los cambios se reintentarán.', 'warning'); }
   }, []);
 
   const deleteTopic = useCallback(async (id: string) => {
     setTopics(prev => prev.filter(t => t.id !== id));
-    try { await apiDelete(`/topics/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/topics/${id}`); } catch { emitToast('Error al eliminar tema.', 'error'); }
   }, []);
 
   const addTemplate = useCallback(async (template: Template) => {
     setTemplates(prev => [...prev, template]);
-    try { await apiPost('/templates', template); } catch { /* fallback */ }
+    try { await apiPost('/templates', template); } catch { emitToast('Error al guardar plantilla.', 'warning'); }
   }, []);
 
   const updateTemplate = useCallback(async (id: string, updates: Partial<Template>) => {
     setTemplates(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-    try { await apiPut(`/templates/${id}`, updates); } catch { /* fallback */ }
+    try { await apiPut(`/templates/${id}`, updates); } catch { emitToast('Error al actualizar plantilla.', 'warning'); }
   }, []);
 
   const deleteTemplate = useCallback(async (id: string) => {
     setTemplates(prev => prev.filter(t => t.id !== id));
-    try { await apiDelete(`/templates/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/templates/${id}`); } catch { emitToast('Error al eliminar plantilla.', 'error'); }
   }, []);
 
   const addReference = useCallback(async (ref: BibliographyReference) => {
     setReferences(prev => [...prev, ref]);
-    try { await apiPost('/references', ref); } catch { /* fallback */ }
+    try { await apiPost('/references', ref); } catch { emitToast('Error al guardar referencia.', 'warning'); }
   }, []);
 
   const updateReference = useCallback(async (id: string, updates: Partial<BibliographyReference>) => {
     setReferences(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
-    try { await apiPut(`/references/${id}`, updates); } catch { /* fallback */ }
+    try { await apiPut(`/references/${id}`, updates); } catch { emitToast('Error al actualizar referencia.', 'warning'); }
   }, []);
 
   const deleteReference = useCallback(async (id: string) => {
     setReferences(prev => prev.filter(r => r.id !== id));
-    try { await apiDelete(`/references/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/references/${id}`); } catch { emitToast('Error al eliminar referencia.', 'error'); }
   }, []);
 
   const addMedia = useCallback(async (asset: MediaAsset) => {
     setMedia(prev => [...prev, asset]);
-    try { await apiPost('/media', asset); } catch { /* fallback */ }
+    try { await apiPost('/media', asset); } catch { emitToast('Error al subir archivo multimedia.', 'warning'); }
   }, []);
 
   const deleteMedia = useCallback(async (id: string) => {
     setMedia(prev => prev.filter(m => m.id !== id));
-    try { await apiDelete(`/media/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/media/${id}`); } catch { emitToast('Error al eliminar multimedia.', 'error'); }
   }, []);
 
   const addFolder = useCallback(async (folder: RepositoryFolder) => {
     setFolders(prev => [...prev, folder]);
-    try { await apiPost('/folders', folder); } catch { /* fallback */ }
+    try { await apiPost('/folders', folder); } catch { emitToast('Error al crear carpeta.', 'warning'); }
   }, []);
 
   const updateFolder = useCallback(async (id: string, updates: Partial<RepositoryFolder>) => {
     setFolders(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
-    try { await apiPut(`/folders/${id}`, updates); } catch { /* fallback */ }
+    try { await apiPut(`/folders/${id}`, updates); } catch { emitToast('Error al actualizar carpeta.', 'warning'); }
   }, []);
 
   const deleteFolder = useCallback(async (id: string) => {
     setFolders(prev => prev.filter(f => f.id !== id));
-    try { await apiDelete(`/folders/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/folders/${id}`); } catch { emitToast('Error al eliminar carpeta.', 'error'); }
   }, []);
 
   const addIdentity = useCallback(async (identity: CorporateIdentity) => {
     setIdentities(prev => [...prev, identity]);
-    try { await apiPost('/identities', identity); } catch { /* fallback */ }
+    try { await apiPost('/identities', identity); } catch { emitToast('Error al guardar identidad corporativa.', 'warning'); }
   }, []);
 
   const updateIdentity = useCallback(async (id: string, updates: Partial<CorporateIdentity>) => {
     setIdentities(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
-    try { await apiPut(`/identities/${id}`, updates); } catch { /* fallback */ }
+    try { await apiPut(`/identities/${id}`, updates); } catch { emitToast('Error al actualizar identidad.', 'warning'); }
   }, []);
 
   const deleteIdentity = useCallback(async (id: string) => {
     setIdentities(prev => prev.filter(i => i.id !== id));
-    try { await apiDelete(`/identities/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/identities/${id}`); } catch { emitToast('Error al eliminar identidad.', 'error'); }
   }, []);
 
   const addUser = useCallback(async (user: User) => {
     setUsers(prev => [...prev, user]);
-    try { await apiPost('/users', user); } catch { /* fallback */ }
+    try { await apiPost('/users', user); } catch { emitToast('Error al crear usuario.', 'warning'); }
   }, []);
 
   const updateUser = useCallback(async (id: string, updates: Partial<User>) => {
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
     setCurrentUser(prev => prev && prev.id === id ? { ...prev, ...updates } : prev);
-    try { await apiPut(`/users/${id}`, updates); } catch { /* fallback */ }
+    try { await apiPut(`/users/${id}`, updates); } catch { emitToast('Error al actualizar usuario.', 'warning'); }
   }, []);
 
   const deleteUser = useCallback(async (id: string) => {
     setUsers(prev => prev.filter(u => u.id !== id));
-    try { await apiDelete(`/users/${id}`); } catch { /* fallback */ }
+    try { await apiDelete(`/users/${id}`); } catch { emitToast('Error al eliminar usuario.', 'error'); }
   }, []);
 
   const assignEditor = useCallback(async (targetType: 'module' | 'topic', targetId: string, editorId: string, offerId?: string) => {
@@ -283,7 +284,7 @@ export function useAppStore() {
         }
         return t;
       }));
-      try { await apiPut(`/topics/${targetId}`, { assignedEditors: updatedEditors }); } catch { /* fallback */ }
+      try { await apiPut(`/topics/${targetId}`, { assignedEditors: updatedEditors }); } catch { emitToast('Error al asignar editor.', 'warning'); }
     } else if (offerId) {
       let updatedModules: Offer['modules'] = [];
       setOffers(prev => prev.map(o => {
@@ -295,7 +296,7 @@ export function useAppStore() {
         }
         return o;
       }));
-      try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { /* fallback */ }
+      try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { emitToast('Error al asignar editor.', 'warning'); }
     }
   }, []);
 
@@ -309,7 +310,7 @@ export function useAppStore() {
         }
         return t;
       }));
-      try { await apiPut(`/topics/${targetId}`, { assignedEditors: updatedEditors }); } catch { /* fallback */ }
+      try { await apiPut(`/topics/${targetId}`, { assignedEditors: updatedEditors }); } catch { emitToast('Error al asignar editor.', 'warning'); }
     } else if (offerId) {
       let updatedModules: Offer['modules'] = [];
       setOffers(prev => prev.map(o => {
@@ -321,7 +322,7 @@ export function useAppStore() {
         }
         return o;
       }));
-      try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { /* fallback */ }
+      try { await apiPut(`/offers/${offerId}`, { modules: updatedModules }); } catch { emitToast('Error al asignar editor.', 'warning'); }
     }
   }, []);
 

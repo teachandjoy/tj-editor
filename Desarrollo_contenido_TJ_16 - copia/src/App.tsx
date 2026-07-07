@@ -27,7 +27,7 @@ function AppContent() {
     <>
       <OfflineBanner isOnline={isOnline} />
       <ToastContainer />
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.VITE_BASE_PATH || '/'}>
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route element={<AppLayout />}>
