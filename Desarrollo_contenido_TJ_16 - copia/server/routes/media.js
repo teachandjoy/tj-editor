@@ -36,7 +36,7 @@ router.post('/', (req, res) => {
 
     // MIME type validation
     if (m.mimeType || m.type) {
-      const mimeToCheck = m.mimeType || (m.type === 'image' ? 'image/png' : m.type === 'video' ? 'video/mp4' : 'application/pdf');
+      const mimeToCheck = m.mimeType || (m.type === 'image' ? 'image/png' : m.type === 'audio' ? 'audio/mpeg' : m.type === 'video' ? 'video/mp4' : 'application/pdf');
       const validation = validateMimeType(m.name, mimeToCheck);
       if (!validation.valid) {
         return res.status(400).json({ error: validation.error });

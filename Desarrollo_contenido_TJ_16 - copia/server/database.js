@@ -162,6 +162,7 @@ export function initializeDatabase() {
       logo_negative_url TEXT,
       snippet TEXT DEFAULT '',
       blocks TEXT DEFAULT '[]',
+      html_templates TEXT DEFAULT '{}',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -194,6 +195,11 @@ export function initializeDatabase() {
       created_at TEXT DEFAULT (datetime('now'))
     );
   `);
+
+  const identityColumns = db.prepare('PRAGMA table_info(identities)').all().map(column => column.name);
+  if (!identityColumns.includes('html_templates')) {
+    db.exec("ALTER TABLE identities ADD COLUMN html_templates TEXT DEFAULT '{}'");
+  }
 
   // Seed default data if empty
   seedData();

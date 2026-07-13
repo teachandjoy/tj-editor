@@ -69,6 +69,11 @@ export default function AppLayout() {
   }, [mode]);
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const isEmbedPreview = location.pathname.startsWith('/preview/') && new URLSearchParams(location.search).get('embed') === '1';
+
+  if (isEmbedPreview) {
+    return <main className="min-h-screen"><Outlet /></main>;
+  }
 
   // Loading state
   if (loading) {

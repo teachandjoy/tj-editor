@@ -34,11 +34,11 @@ export default function ExportPage() {
   });
 
   const toggleOffer = (id: string) => {
-    setExpandedOffers(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+    setExpandedOffers(prev => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s; });
   };
 
   const toggleSelect = (id: string) => {
-    setSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+    setSelected(prev => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s; });
   };
 
   const toggleSelectAll = () => {
@@ -58,23 +58,31 @@ export default function ExportPage() {
   const handleExportHTML = (topicId: string) => {
     const topic = topics.find(t => t.id === topicId);
     if (!topic) return;
-    const html = exportTopicToHTML(topic, references);
+    const offer = offers.find(item => item.id === topic.offerId);
+    const identity = identities.find(item => item.id === offer?.identityId);
+    const html = exportTopicToHTML(topic, references, identity);
     downloadFile(html, `${topic.title.replace(/[^a-z0-9]/gi, '_')}.html`);
   };
 
   const handleExportWord = (topicId: string) => {
     const topic = topics.find(t => t.id === topicId);
     if (!topic) return;
-    exportTopicToWord(topic, references);
+    const offer = offers.find(item => item.id === topic.offerId);
+    const identity = identities.find(item => item.id === offer?.identityId);
+    exportTopicToWord(topic, references, identity);
   };
 
   const handleBulkExport = () => {
     visibleTopics.filter(t => selected.has(t.id)).forEach(topic => {
       if (exportFormat === 'html') {
-        const html = exportTopicToHTML(topic, references);
+        const offer = offers.find(item => item.id === topic.offerId);
+        const identity = identities.find(item => item.id === offer?.identityId);
+        const html = exportTopicToHTML(topic, references, identity);
         downloadFile(html, `${topic.title.replace(/[^a-z0-9]/gi, '_')}.html`);
       } else {
-        exportTopicToWord(topic, references);
+        const offer = offers.find(item => item.id === topic.offerId);
+        const identity = identities.find(item => item.id === offer?.identityId);
+        exportTopicToWord(topic, references, identity);
       }
     });
   };

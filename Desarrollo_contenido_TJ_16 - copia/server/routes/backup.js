@@ -106,9 +106,9 @@ router.post('/', (req, res) => {
 
       // Restore identities
       if (data.identities) {
-        const stmt = db.prepare('INSERT INTO identities (id, name, description, is_default, color_primary, color_secondary, color_tertiary, color_background, color_text_primary, color_buttons, color_buttons_hover, font_primary_name, font_primary_family, font_primary_import_url, font_secondary_name, font_secondary_family, button_style, border_radius, logo_url, logo_negative_url, snippet, blocks, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        const stmt = db.prepare('INSERT INTO identities (id, name, description, is_default, color_primary, color_secondary, color_tertiary, color_background, color_text_primary, color_buttons, color_buttons_hover, font_primary_name, font_primary_family, font_primary_import_url, font_secondary_name, font_secondary_family, button_style, border_radius, logo_url, logo_negative_url, snippet, blocks, html_templates, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         for (const i of data.identities) {
-          stmt.run(i.id, i.name, i.description, i.is_default, i.color_primary, i.color_secondary, i.color_tertiary, i.color_background, i.color_text_primary, i.color_buttons, i.color_buttons_hover, i.font_primary_name, i.font_primary_family, i.font_primary_import_url, i.font_secondary_name, i.font_secondary_family, i.button_style, i.border_radius, i.logo_url, i.logo_negative_url, i.snippet, i.blocks, i.created_at, i.updated_at);
+          stmt.run(i.id, i.name, i.description, i.is_default, i.color_primary, i.color_secondary, i.color_tertiary, i.color_background, i.color_text_primary, i.color_buttons, i.color_buttons_hover, i.font_primary_name, i.font_primary_family, i.font_primary_import_url, i.font_secondary_name, i.font_secondary_family, i.button_style, i.border_radius, i.logo_url, i.logo_negative_url, i.snippet, i.blocks, i.html_templates || '{}', i.created_at, i.updated_at);
         }
       }
     });

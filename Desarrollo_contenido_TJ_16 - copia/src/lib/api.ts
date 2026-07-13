@@ -15,10 +15,11 @@ const IS_PHP = API_BASE.includes('api.php');
 
 function apiUrl(path: string): string {
   if (IS_PHP) {
-    const cleanPath = path.replace(/^\//, '');
-    return `${API_BASE}?r=${encodeURIComponent(cleanPath)}`;
+    const [route, query] = path.split('?');
+    const cleanPath = route.replace(/^\//, '');
+    return `${API_BASE}?r=${encodeURIComponent(cleanPath)}${query ? `&${query}` : ''}`;
   }
-  return apiUrl(path);
+  return `${API_BASE}${path}`;
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline';

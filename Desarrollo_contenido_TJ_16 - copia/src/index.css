@@ -129,6 +129,67 @@ body { font-family: 'Open Sans', sans-serif; }
 .tiptap .block-conclusion { background: #fff8e5; border: 1px solid #e8d89a; border-radius: 8px; padding: 12px 14px; margin: 16px 0; }
 .tiptap .block-objectives { background: #f0f7ff; border: 1px solid #bcd4f0; border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
 
+.tj-corporate-block {
+  position: relative;
+  margin: 18px 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.tj-corporate-block:hover,
+.tj-corporate-block-selected {
+  border-color: #1b4b85;
+  box-shadow: 0 0 0 3px rgba(27, 75, 133, .08);
+}
+.tj-corporate-block-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 5px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 8px 8px 0 0;
+  font-family: Montserrat, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+}
+.tj-corporate-block-toolbar span { flex: 1; }
+.tj-corporate-block-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: #1b4b85;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 5px 7px;
+  border-radius: 6px;
+}
+.tj-corporate-block-toolbar button:hover { background: #e8eef6; }
+.tj-corporate-block-toolbar button.danger { color: #9f1239; }
+.tj-corporate-block-handle { cursor: grab !important; color: #64748b !important; }
+.tj-corporate-block-handle:active { cursor: grabbing !important; }
+.tj-corporate-block-preview { padding: 10px; pointer-events: none; }
+.tj-block-modal-editor .ProseMirror { min-height: 180px; outline: none; }
+.tj-mini-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #475569;
+}
+.tj-mini-tool:hover,
+.tj-mini-tool.active { background: #e8eef6; color: #1b4b85; border-color: #cbd5e1; }
+.tj-objective-editor .ProseMirror { min-height: 56px; outline: none; }
+.tj-objective-editor .ProseMirror p { margin: 0; }
+
 /* ── Editor Blocks (Correction 17) ── */
 .tiptap .tj-editor-block {
   position: relative;

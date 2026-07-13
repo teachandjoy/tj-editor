@@ -6,13 +6,13 @@ const ALLOWED_TAGS = [
   'ul', 'ol', 'li', 'a', 'strong', 'em', 'u', 's', 'sub', 'sup',
   'blockquote', 'pre', 'code', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
   'img', 'figure', 'figcaption', 'div', 'span', 'mark', 'details', 'summary',
-  'section', 'article', 'header', 'footer', 'nav', 'aside',
+  'section', 'article', 'header', 'footer', 'nav', 'aside', 'audio', 'source',
 ];
 
 const ALLOWED_ATTR = [
   'href', 'src', 'alt', 'title', 'class', 'style', 'id', 'name',
   'target', 'rel', 'width', 'height', 'colspan', 'rowspan',
-  'type', 'start', 'data-*',
+  'type', 'start', 'data-*', 'controls', 'preload',
 ];
 
 export function sanitizeHtml(dirty: string): string {
