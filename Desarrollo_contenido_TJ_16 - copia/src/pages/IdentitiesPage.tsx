@@ -7,6 +7,7 @@ import type { CorporateIdentity, IdentityBlock } from '../types';
 import { hasPermission } from '../utils/permissions';
 import { TJ } from '../constants/theme';
 import ModalPortal from '../components/ui/ModalPortal';
+import { DEFAULT_IDENTITY_HTML_TEMPLATES } from '../utils/topicPresentation';
 const inputCls = 'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none';
 const inputStyle = { borderColor: TJ.border };
 
@@ -49,6 +50,9 @@ function identityToJSON(id: CorporateIdentity): object {
     animationsEnabled: true,
     darkMode: false,
     isActive: true,
+    snippet: id.snippet || '',
+    blocks: id.blocks || [],
+    htmlTemplates: id.htmlTemplates || {},
   };
 }
 
@@ -56,12 +60,12 @@ export default function IdentitiesPage() {
   const { currentUser, identities, addIdentity, updateIdentity, deleteIdentity } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CorporateIdentity | null>(null);
-  const [activeTab, setActiveTab] = useState<'general' | 'colores' | 'blocks'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'colores' | 'blocks' | 'templates'>('general');
   const [form, setForm] = useState<Partial<CorporateIdentity>>({
     colorPrimary: '#1b4b85', colorSecondary: '#8b2f3a', colorTertiary: '#c5aa6f',
     colorBackground: '#f4f5f7', colorTextPrimary: '#2a2a32', colorButtons: '#1b4b85', colorButtonsHover: '#8b2f3a',
     fontPrimaryName: 'Montserrat', fontSecondaryName: 'Open Sans', buttonStyle: 'semi-rounded', borderRadius: '8px',
-    blocks: [],
+    blocks: [], htmlTemplates: { ...DEFAULT_IDENTITY_HTML_TEMPLATES },
   });
   const [blockPreviewing, setBlockPreviewing] = useState<string | null>(null);
   const [jsonImport, setJsonImport] = useState('');
@@ -99,7 +103,7 @@ export default function IdentitiesPage() {
       colorPrimary: '#1b4b85', colorSecondary: '#8b2f3a', colorTertiary: '#c5aa6f',
       colorBackground: '#f4f5f7', colorTextPrimary: '#2a2a32', colorButtons: '#1b4b85', colorButtonsHover: '#8b2f3a',
       fontPrimaryName: 'Montserrat', fontSecondaryName: 'Open Sans', buttonStyle: 'semi-rounded', borderRadius: '8px',
-      snippet: '', detectedBlocks: [], blocks: [],
+      snippet: '', detectedBlocks: [], blocks: [], htmlTemplates: { ...DEFAULT_IDENTITY_HTML_TEMPLATES },
     });
     setShowModal(true);
   };
@@ -112,7 +116,7 @@ export default function IdentitiesPage() {
     setShowModal(true);
   };
 
-  const applyJSON = (json: Record<string, string>) => {
+  const applyJSON = (json: Partial<CorporateIdentity>) => {
     setForm(prev => ({
       ...prev,
       name: json.name || prev.name,
@@ -130,6 +134,9 @@ export default function IdentitiesPage() {
       fontSecondaryName: json.fontSecondaryName || prev.fontSecondaryName,
       buttonStyle: json.buttonStyle || prev.buttonStyle,
       borderRadius: json.borderRadius || prev.borderRadius,
+      snippet: json.snippet ?? prev.snippet,
+      blocks: json.blocks ?? prev.blocks,
+      htmlTemplates: json.htmlTemplates ?? prev.htmlTemplates,
     }));
     setImportMsg('✓ JSON importado correctamente');
   };
@@ -174,8 +181,26 @@ export default function IdentitiesPage() {
   };
 
   const addBlock = () => {
-    const newBlock: IdentityBlock = { id: `blk-${Date.now()}`, name: `Bloque ${(form.blocks?.length || 0) + 1}`, html: '', detectedTypes: [] };
+    const newBlock: IdentityBlock = { id: `blk-${Date.now()}`, name: `Bloque ${(form.blocks?.length || 0) + 1}`, html: '', role: 'content', detectedTypes: [] };
     setForm(prev => ({ ...prev, blocks: [...(prev.blocks || []), newBlock] }));
+  };
+
+  const addPresetBlock = (type: 'tip' | 'pearl' | 'note' | 'warning' | 'conclusion') => {
+    const config = {
+      tip: { name: 'TIP', className: 'block-tip', color: '#919BA5', background: '#f6f7fa', label: 'TIP' },
+      pearl: { name: 'Perla', className: 'block-perla', color: form.colorPrimary || '#2373BA', background: '#eff6ff', label: 'Perla' },
+      note: { name: 'Nota', className: 'block-nota', color: form.colorTertiary || '#c5aa6f', background: '#fff8e5', label: 'Nota' },
+      warning: { name: 'Advertencia', className: 'block-warning', color: form.colorSecondary || '#8b2f3a', background: '#fff5f5', label: 'Advertencia' },
+      conclusion: { name: 'Conclusión', className: 'block-conclusion', color: form.colorTertiary || '#c5aa6f', background: '#fff8e5', label: 'Conclusión' },
+    }[type];
+    const block: IdentityBlock = {
+      id: `blk-${type}-${Date.now()}`,
+      name: config.name,
+      role: type,
+      html: `<div class="${config.className}" style="background:${config.background};border-left:6px solid ${config.color};padding:12px 16px;margin:14px 0;border-radius:0 8px 8px 0"><p style="margin:0;text-align:justify"><strong>${config.label}:</strong> Escriba aquí...</p></div>`,
+      detectedTypes: [type],
+    };
+    setForm(previous => ({ ...previous, blocks: [...(previous.blocks || []), block] }));
   };
 
   const updateBlock = (blockId: string, updates: Partial<IdentityBlock>) => {
@@ -213,6 +238,7 @@ export default function IdentitiesPage() {
     { id: 'general' as const, label: 'General' },
     { id: 'colores' as const, label: 'Colores y Tipografía' },
     { id: 'blocks' as const, label: `Bloques (${form.blocks?.length || 0})` },
+    { id: 'templates' as const, label: 'Diseño de secciones' },
   ];
 
   return (
@@ -483,8 +509,26 @@ export default function IdentitiesPage() {
               {activeTab === 'blocks' && (
                 <div>
                   <p className="text-xs mb-3" style={{ color: '#a8b8d8' }}>
-                    Agrega bloques HTML reutilizables. Cada bloque tiene nombre, código HTML y vista previa. Se pueden insertar desde el editor de temas.
+                    Usa un diseño base o agrega HTML avanzado. En el editor de temas cada bloque se comporta como una unidad aislada, arrastrable y editable solo desde su botón.
                   </p>
+                  <div className="mb-4 rounded-xl border p-3" style={{ borderColor: TJ.border, background: '#f8fafc' }}>
+                    <p className="mb-2 text-xs font-bold" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Diseños predefinidos</p>
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        ['tip', 'TIP'],
+                        ['pearl', 'Perla'],
+                        ['note', 'Nota'],
+                        ['warning', 'Advertencia'],
+                        ['conclusion', 'Conclusión'],
+                      ] as const).map(([type, label]) => (
+                        <button key={type} type="button" onClick={() => addPresetBlock(type)}
+                          className="rounded-lg border bg-white px-3 py-1.5 text-xs font-semibold"
+                          style={{ borderColor: TJ.border, color: TJ.primary }}>
+                          <Plus size={12} className="mr-1 inline" /> {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   {(form.blocks || []).length === 0 && (
                     <div className="text-center py-8">
@@ -504,6 +548,20 @@ export default function IdentitiesPage() {
                             onChange={e => updateBlock(block.id, { name: e.target.value })}
                             placeholder="Nombre del bloque"
                           />
+                          <select
+                            className="rounded-lg border px-2 py-1 text-xs"
+                            style={{ borderColor: TJ.border }}
+                            value={block.role || 'content'}
+                            onChange={e => updateBlock(block.id, { role: e.target.value as IdentityBlock['role'] })}
+                            title="Tipo de bloque"
+                          >
+                            <option value="content">Personalizado</option>
+                            <option value="tip">TIP</option>
+                            <option value="pearl">Perla</option>
+                            <option value="note">Nota</option>
+                            <option value="warning">Advertencia</option>
+                            <option value="conclusion">Conclusión</option>
+                          </select>
                           <button onClick={() => setBlockPreviewing(blockPreviewing === block.id ? null : block.id)}
                             className="px-2 py-1 text-xs rounded-lg border transition-all"
                             style={{ borderColor: blockPreviewing === block.id ? TJ.primary : TJ.border, color: blockPreviewing === block.id ? TJ.primary : '#666' }}>
@@ -553,6 +611,49 @@ export default function IdentitiesPage() {
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(27,75,133,0.06)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     <Plus size={14} /> Agregar bloque
+                  </button>
+                </div>
+              )}
+
+              {activeTab === 'templates' && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border p-3 text-xs" style={{ borderColor: TJ.border, background: '#f8fafc', color: '#475569' }}>
+                    Estas plantillas se aplican automáticamente al exportar o incrustar un tema. Conserva los marcadores entre llaves, por ejemplo <code>{'{{objectiveItems}}'}</code>.
+                  </div>
+                  {([
+                    ['page', 'Estructura general', 'Marcadores: {{header}}, {{title}}, {{meta}}, {{objectives}}, {{content}}, {{audio}}, {{bibliography}}'],
+                    ['header', 'Encabezado gráfico', 'Marcadores: {{headerUrl}}, {{headerAlt}}'],
+                    ['objectives', 'Objetivos', 'Marcador: {{objectiveItems}}'],
+                    ['audio', 'Música / audiolibro', 'Marcadores: {{audioLabel}}, {{audioItems}}; compatibilidad: {{audioTitle}}, {{audioUrl}}'],
+                    ['bibliography', 'Bibliografía', 'Marcador: {{referenceItems}}'],
+                  ] as const).map(([key, label, help]) => (
+                    <div key={key}>
+                      <div className="mb-1 flex items-center justify-between gap-3">
+                        <label className="text-xs font-bold" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>{label}</label>
+                        <span className="text-[10px]" style={{ color: '#94a3b8' }}>{help}</span>
+                      </div>
+                      <textarea
+                        className={inputCls}
+                        style={{ ...inputStyle, minHeight: key === 'page' ? 180 : 110, resize: 'vertical', fontFamily: 'monospace', fontSize: 11 }}
+                        value={form.htmlTemplates?.[key] || DEFAULT_IDENTITY_HTML_TEMPLATES[key]}
+                        onChange={event => setForm(previous => ({
+                          ...previous,
+                          htmlTemplates: {
+                            ...DEFAULT_IDENTITY_HTML_TEMPLATES,
+                            ...(previous.htmlTemplates || {}),
+                            [key]: event.target.value,
+                          },
+                        }))}
+                      />
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="rounded-lg border px-3 py-2 text-xs font-semibold"
+                    style={{ borderColor: TJ.border, color: TJ.primary }}
+                    onClick={() => setForm(previous => ({ ...previous, htmlTemplates: { ...DEFAULT_IDENTITY_HTML_TEMPLATES } }))}
+                  >
+                    Restaurar diseños base
                   </button>
                 </div>
               )}

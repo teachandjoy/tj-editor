@@ -44,7 +44,7 @@ function Modal({ title, onClose, onSave, children }: {
   );
 }
 
-function FormField({ label, id: _id, type = 'text', placeholder, rows, options, value, onChange }: ModalField & { value: string; onChange: (v: string) => void }) {
+function FormField({ label, type = 'text', placeholder, rows, options, value, onChange }: ModalField & { value: string; onChange: (v: string) => void }) {
   return (
     <div className="page-enter">
       <label className="block text-xs font-semibold mb-1.5" style={{ color: TJ.text, fontFamily: 'Montserrat, sans-serif' }}>{label}</label>
@@ -104,10 +104,10 @@ export default function AcademicPage() {
     : offers;
 
   const toggleOffer = (id: string) => setExpandedOffers(prev => {
-    const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s;
+    const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s;
   });
   const toggleModule = (id: string) => setExpandedModules(prev => {
-    const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s;
+    const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s;
   });
 
   // Offer CRUD

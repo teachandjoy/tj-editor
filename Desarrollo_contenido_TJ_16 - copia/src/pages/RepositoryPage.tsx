@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
-import { FolderOpen, Image, FileText, Upload, Search, Plus, Folder, X, Trash2, Lock, Link, Check } from 'lucide-react';
+import { FolderOpen, Image, FileText, Upload, Search, Plus, Folder, X, Trash2, Lock, Link, Check, Music2 } from 'lucide-react';
 import type { UserRole } from '../types';
 import { hasPermission } from '../utils/permissions';
 import { TJ } from '../constants/theme';
@@ -28,7 +28,7 @@ export default function RepositoryPage() {
   const handleUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*,video/*,.pdf,.doc,.docx';
+    input.accept = 'image/*,audio/*,video/*,.pdf,.doc,.docx';
     input.multiple = true;
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
@@ -40,7 +40,7 @@ export default function RepositoryPage() {
             id: `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
             name: file.name,
             url: reader.result as string,
-            type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document',
+            type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('audio/') ? 'audio' : file.type.startsWith('video/') ? 'video' : 'document',
             description: file.name,
             uploadedBy: currentUser.id,
             uploadedAt: new Date().toISOString().split('T')[0],
@@ -206,7 +206,7 @@ export default function RepositoryPage() {
                     <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
                   ) : (
                     <div style={{ color: '#d4cfc8' }}>
-                      {asset.type === 'image' ? <Image size={36} /> : <FileText size={36} />}
+                      {asset.type === 'image' ? <Image size={36} /> : asset.type === 'audio' ? <Music2 size={36} /> : <FileText size={36} />}
                     </div>
                   )}
                 </div>

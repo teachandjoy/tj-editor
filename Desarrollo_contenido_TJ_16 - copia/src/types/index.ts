@@ -107,9 +107,40 @@ export interface Topic {
   order?: number;
 }
 
+export interface TopicObjective {
+  id: string;
+  html: string;
+}
+
+export interface TopicAudioTrack {
+  id: string;
+  title: string;
+  url: string;
+}
+
+export interface TopicPresentation {
+  objectives: TopicObjective[];
+  header: {
+    enabled: boolean;
+    url: string;
+    alt: string;
+  };
+  audio: {
+    enabled: boolean;
+    kind: 'music' | 'audiobook';
+    tracks: TopicAudioTrack[];
+    title?: string;
+    url?: string;
+  };
+  embed: {
+    enabled: boolean;
+    token: string;
+  };
+}
+
 export interface ContentBlock {
   id: string;
-  type: 'heading' | 'paragraph' | 'image' | 'callout' | 'list' | 'table' | 'references' | 'section';
+  type: 'heading' | 'paragraph' | 'image' | 'callout' | 'list' | 'table' | 'references' | 'section' | 'topic-settings';
   content: string;
   level?: number;
   variant?: string;
@@ -119,6 +150,7 @@ export interface ContentBlock {
   items?: string[];
   order: number;
   sectionTitle?: string;
+  presentation?: TopicPresentation;
 }
 
 export type ReferenceStyle = 'apa' | 'vancouver';
@@ -169,7 +201,7 @@ export interface MediaAsset {
   id: string;
   name: string;
   url: string;
-  type: 'image' | 'video' | 'document';
+  type: 'image' | 'audio' | 'video' | 'document';
   description: string;
   uploadedBy: string;
   uploadedAt: string;
@@ -186,11 +218,22 @@ export interface RepositoryFolder {
   offerId?: string;
 }
 
+export type IdentityBlockRole = 'content' | 'tip' | 'pearl' | 'note' | 'warning' | 'conclusion';
+
 export interface IdentityBlock {
   id: string;
   name: string;
   html: string;
+  role?: IdentityBlockRole;
   detectedTypes?: string[];
+}
+
+export interface IdentityHtmlTemplates {
+  page?: string;
+  header?: string;
+  objectives?: string;
+  audio?: string;
+  bibliography?: string;
 }
 
 export interface CorporateIdentity {
@@ -216,4 +259,5 @@ export interface CorporateIdentity {
   snippet?: string;
   detectedBlocks?: string[];
   blocks?: IdentityBlock[];
+  htmlTemplates?: IdentityHtmlTemplates;
 }

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import db from '../database.js';
 
 const router = Router();
@@ -24,6 +25,57 @@ function rowToTopic(row) {
   };
 }
 
+function rowToEmbedIdentity(row) {
+  if (!row) return undefined;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || '',
+    logoUrl: row.logo_url || '',
+    colorPrimary: row.color_primary || '#1b4b85',
+    colorSecondary: row.color_secondary || '#8b2f3a',
+    colorTertiary: row.color_tertiary || '#c5aa6f',
+    colorBackground: row.color_background || '#ebeae7',
+    colorTextPrimary: row.color_text_primary || '#2a2a32',
+    fontPrimaryName: row.font_primary_name || '',
+    fontPrimaryFamily: row.font_primary_family || '',
+    fontPrimaryImportUrl: row.font_primary_import_url || '',
+    fontSecondaryName: row.font_secondary_name || '',
+    fontSecondaryFamily: row.font_secondary_family || '',
+    snippet: row.snippet || '',
+    blocks: JSON.parse(row.blocks || '[]'),
+    htmlTemplates: JSON.parse(row.html_templates || '{}'),
+  };
+}
+
+function rowToReference(row) {
+  return {
+    id: row.id,
+    type: row.type,
+    style: row.style,
+    title: row.title || '',
+    authors: row.authors || '',
+    year: row.year || '',
+    source: row.source || '',
+    doi: row.doi || '',
+    url: row.url || '',
+    edition: row.edition || '',
+    pages: row.pages || '',
+    volume: row.volume || '',
+    issue: row.issue || '',
+    publisher: row.publisher || '',
+    city: row.city || '',
+    journal: row.journal || '',
+    chapter: row.chapter || '',
+    editors: row.editors || '',
+  };
+}
+
+function tokensMatch(expected, provided) {
+  if (!expected || !provided || expected.length !== provided.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(provided));
+}
+
 router.get('/', (req, res) => {
   try {
     const rows = db.prepare('SELECT * FROM topics ORDER BY "order" ASC').all();
@@ -38,6 +90,26 @@ router.get('/:id', (req, res) => {
   try {
     const row = db.prepare('SELECT * FROM topics WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Tema no encontrado' });
+    if (req.query.embedToken) {
+      const topic = rowToTopic(row);
+      const presentationBlock = topic.blocks.find(block => block.id === '__tj-topic-presentation__');
+      const embed = presentationBlock?.presentation?.embed;
+      if (!embed?.enabled || !tokensMatch(embed.token, String(req.query.embedToken))) {
+        return res.status(403).json({ error: 'Incrustación no autorizada' });
+      }
+      const offer = db.prepare('SELECT identity_id FROM offers WHERE id = ?').get(topic.offerId);
+      const identityRow = offer?.identity_id
+        ? db.prepare('SELECT * FROM identities WHERE id = ?').get(offer.identity_id)
+        : undefined;
+      const referenceIds = new Set(topic.referenceIds);
+      const references = db.prepare('SELECT * FROM "references"').all()
+        .filter(reference => referenceIds.has(reference.id))
+        .map(rowToReference);
+      topic.blocks = topic.blocks.map(block => block.id === '__tj-topic-presentation__'
+        ? { ...block, presentation: { ...block.presentation, embed: { enabled: true, token: '' } } }
+        : block);
+      return res.json({ topic, identity: rowToEmbedIdentity(identityRow), references });
+    }
     res.json(rowToTopic(row));
   } catch (err) {
     console.error('[Topics] GET/:id error:', err.message);

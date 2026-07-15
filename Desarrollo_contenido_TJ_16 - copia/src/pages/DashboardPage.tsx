@@ -161,9 +161,9 @@ export default function DashboardPage() {
               offers.forEach(o => { if (o.type === 'diplomado') types.diplomado++; else types.curso++; });
               tooltipContent = `Diplomados: ${types.diplomado} · Cursos: ${types.curso}`;
             } else if (stat.label === 'Multimedia') {
-              const byType = { image: 0, video: 0, document: 0 };
+              const byType = { image: 0, audio: 0, video: 0, document: 0 };
               media.forEach(m => { byType[m.type]++; });
-              tooltipContent = `Imágenes: ${byType.image} · Videos: ${byType.video} · Documentos: ${byType.document}`;
+              tooltipContent = `Imágenes: ${byType.image} · Audio: ${byType.audio} · Videos: ${byType.video} · Documentos: ${byType.document}`;
             } else if (stat.label === 'Referencias') {
               const byType: Record<string, number> = {};
               references.forEach(r => { byType[r.type] = (byType[r.type] || 0) + 1; });
@@ -481,7 +481,7 @@ export default function DashboardPage() {
                       ['Edición', filteredOffer.edition],
                       ['Autor(es)', filteredOffer.authors],
                       ['Público', filteredOffer.audience],
-                    ].filter(([_, v]) => v).map(([label, value]) => (
+                    ].filter(entry => entry[1]).map(([label, value]) => (
                       <div key={label as string} className="flex gap-2">
                         <dt className="text-xs font-semibold flex-shrink-0" style={{ color: '#a8b8d8', fontFamily: 'Montserrat, sans-serif', width: 72 }}>{label}</dt>
                         <dd className="text-xs" style={{ color: TJ.text }}>{value}</dd>

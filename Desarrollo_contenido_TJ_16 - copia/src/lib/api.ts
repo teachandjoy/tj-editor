@@ -15,10 +15,11 @@ const IS_PHP = API_BASE.includes('api.php');
 
 function apiUrl(path: string): string {
   if (IS_PHP) {
-    const cleanPath = path.replace(/^\//, '');
-    return `${API_BASE}?r=${encodeURIComponent(cleanPath)}`;
+    const [route, query] = path.split('?');
+    const cleanPath = route.replace(/^\//, '');
+    return `${API_BASE}?r=${encodeURIComponent(cleanPath)}${query ? `&${query}` : ''}`;
   }
-  return apiUrl(path);
+  return `${API_BASE}${path}`;
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline';
@@ -187,7 +188,9 @@ export function stopHeartbeat() {
 
 // ── 401 handler ─────────────────────────────────────────────────────────────
 
-const BASE_PATH = import.meta.env.VITE_BASE_PATH || '/desarrollo-de-contenido';
+const configuredBasePath = import.meta.env.VITE_BASE_PATH || import.meta.env.BASE_URL;
+const basePathSegment = configuredBasePath.replace(/^\/|\/$/g, '');
+const BASE_PATH = basePathSegment ? `/${basePathSegment}/` : '/';
 
 function handle401(res: Response): void {
   if (res.status === 401) {
@@ -207,6 +210,22 @@ export async function apiGet<T>(path: string): Promise<T> {
     throw new Error(err.error || `HTTP ${res.status}`);
   }
   return res.json();
+}
+
+export async function apiDownload(path: string, filename: string): Promise<void> {
+  const res = await fetchWithRetry(apiUrl(path), { headers: getHeaders() });
+  if (!res.ok) {
+    handle401(res);
+    const err = await res.json().catch(() => ({ error: 'Error de red' }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 export async function apiPost<T>(path: string, data: unknown): Promise<T> {

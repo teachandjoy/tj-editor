@@ -30,6 +30,7 @@ function rowToIdentity(row) {
     snippet: row.snippet || '',
     blocks: isBlockObjects ? parsed : [],
     detectedBlocks: isBlockObjects ? [] : parsed,
+    htmlTemplates: JSON.parse(row.html_templates || '{}'),
   };
 }
 
@@ -47,8 +48,8 @@ router.post('/', (req, res) => {
   try {
     const i = req.body;
     if (!i.id || !i.name) return res.status(400).json({ error: 'id y name son requeridos' });
-    db.prepare('INSERT INTO identities (id, name, description, logo_url, logo_negative_url, color_primary, color_secondary, color_tertiary, color_background, color_text_primary, color_buttons, color_buttons_hover, font_primary_name, font_primary_family, font_primary_import_url, font_secondary_name, font_secondary_family, button_style, border_radius, snippet, blocks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(i.id, i.name, i.description || null, i.logoUrl || null, i.logoNegativeUrl || null, i.colorPrimary || '#1b4b85', i.colorSecondary || '#8b2f3a', i.colorTertiary || '#c5aa6f', i.colorBackground || '#ebeae7', i.colorTextPrimary || '#2a2a32', i.colorButtons || '#1b4b85', i.colorButtonsHover || '#8b2f3a', i.fontPrimaryName || null, i.fontPrimaryFamily || null, i.fontPrimaryImportUrl || null, i.fontSecondaryName || null, i.fontSecondaryFamily || null, i.buttonStyle || null, i.borderRadius || null, i.snippet || '', JSON.stringify(i.blocks && i.blocks.length > 0 ? i.blocks : i.detectedBlocks || []));
+    db.prepare('INSERT INTO identities (id, name, description, logo_url, logo_negative_url, color_primary, color_secondary, color_tertiary, color_background, color_text_primary, color_buttons, color_buttons_hover, font_primary_name, font_primary_family, font_primary_import_url, font_secondary_name, font_secondary_family, button_style, border_radius, snippet, blocks, html_templates) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(i.id, i.name, i.description || null, i.logoUrl || null, i.logoNegativeUrl || null, i.colorPrimary || '#1b4b85', i.colorSecondary || '#8b2f3a', i.colorTertiary || '#c5aa6f', i.colorBackground || '#ebeae7', i.colorTextPrimary || '#2a2a32', i.colorButtons || '#1b4b85', i.colorButtonsHover || '#8b2f3a', i.fontPrimaryName || null, i.fontPrimaryFamily || null, i.fontPrimaryImportUrl || null, i.fontSecondaryName || null, i.fontSecondaryFamily || null, i.buttonStyle || null, i.borderRadius || null, i.snippet || '', JSON.stringify(i.blocks && i.blocks.length > 0 ? i.blocks : i.detectedBlocks || []), JSON.stringify(i.htmlTemplates || {}));
     const row = db.prepare('SELECT * FROM identities WHERE id = ?').get(i.id);
     res.status(201).json(rowToIdentity(row));
   } catch (err) {
@@ -62,7 +63,7 @@ router.put('/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM identities WHERE id = ?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Identidad no encontrada' });
     const i = req.body;
-    db.prepare(`UPDATE identities SET name = ?, description = ?, logo_url = ?, logo_negative_url = ?, color_primary = ?, color_secondary = ?, color_tertiary = ?, color_background = ?, color_text_primary = ?, color_buttons = ?, color_buttons_hover = ?, font_primary_name = ?, font_primary_family = ?, font_primary_import_url = ?, font_secondary_name = ?, font_secondary_family = ?, button_style = ?, border_radius = ?, snippet = ?, blocks = ?, updated_at = datetime('now') WHERE id = ?`)
+    db.prepare(`UPDATE identities SET name = ?, description = ?, logo_url = ?, logo_negative_url = ?, color_primary = ?, color_secondary = ?, color_tertiary = ?, color_background = ?, color_text_primary = ?, color_buttons = ?, color_buttons_hover = ?, font_primary_name = ?, font_primary_family = ?, font_primary_import_url = ?, font_secondary_name = ?, font_secondary_family = ?, button_style = ?, border_radius = ?, snippet = ?, blocks = ?, html_templates = ?, updated_at = datetime('now') WHERE id = ?`)
       .run(
         i.name ?? existing.name,
         i.description !== undefined ? i.description : existing.description,
@@ -84,6 +85,7 @@ router.put('/:id', (req, res) => {
         i.borderRadius !== undefined ? i.borderRadius : existing.border_radius,
         i.snippet !== undefined ? i.snippet : existing.snippet,
         i.blocks !== undefined ? JSON.stringify(i.blocks) : (i.detectedBlocks !== undefined ? JSON.stringify(i.detectedBlocks) : existing.blocks),
+        i.htmlTemplates !== undefined ? JSON.stringify(i.htmlTemplates) : existing.html_templates,
         req.params.id
       );
     const row = db.prepare('SELECT * FROM identities WHERE id = ?').get(req.params.id);

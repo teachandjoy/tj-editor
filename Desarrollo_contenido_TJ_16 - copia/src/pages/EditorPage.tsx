@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { sanitizeHtml } from '../lib/sanitize';
-import { cleanExportHTML } from '../lib/export-cleanup';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../store/context';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -26,100 +25,23 @@ import {
   Table as TableIcon, Image, Link as LinkIcon, Highlighter,
   Superscript as SuperIcon, Subscript as SubIcon, Palette, BookOpen,
   ImagePlus, Type, ChevronDown, X, Maximize2, Minimize2,
-  Columns, Trash2, Code, Edit, Plus, Upload
+  Columns, Trash2, Code, Edit, Plus, Upload, Settings2,
+  ListChecks, PanelLeftClose, PanelLeftOpen, Share2
 } from 'lucide-react';
 import ImportDialog from '../components/editor/ImportDialog';
 import PublicationPreviewDialog from '../components/editor/PublicationPreviewDialog';
+import TopicPresentationDialog from '../components/editor/TopicPresentationDialog';
 import { StylePreserver } from '../lib/StylePreservingExtensions';
 import { DivBlock } from '../lib/DivBlock';
+import { CorporateBlock } from '../lib/CorporateBlock';
 import { formatReference, generateInTextCitation } from '../utils/bibliography';
 import { downloadFile } from '../utils/export';
 import type { BibliographyReference, IdentityBlock } from '../types';
 import { TJ } from '../constants/theme';
 import ModalPortal from '../components/ui/ModalPortal';
 import { createPortal } from 'react-dom';
-
-function getBlockStyles(cp: string, cs: string, ct: string): string {
-  return `
-    .block-tip{background:#f6f7fa;border-left:5px solid #a8b8d8;padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-    .block-perla{background:#eff6ff;border-left:5px solid ${cp};padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-    .block-nota{background:#fff8e5;border-left:5px solid ${ct};padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-    .block-warning{background:#fff5f5;border-left:5px solid ${cs};padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-    .block-conclusion{background:#fff8e5;border:1px solid #e8d89a;border-radius:8px;padding:12px 14px;margin:20px 0}
-    .block-objectives{background:#f0f7ff;border:1px solid #bcd4f0;border-radius:8px;padding:12px 14px;margin:14px 0}
-    .tj-editor-block{margin:16px 0;border-radius:8px;padding:4px}
-  `;
-}
-
-function buildExportHTML(
-  topic: { title: string; content: string; author: string; version: string; date: string; offerName: string },
-  topicRefs: BibliographyReference[],
-  snippet?: string,
-  identity?: { colorPrimary: string; colorSecondary: string; colorTertiary: string; fontPrimaryName?: string; fontSecondaryName?: string; logoUrl?: string }
-): string {
-  const cp = identity?.colorPrimary || '#1b4b85';
-  const cs = identity?.colorSecondary || '#8b2f3a';
-  const ct = identity?.colorTertiary || '#c5aa6f';
-  const fm = identity?.fontPrimaryName || 'Montserrat';
-  const fb = identity?.fontSecondaryName || 'Open Sans';
-  const logo = identity?.logoUrl || '';
-  const refsHTML = topicRefs.length > 0 ? `
-    <details style="border:1px solid #919BA5;border-radius:8px;overflow:hidden;background:#fff;margin-top:20px">
-      <summary style="list-style:none;cursor:pointer;background:${cp};color:#fff;padding:12px 14px;font-size:1rem;outline:none;font-weight:600">
-        Referencias bibliográficas
-      </summary>
-      <div style="padding:12px 14px;background:#f6f7fa">
-        <ol style="margin:0 0 0 18px;padding:0;font-size:.9rem">
-          ${topicRefs.map((r, i) => `<li style="margin:4px 0">${formatReference(r, i + 1)}</li>`).join('')}
-        </ol>
-      </div>
-    </details>` : '';
-
-  if (snippet?.trim()) {
-    const blockStyles = getBlockStyles(cp, cs, ct);
-    return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${topic.title}</title>
-<link href="https://fonts.googleapis.com/css2?family=${fm.replace(/ /g,'+')}:wght@400;600;700&family=${fb.replace(/ /g,'+')}:wght@400;600&display=swap" rel="stylesheet">
-<style>${blockStyles}</style>
-</head><body style="font-family:'${fb}',sans-serif;background:#f5f5f5;padding:20px;margin:0">
-${snippet.replace('Título principal del tema', topic.title).replace('Autor 1 · Autor 2 · Autor 3', topic.author)}
-<section style="max-width:1200px;margin:20px auto;font-family:'${fb}',sans-serif;color:#212121;line-height:1.65">
-${topic.content}${refsHTML}
-</section></body></html>`;
-  }
-
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${topic.title}</title>
-<link href="https://fonts.googleapis.com/css2?family=${fm.replace(/ /g,'+')}:wght@400;600;700&family=${fb.replace(/ /g,'+')}:wght@400;600&display=swap" rel="stylesheet">
-<style>
-  body{font-family:'${fb}',sans-serif;background:#f5f5f5;margin:0;padding:20px;color:#212121}
-  .wrap{max-width:900px;margin:0 auto;background:#fff;border-radius:10px;padding:48px;box-shadow:0 2px 20px rgba(0,0,0,.08)}
-  h1{font-family:'${fm}',sans-serif;color:${cp};font-size:1.8rem;margin:0 0 12px;font-weight:700}
-  h2{font-family:'${fm}',sans-serif;color:${cp};font-size:1.3rem;margin:24px 0 8px;font-weight:600}
-  h3{font-family:'${fm}',sans-serif;color:${cs};font-size:1.1rem;margin:16px 0 6px}
-  p{margin:0 0 10px;line-height:1.75;text-align:justify}
-  table{width:100%;border-collapse:collapse;margin:14px 0}
-  th{background:${cp};color:#fff;padding:9px 12px;border:1px solid #ddd;text-align:left;font-weight:600}
-  td{padding:8px 12px;border:1px solid #ddd}
-  tr:nth-child(even) td{background:#fafafa}
-  blockquote{border-left:4px solid ${ct};background:#fdf9f0;padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0}
-  img{max-width:100%;border-radius:6px}
-  figure{text-align:center;margin:20px 0}
-  figcaption{font-size:12px;color:#666;margin-top:6px;font-style:italic}
-  sup{font-size:11px;color:${cp};font-weight:600;vertical-align:super}
-  .meta{font-size:13px;color:#a8b8d8;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid ${ct}}
-  .block-tip{background:#f6f7fa;border-left:5px solid #a8b8d8;padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-  .block-perla{background:#eff6ff;border-left:5px solid ${cp};padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-  .block-nota{background:#fff8e5;border-left:5px solid ${ct};padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-  .block-warning{background:#fff5f5;border-left:5px solid ${cs};padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
-  .block-conclusion{background:#fff8e5;border:1px solid #e8d89a;border-radius:8px;padding:12px 14px;margin:20px 0}
-  .block-objectives{background:#f0f7ff;border:1px solid #bcd4f0;border-radius:8px;padding:12px 14px;margin:14px 0}
-  details summary{cursor:pointer;background:${cp};color:#fff;padding:10px 14px;border-radius:6px;font-weight:600;list-style:none}
-  details>div{padding:12px 14px;background:#f6f7fa;border:1px solid #ddd;border-top:0}
-</style></head><body><div class="wrap">
-${logo ? `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid ${ct}"><img src="${logo}" style="height:40px;object-fit:contain"></div>` : ''}
-<div class="meta">${topic.offerName ? `<strong>${topic.offerName}</strong> · ` : ''}${topic.author} · ${topic.version} · ${topic.date}</div>
-${topic.content}${refsHTML}
-</div></body></html>`;
-}
+import { buildTopicDocument } from '../utils/topic-export';
+import { getTopicPresentation, withTopicPresentation } from '../utils/topicPresentation';
 
 export default function EditorPage() {
   const { topicId } = useParams<{ topicId: string }>();
@@ -150,6 +72,10 @@ export default function EditorPage() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showPublicationPreview, setShowPublicationPreview] = useState(false);
   const [publicationPreviewHtml, setPublicationPreviewHtml] = useState('');
+  const [topicPresentationMode, setTopicPresentationMode] = useState<'elements' | 'objectives' | 'embed' | null>(null);
+  const [showOutline, setShowOutline] = useState(true);
+  const [outlineHeadings, setOutlineHeadings] = useState<Array<{ level: number; text: string; pos: number }>>([]);
+  const [imageReplacePos, setImageReplacePos] = useState<number | null>(null);
 
   const editorWrapRef = useRef<HTMLDivElement>(null);
 
@@ -173,7 +99,6 @@ export default function EditorPage() {
     ['block-nota', 'Nota'],
     ['block-warning', 'Advertencia'],
     ['block-conclusion', 'Conclusión'],
-    ['block-objectives', 'Objetivos'],
   ];
 
   const [showNewBlockForm, setShowNewBlockForm] = useState(false);
@@ -189,7 +114,7 @@ export default function EditorPage() {
     if (!topic) return '';
     if (topic.content) return topic.content;
     let html = '';
-    for (const block of topic.blocks.sort((a, b) => a.order - b.order)) {
+    for (const block of [...topic.blocks].sort((a, b) => a.order - b.order)) {
       switch (block.type) {
         case 'heading': html += `<h${block.level || 2}>${block.content}</h${block.level || 2}>`; break;
         case 'paragraph': html += `<p>${block.content}</p>`; break;
@@ -214,6 +139,7 @@ export default function EditorPage() {
       Highlight.configure({ multicolor: true }), TextStyle, Color,
       Superscript, Subscript, Link.configure({ openOnClick: false }),
       StylePreserver,
+      CorporateBlock,
       DivBlock,
     ],
     content: initialContent,
@@ -236,6 +162,41 @@ export default function EditorPage() {
       }, 2000);
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    const refreshOutline = () => {
+      const headings: Array<{ level: number; text: string; pos: number }> = [];
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'heading') {
+          headings.push({
+            level: Number(node.attrs.level) || 2,
+            text: node.textContent.trim() || 'Título sin texto',
+            pos,
+          });
+        }
+      });
+      setOutlineHeadings(headings);
+    };
+    refreshOutline();
+    editor.on('update', refreshOutline);
+    return () => {
+      editor.off('update', refreshOutline);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    const handleReplaceImage = (event: Event) => {
+      const detail = (event as CustomEvent<{ pos: number; alt: string }>).detail;
+      if (!detail || typeof detail.pos !== 'number') return;
+      setImageReplacePos(detail.pos);
+      setImageCaption(detail.alt || '');
+      setImgTab('repo');
+      setShowImagePicker(true);
+    };
+    window.addEventListener('tj:replace-image', handleReplaceImage);
+    return () => window.removeEventListener('tj:replace-image', handleReplaceImage);
+  }, []);
 
   // Escape key exits fullscreen + closes dropdowns
   useEffect(() => {
@@ -266,80 +227,6 @@ export default function EditorPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [editor, topic]);
 
-  // Block manipulation: click to select, delete button, Delete key
-  useEffect(() => {
-    const wrap = editorWrapRef.current;
-    if (!wrap || !editor) return;
-
-    const handleClick = (e: MouseEvent) => {
-      // Deselect all blocks first
-      wrap.querySelectorAll('.tj-editor-block.tj-block-selected').forEach(el => el.classList.remove('tj-block-selected'));
-      // Find clicked block
-      const target = e.target as HTMLElement;
-      const block = target.closest('.tj-editor-block') as HTMLElement | null;
-      if (block && wrap.contains(block)) {
-        block.classList.add('tj-block-selected');
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        const selected = wrap.querySelector('.tj-editor-block.tj-block-selected');
-        if (selected) {
-          // Only delete the block if the cursor is not inside editable text
-          const sel = window.getSelection();
-          const isEditingText = sel && sel.rangeCount > 0 && selected.contains(sel.anchorNode) && sel.toString().length === 0 && sel.anchorNode?.nodeType === Node.TEXT_NODE;
-          if (!isEditingText) {
-            e.preventDefault();
-            selected.remove();
-            editor.commands.focus();
-          }
-        }
-      }
-    };
-
-    // Inject delete buttons into blocks that don't have them
-    const injectDeleteButtons = () => {
-      wrap.querySelectorAll('.tj-editor-block:not(:has(.tj-block-delete))').forEach(block => {
-        const btn = document.createElement('button');
-        btn.className = 'tj-block-delete';
-        btn.textContent = '✕ Eliminar';
-        btn.contentEditable = 'false';
-        btn.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          block.remove();
-          editor.commands.focus();
-        });
-        block.appendChild(btn);
-      });
-    };
-
-    // Only watch for direct children added to wrap (not subtree typing events)
-    const observer = new MutationObserver((mutations) => {
-      const hasNewBlock = mutations.some(m =>
-        Array.from(m.addedNodes).some(n =>
-          n instanceof HTMLElement && (
-            n.classList.contains('tj-editor-block') ||
-            n.querySelector?.('.tj-editor-block')
-          )
-        )
-      );
-      if (hasNewBlock) injectDeleteButtons();
-    });
-    observer.observe(wrap, { childList: true, subtree: false });
-    // Run once for existing blocks
-    injectDeleteButtons();
-
-    wrap.addEventListener('click', handleClick);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      wrap.removeEventListener('click', handleClick);
-      document.removeEventListener('keydown', handleKeyDown);
-      observer.disconnect();
-    };
-  }, [editor]);
-
   const handleSave = useCallback(() => {
     if (!topic || !editor) return;
     updateTopic(topic.id, { content: editor.getHTML() });
@@ -350,8 +237,12 @@ export default function EditorPage() {
   const handleExport = useCallback((withSnippet: boolean) => {
     if (!topic) return;
     const rawContent = editor?.getHTML() || topic.content;
-    const content = cleanExportHTML(rawContent);
-    const html = buildExportHTML({ ...topic, content }, topicRefs, withSnippet ? identity?.snippet : undefined, identity);
+    const exportIdentity = withSnippet ? identity : identity ? { ...identity, snippet: '' } : undefined;
+    const html = buildTopicDocument({
+      topic: { ...topic, content: rawContent },
+      references: topicRefs,
+      identity: exportIdentity,
+    });
     downloadFile(html, `${topic.title.replace(/[^a-z0-9]/gi, '_')}.html`);
     setShowExportMenu(false);
   }, [topic, editor, topicRefs, identity]);
@@ -418,6 +309,26 @@ export default function EditorPage() {
   const doInsertImage = useCallback((url: string, name: string) => {
     if (!editor) return;
     const caption = imageCaption || name;
+    if (imageReplacePos !== null) {
+      const replaced = editor.commands.command(({ state, tr }) => {
+        const imageNode = state.doc.nodeAt(imageReplacePos);
+        if (imageNode?.type.name !== 'image') return false;
+        tr.setNodeMarkup(imageReplacePos, undefined, {
+          ...imageNode.attrs,
+          src: url,
+          alt: caption,
+          title: caption,
+        });
+        return true;
+      });
+      if (replaced) {
+        setImageReplacePos(null);
+        setImageCaption('');
+        setShowImagePicker(false);
+        return;
+      }
+      setImageReplacePos(null);
+    }
     const figNum = figureCount;
     const pct = imageScale;
     editor.chain().focus().insertContent(
@@ -426,7 +337,7 @@ export default function EditorPage() {
     setFigureCount(f => f + 1);
     setImageCaption('');
     setShowImagePicker(false);
-  }, [editor, imageCaption, figureCount, imageScale]);
+  }, [editor, imageCaption, figureCount, imageReplacePos, imageScale]);
 
   const handleImageUpload = useCallback(() => {
     const input = document.createElement('input');
@@ -447,13 +358,32 @@ export default function EditorPage() {
 
   const insertBlock = useCallback((cls: string, label: string) => {
     if (!editor) return;
-    editor.chain().focus().insertContent(`<div class="${cls}"><p><strong>${label}:</strong> Escriba aquí...</p></div><p></p>`).run();
+    editor.chain().focus().insertContent([
+      {
+        type: 'corporateBlock',
+        attrs: {
+          blockId: `generic-${cls}-${Date.now()}`,
+          blockName: label,
+          blockHtml: `<div class="${cls}"><p><strong>${label}:</strong> Escriba aquí...</p></div>`,
+        },
+      },
+      { type: 'paragraph' },
+    ]).run();
   }, [editor]);
 
   const insertIdentityBlock = useCallback((block: IdentityBlock) => {
     if (!editor) return;
-    const wrappedHtml = `<div data-tj-block="${block.id}" data-tj-block-name="${block.name}" class="tj-editor-block">${block.html}</div><p></p>`;
-    editor.chain().focus().insertContent(wrappedHtml).run();
+    editor.chain().focus().insertContent([
+      {
+        type: 'corporateBlock',
+        attrs: {
+          blockId: block.id,
+          blockName: block.name,
+          blockHtml: sanitizeHtml(block.html),
+        },
+      },
+      { type: 'paragraph' },
+    ]).run();
     setShowBlockCatalog(false);
   }, [editor]);
 
@@ -476,8 +406,11 @@ export default function EditorPage() {
   const handlePublicationPreview = useCallback(() => {
     if (!topic) return;
     const rawContent = editor?.getHTML() || topic.content;
-    const content = cleanExportHTML(rawContent);
-    const html = buildExportHTML({ ...topic, content }, topicRefs, identity?.snippet, identity);
+    const html = buildTopicDocument({
+      topic: { ...topic, content: rawContent },
+      references: topicRefs,
+      identity,
+    });
     setPublicationPreviewHtml(html);
     setShowPublicationPreview(true);
   }, [topic, editor, topicRefs, identity]);
@@ -556,6 +489,11 @@ export default function EditorPage() {
             onMouseLeave={e => { e.currentTarget.style.borderColor = TJ.border; e.currentTarget.style.color = TJ.text; }}>
             <Upload size={14} /> <span className="hidden md:inline">Importar</span>
           </button>
+          <button onClick={() => setTopicPresentationMode('elements')}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-all"
+            style={{ borderColor: TJ.border, color: TJ.primary }}>
+            <Settings2 size={14} /> Elementos
+          </button>
           <button onClick={() => navigate(`/preview/${topic.id}`)}
             className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-all"
             style={{ borderColor: TJ.border, color: TJ.text }}>
@@ -577,6 +515,10 @@ export default function EditorPage() {
             </button>
             {showMobileMenu && (
               <div className="absolute right-0 top-full mt-1 bg-white border rounded-xl shadow-lg py-1 z-20 min-w-48 modal-enter" style={{ borderColor: TJ.border }}>
+                <button onClick={() => { setTopicPresentationMode('elements'); setShowMobileMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ color: TJ.text }}>
+                  <Settings2 size={14} style={{ color: TJ.primary }} /> Elementos del tema
+                </button>
                 <button onClick={() => { navigate(`/preview/${topic.id}`); setShowMobileMenu(false); }}
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ color: TJ.text }}>
                   <Eye size={14} style={{ color: TJ.primary }} /> Vista Previa
@@ -601,6 +543,9 @@ export default function EditorPage() {
                 </button>
                 <button onClick={() => handleExport(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ color: TJ.text }}>
                   <Code size={14} style={{ color: '#666' }} /> HTML genérico
+                </button>
+                <button onClick={() => { setTopicPresentationMode('embed'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ color: TJ.text }}>
+                  <Share2 size={14} style={{ color: TJ.secondary }} /> Incrustar / URL pública
                 </button>
               </div>
             )}
@@ -631,7 +576,7 @@ export default function EditorPage() {
             {showHeadingMenu && (
               <div className="absolute left-0 top-full mt-1 bg-white border rounded-xl shadow-lg py-1 min-w-40 modal-enter" style={{ borderColor: TJ.border, zIndex: 9999 }}>
                 {[['Párrafo', null], ['Título 1', 1], ['Título 2', 2], ['Título 3', 3], ['Título 4', 4], ['Título 5', 5]].map(([lbl, lvl]) => (
-                  <button key={String(lbl)} onClick={() => { lvl ? editor.chain().focus().toggleHeading({ level: lvl as 1|2|3|4|5|6 }).run() : editor.chain().focus().setParagraph().run(); setShowHeadingMenu(false); }}
+                  <button key={String(lbl)} onClick={() => { if (lvl) editor.chain().focus().toggleHeading({ level: lvl as 1|2|3|4|5|6 }).run(); else editor.chain().focus().setParagraph().run(); setShowHeadingMenu(false); }}
                     className="w-full text-left px-4 py-2 hover:bg-gray-50"
                     style={{ fontSize: lvl ? Math.max(12, 16 - (Number(lvl) * 1.5)) : 14, fontWeight: lvl && Number(lvl) <= 3 ? 600 : 400 }}>
                     {lbl}
@@ -746,6 +691,22 @@ export default function EditorPage() {
             )}
           </div>
           <TbBtn onClick={() => { setShowReferences(true); setShowRefNew(false); setEditingRef(null); }} title="Citas bibliográficas"><BookOpen size={14} /></TbBtn>
+          <button
+            onClick={() => setTopicPresentationMode('objectives')}
+            className="flex items-center gap-1 px-2 py-1.5 text-xs font-semibold rounded transition-all"
+            style={{ color: TJ.primary, whiteSpace: 'nowrap' }}
+            title="Objetivos del tema"
+          >
+            <ListChecks size={14} /> Objetivos
+          </button>
+          <button
+            onClick={() => setShowOutline(current => !current)}
+            className="flex items-center gap-1 px-2 py-1.5 text-xs font-semibold rounded transition-all"
+            style={{ color: showOutline ? TJ.primary : '#666', background: showOutline ? 'rgba(27,75,133,0.08)' : 'transparent', whiteSpace: 'nowrap' }}
+            title={showOutline ? 'Ocultar navegación rápida' : 'Mostrar navegación rápida'}
+          >
+            {showOutline ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />} Navegación
+          </button>
           <Sep />
           {/* Block catalog button */}
           <div ref={blockBtnRef} className="relative">
@@ -768,11 +729,39 @@ export default function EditorPage() {
       )}
 
       {/* Editor area */}
-      <div className="flex-1 overflow-auto p-2 md:p-8" style={{ background: '#eef0f3' }}>
-        <div ref={editorWrapRef} className="max-w-[850px] mx-auto bg-white min-h-[600px] md:min-h-[1100px] relative"
-          style={{ boxShadow: '0 2px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)' }}>
-
-          <EditorContent editor={editor} />
+      <div className="flex-1 overflow-hidden" style={{ background: '#eef0f3' }}>
+        <div className="flex h-full min-h-0">
+          {showOutline && (
+            <aside className="hidden w-64 flex-shrink-0 overflow-y-auto border-r bg-white p-3 md:block" style={{ borderColor: TJ.border }}>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <strong className="text-xs uppercase tracking-wide" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Navegación rápida</strong>
+                <button onClick={() => setShowOutline(false)} className="rounded p-1 hover:bg-gray-100" title="Ocultar"><X size={13} /></button>
+              </div>
+              {outlineHeadings.length ? (
+                <nav className="space-y-1">
+                  {outlineHeadings.map((heading, index) => (
+                    <button
+                      key={`${heading.pos}-${index}`}
+                      onClick={() => editor?.chain().focus().setTextSelection(heading.pos + 1).scrollIntoView().run()}
+                      className="block w-full truncate rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                      style={{ color: heading.level <= 2 ? TJ.primary : TJ.text, fontWeight: heading.level <= 2 ? 700 : 500, paddingLeft: 8 + Math.min(heading.level - 1, 4) * 10 }}
+                      title={heading.text}
+                    >
+                      {heading.text}
+                    </button>
+                  ))}
+                </nav>
+              ) : (
+                <p className="rounded-lg border border-dashed p-3 text-xs leading-relaxed text-slate-400">Agrega títulos y subtítulos para navegar rápidamente por el tema.</p>
+              )}
+            </aside>
+          )}
+          <div className="min-w-0 flex-1 overflow-auto p-2 md:p-8">
+            <div ref={editorWrapRef} className="max-w-[850px] mx-auto bg-white min-h-[600px] md:min-h-[1100px] relative"
+              style={{ boxShadow: '0 2px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+              <EditorContent editor={editor} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -886,9 +875,17 @@ export default function EditorPage() {
                         if (!newBlockName.trim()) return;
                         const html = newBlockHtml.trim() || `<p><strong>${newBlockName}:</strong> Escriba aquí...</p>`;
                         const blockId = `custom-${Date.now()}`;
-                        editor?.chain().focus().insertContent(
-                          `<div data-tj-block="${blockId}" data-tj-block-name="${newBlockName}" class="tj-editor-block">${html}</div><p></p>`
-                        ).run();
+                        editor?.chain().focus().insertContent([
+                          {
+                            type: 'corporateBlock',
+                            attrs: {
+                              blockId,
+                              blockName: newBlockName,
+                              blockHtml: sanitizeHtml(html),
+                            },
+                          },
+                          { type: 'paragraph' },
+                        ]).run();
                         setNewBlockName(''); setNewBlockHtml(''); setShowNewBlockForm(false); setShowBlockCatalog(false);
                       }}
                         className="px-2.5 py-1 text-xs rounded-lg text-white font-semibold"
@@ -1052,6 +1049,23 @@ export default function EditorPage() {
         />
       )}
 
+      {topicPresentationMode && (
+        <TopicPresentationDialog
+          topicId={topic.id}
+          topicTitle={topic.title}
+          initialValue={getTopicPresentation(topic.blocks)}
+          media={media}
+          mode={topicPresentationMode}
+          onClose={() => setTopicPresentationMode(null)}
+          onSave={presentation => {
+            updateTopic(topic.id, { blocks: withTopicPresentation(topic.blocks, presentation) });
+            setTopicPresentationMode(null);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+          }}
+        />
+      )}
+
       {/* ── Publication Preview Dialog ── */}
       {showPublicationPreview && (
         <PublicationPreviewDialog
@@ -1066,8 +1080,8 @@ export default function EditorPage() {
         <ModalPortal><div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col modal-enter" style={{ border: `1px solid ${TJ.border}` }}>
             <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: TJ.border }}>
-              <h3 className="font-bold text-sm" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Insertar Imagen</h3>
-              <button onClick={() => setShowImagePicker(false)} className="p-1 rounded-lg hover:bg-gray-100"><X size={17} /></button>
+              <h3 className="font-bold text-sm" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>{imageReplacePos !== null ? 'Reemplazar imagen' : 'Insertar imagen'}</h3>
+              <button onClick={() => { setShowImagePicker(false); setImageReplacePos(null); setImageCaption(''); }} className="p-1 rounded-lg hover:bg-gray-100"><X size={17} /></button>
             </div>
             <div className="px-5 py-3 border-b flex-shrink-0" style={{ borderColor: TJ.border }}>
               <div className="flex gap-3 mb-3">
@@ -1147,7 +1161,7 @@ export default function EditorPage() {
                     disabled={!imgUrlInput}
                     className="px-4 py-2 text-sm rounded-lg text-white font-semibold disabled:opacity-50"
                     style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
-                    Insertar
+                    {imageReplacePos !== null ? 'Reemplazar' : 'Insertar'}
                   </button>
                 </div>
               )}
