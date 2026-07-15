@@ -3,6 +3,7 @@ import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
 import { Download, Upload, Database, Clock, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { hasPermission } from '../utils/permissions';
+import { apiGet, apiPost } from '../lib/api';
 
 const TJ = { primary: '#1b4b85', secondary: '#8b2f3a', gold: '#c5aa6f', border: '#e8e4de', text: '#2a2a32' };
 
@@ -20,9 +21,7 @@ export default function SettingsPage() {
   const handleBackup = async () => {
     setBackupStatus('loading');
     try {
-      const res = await fetch('/api/backup');
-      if (!res.ok) throw new Error('Error al descargar respaldo');
-      const data = await res.json();
+      const data = await apiGet<Record<string, unknown>>('/backup');
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -47,15 +46,7 @@ export default function SettingsPage() {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      const res = await fetch('/api/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Error al restaurar' }));
-        throw new Error(err.error || 'Error al restaurar');
-      }
+      await apiPost('/restore', data);
       setRestoreStatus('success');
       setRestoreMsg('Respaldo restaurado correctamente. La pagina se recargara en 2 segundos...');
       setTimeout(() => window.location.reload(), 2000);

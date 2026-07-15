@@ -25,7 +25,8 @@ import {
   Table as TableIcon, Image, Link as LinkIcon, Highlighter,
   Superscript as SuperIcon, Subscript as SubIcon, Palette, BookOpen,
   ImagePlus, Type, ChevronDown, X, Maximize2, Minimize2,
-  Columns, Trash2, Code, Edit, Plus, Upload, Settings2
+  Columns, Trash2, Code, Edit, Plus, Upload, Settings2,
+  ListChecks, PanelLeftClose, PanelLeftOpen, Share2
 } from 'lucide-react';
 import ImportDialog from '../components/editor/ImportDialog';
 import PublicationPreviewDialog from '../components/editor/PublicationPreviewDialog';
@@ -71,7 +72,10 @@ export default function EditorPage() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showPublicationPreview, setShowPublicationPreview] = useState(false);
   const [publicationPreviewHtml, setPublicationPreviewHtml] = useState('');
-  const [showTopicPresentation, setShowTopicPresentation] = useState(false);
+  const [topicPresentationMode, setTopicPresentationMode] = useState<'elements' | 'objectives' | 'embed' | null>(null);
+  const [showOutline, setShowOutline] = useState(true);
+  const [outlineHeadings, setOutlineHeadings] = useState<Array<{ level: number; text: string; pos: number }>>([]);
+  const [imageReplacePos, setImageReplacePos] = useState<number | null>(null);
 
   const editorWrapRef = useRef<HTMLDivElement>(null);
 
@@ -95,7 +99,6 @@ export default function EditorPage() {
     ['block-nota', 'Nota'],
     ['block-warning', 'Advertencia'],
     ['block-conclusion', 'Conclusión'],
-    ['block-objectives', 'Objetivos'],
   ];
 
   const [showNewBlockForm, setShowNewBlockForm] = useState(false);
@@ -159,6 +162,41 @@ export default function EditorPage() {
       }, 2000);
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    const refreshOutline = () => {
+      const headings: Array<{ level: number; text: string; pos: number }> = [];
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'heading') {
+          headings.push({
+            level: Number(node.attrs.level) || 2,
+            text: node.textContent.trim() || 'Título sin texto',
+            pos,
+          });
+        }
+      });
+      setOutlineHeadings(headings);
+    };
+    refreshOutline();
+    editor.on('update', refreshOutline);
+    return () => {
+      editor.off('update', refreshOutline);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    const handleReplaceImage = (event: Event) => {
+      const detail = (event as CustomEvent<{ pos: number; alt: string }>).detail;
+      if (!detail || typeof detail.pos !== 'number') return;
+      setImageReplacePos(detail.pos);
+      setImageCaption(detail.alt || '');
+      setImgTab('repo');
+      setShowImagePicker(true);
+    };
+    window.addEventListener('tj:replace-image', handleReplaceImage);
+    return () => window.removeEventListener('tj:replace-image', handleReplaceImage);
+  }, []);
 
   // Escape key exits fullscreen + closes dropdowns
   useEffect(() => {
@@ -271,6 +309,26 @@ export default function EditorPage() {
   const doInsertImage = useCallback((url: string, name: string) => {
     if (!editor) return;
     const caption = imageCaption || name;
+    if (imageReplacePos !== null) {
+      const replaced = editor.commands.command(({ state, tr }) => {
+        const imageNode = state.doc.nodeAt(imageReplacePos);
+        if (imageNode?.type.name !== 'image') return false;
+        tr.setNodeMarkup(imageReplacePos, undefined, {
+          ...imageNode.attrs,
+          src: url,
+          alt: caption,
+          title: caption,
+        });
+        return true;
+      });
+      if (replaced) {
+        setImageReplacePos(null);
+        setImageCaption('');
+        setShowImagePicker(false);
+        return;
+      }
+      setImageReplacePos(null);
+    }
     const figNum = figureCount;
     const pct = imageScale;
     editor.chain().focus().insertContent(
@@ -279,7 +337,7 @@ export default function EditorPage() {
     setFigureCount(f => f + 1);
     setImageCaption('');
     setShowImagePicker(false);
-  }, [editor, imageCaption, figureCount, imageScale]);
+  }, [editor, imageCaption, figureCount, imageReplacePos, imageScale]);
 
   const handleImageUpload = useCallback(() => {
     const input = document.createElement('input');
@@ -431,7 +489,7 @@ export default function EditorPage() {
             onMouseLeave={e => { e.currentTarget.style.borderColor = TJ.border; e.currentTarget.style.color = TJ.text; }}>
             <Upload size={14} /> <span className="hidden md:inline">Importar</span>
           </button>
-          <button onClick={() => setShowTopicPresentation(true)}
+          <button onClick={() => setTopicPresentationMode('elements')}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-all"
             style={{ borderColor: TJ.border, color: TJ.primary }}>
             <Settings2 size={14} /> Elementos
@@ -457,7 +515,7 @@ export default function EditorPage() {
             </button>
             {showMobileMenu && (
               <div className="absolute right-0 top-full mt-1 bg-white border rounded-xl shadow-lg py-1 z-20 min-w-48 modal-enter" style={{ borderColor: TJ.border }}>
-                <button onClick={() => { setShowTopicPresentation(true); setShowMobileMenu(false); }}
+                <button onClick={() => { setTopicPresentationMode('elements'); setShowMobileMenu(false); }}
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ color: TJ.text }}>
                   <Settings2 size={14} style={{ color: TJ.primary }} /> Elementos del tema
                 </button>
@@ -485,6 +543,9 @@ export default function EditorPage() {
                 </button>
                 <button onClick={() => handleExport(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ color: TJ.text }}>
                   <Code size={14} style={{ color: '#666' }} /> HTML genérico
+                </button>
+                <button onClick={() => { setTopicPresentationMode('embed'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ color: TJ.text }}>
+                  <Share2 size={14} style={{ color: TJ.secondary }} /> Incrustar / URL pública
                 </button>
               </div>
             )}
@@ -630,6 +691,22 @@ export default function EditorPage() {
             )}
           </div>
           <TbBtn onClick={() => { setShowReferences(true); setShowRefNew(false); setEditingRef(null); }} title="Citas bibliográficas"><BookOpen size={14} /></TbBtn>
+          <button
+            onClick={() => setTopicPresentationMode('objectives')}
+            className="flex items-center gap-1 px-2 py-1.5 text-xs font-semibold rounded transition-all"
+            style={{ color: TJ.primary, whiteSpace: 'nowrap' }}
+            title="Objetivos del tema"
+          >
+            <ListChecks size={14} /> Objetivos
+          </button>
+          <button
+            onClick={() => setShowOutline(current => !current)}
+            className="flex items-center gap-1 px-2 py-1.5 text-xs font-semibold rounded transition-all"
+            style={{ color: showOutline ? TJ.primary : '#666', background: showOutline ? 'rgba(27,75,133,0.08)' : 'transparent', whiteSpace: 'nowrap' }}
+            title={showOutline ? 'Ocultar navegación rápida' : 'Mostrar navegación rápida'}
+          >
+            {showOutline ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />} Navegación
+          </button>
           <Sep />
           {/* Block catalog button */}
           <div ref={blockBtnRef} className="relative">
@@ -652,11 +729,39 @@ export default function EditorPage() {
       )}
 
       {/* Editor area */}
-      <div className="flex-1 overflow-auto p-2 md:p-8" style={{ background: '#eef0f3' }}>
-        <div ref={editorWrapRef} className="max-w-[850px] mx-auto bg-white min-h-[600px] md:min-h-[1100px] relative"
-          style={{ boxShadow: '0 2px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)' }}>
-
-          <EditorContent editor={editor} />
+      <div className="flex-1 overflow-hidden" style={{ background: '#eef0f3' }}>
+        <div className="flex h-full min-h-0">
+          {showOutline && (
+            <aside className="hidden w-64 flex-shrink-0 overflow-y-auto border-r bg-white p-3 md:block" style={{ borderColor: TJ.border }}>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <strong className="text-xs uppercase tracking-wide" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Navegación rápida</strong>
+                <button onClick={() => setShowOutline(false)} className="rounded p-1 hover:bg-gray-100" title="Ocultar"><X size={13} /></button>
+              </div>
+              {outlineHeadings.length ? (
+                <nav className="space-y-1">
+                  {outlineHeadings.map((heading, index) => (
+                    <button
+                      key={`${heading.pos}-${index}`}
+                      onClick={() => editor?.chain().focus().setTextSelection(heading.pos + 1).scrollIntoView().run()}
+                      className="block w-full truncate rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                      style={{ color: heading.level <= 2 ? TJ.primary : TJ.text, fontWeight: heading.level <= 2 ? 700 : 500, paddingLeft: 8 + Math.min(heading.level - 1, 4) * 10 }}
+                      title={heading.text}
+                    >
+                      {heading.text}
+                    </button>
+                  ))}
+                </nav>
+              ) : (
+                <p className="rounded-lg border border-dashed p-3 text-xs leading-relaxed text-slate-400">Agrega títulos y subtítulos para navegar rápidamente por el tema.</p>
+              )}
+            </aside>
+          )}
+          <div className="min-w-0 flex-1 overflow-auto p-2 md:p-8">
+            <div ref={editorWrapRef} className="max-w-[850px] mx-auto bg-white min-h-[600px] md:min-h-[1100px] relative"
+              style={{ boxShadow: '0 2px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+              <EditorContent editor={editor} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -944,16 +1049,17 @@ export default function EditorPage() {
         />
       )}
 
-      {showTopicPresentation && (
+      {topicPresentationMode && (
         <TopicPresentationDialog
           topicId={topic.id}
           topicTitle={topic.title}
           initialValue={getTopicPresentation(topic.blocks)}
           media={media}
-          onClose={() => setShowTopicPresentation(false)}
+          mode={topicPresentationMode}
+          onClose={() => setTopicPresentationMode(null)}
           onSave={presentation => {
             updateTopic(topic.id, { blocks: withTopicPresentation(topic.blocks, presentation) });
-            setShowTopicPresentation(false);
+            setTopicPresentationMode(null);
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
           }}
@@ -974,8 +1080,8 @@ export default function EditorPage() {
         <ModalPortal><div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col modal-enter" style={{ border: `1px solid ${TJ.border}` }}>
             <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: TJ.border }}>
-              <h3 className="font-bold text-sm" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>Insertar Imagen</h3>
-              <button onClick={() => setShowImagePicker(false)} className="p-1 rounded-lg hover:bg-gray-100"><X size={17} /></button>
+              <h3 className="font-bold text-sm" style={{ color: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>{imageReplacePos !== null ? 'Reemplazar imagen' : 'Insertar imagen'}</h3>
+              <button onClick={() => { setShowImagePicker(false); setImageReplacePos(null); setImageCaption(''); }} className="p-1 rounded-lg hover:bg-gray-100"><X size={17} /></button>
             </div>
             <div className="px-5 py-3 border-b flex-shrink-0" style={{ borderColor: TJ.border }}>
               <div className="flex gap-3 mb-3">
@@ -1055,7 +1161,7 @@ export default function EditorPage() {
                     disabled={!imgUrlInput}
                     className="px-4 py-2 text-sm rounded-lg text-white font-semibold disabled:opacity-50"
                     style={{ background: TJ.primary, fontFamily: 'Montserrat, sans-serif' }}>
-                    Insertar
+                    {imageReplacePos !== null ? 'Reemplazar' : 'Insertar'}
                   </button>
                 </div>
               )}

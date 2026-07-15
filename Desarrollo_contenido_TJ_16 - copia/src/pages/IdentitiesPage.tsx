@@ -624,7 +624,7 @@ export default function IdentitiesPage() {
                     ['page', 'Estructura general', 'Marcadores: {{header}}, {{title}}, {{meta}}, {{objectives}}, {{content}}, {{audio}}, {{bibliography}}'],
                     ['header', 'Encabezado gráfico', 'Marcadores: {{headerUrl}}, {{headerAlt}}'],
                     ['objectives', 'Objetivos', 'Marcador: {{objectiveItems}}'],
-                    ['audio', 'Música / audiolibro', 'Marcadores: {{audioLabel}}, {{audioTitle}}, {{audioUrl}}'],
+                    ['audio', 'Música / audiolibro', 'Marcadores: {{audioLabel}}, {{audioItems}}; compatibilidad: {{audioTitle}}, {{audioUrl}}'],
                     ['bibliography', 'Bibliografía', 'Marcador: {{referenceItems}}'],
                   ] as const).map(([key, label, help]) => (
                     <div key={key}>

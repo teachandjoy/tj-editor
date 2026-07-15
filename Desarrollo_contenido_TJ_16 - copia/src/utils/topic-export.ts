@@ -86,6 +86,18 @@ function buildValues(input: TopicExportInput): Record<string, string> {
   const referenceItems = topicReferences
     .map((reference, index) => `<li>${sanitizeHtml(formatReference(reference, index + 1))}</li>`)
     .join('');
+  const audioTracks = (presentation.audio.kind === 'audiobook'
+    ? presentation.audio.tracks.slice(0, 1)
+    : presentation.audio.tracks)
+    .filter(track => track.url.trim());
+  const audioItems = audioTracks
+    .map(track => `
+      <div class="tj-topic-audio-track">
+        ${track.title.trim() ? `<p>${escapeHtml(track.title)}</p>` : ''}
+        <audio controls preload="metadata" src="${escapeHtml(track.url)}"></audio>
+      </div>`)
+    .join('');
+  const firstAudio = audioTracks[0];
 
   const common = {
     title: escapeHtml(topic.title),
@@ -100,10 +112,24 @@ function buildValues(input: TopicExportInput): Record<string, string> {
     headerAlt: escapeHtml(presentation.header.alt || topic.title),
     objectiveItems,
     audioLabel: presentation.audio.kind === 'audiobook' ? 'Audiolibro' : 'Audio',
-    audioTitle: escapeHtml(presentation.audio.title),
-    audioUrl: escapeHtml(presentation.audio.url),
+    audioTitle: escapeHtml(firstAudio?.title || ''),
+    audioUrl: escapeHtml(firstAudio?.url || ''),
+    audioItems,
     referenceItems,
   };
+  const audio = presentation.audio.enabled && audioTracks.length
+    ? sanitizeHtml(
+      templates.audio.includes('{{audioItems}}')
+        ? applyHtmlTemplate(templates.audio, common)
+        : audioTracks
+          .map(track => applyHtmlTemplate(templates.audio, {
+            ...common,
+            audioTitle: escapeHtml(track.title),
+            audioUrl: escapeHtml(track.url),
+          }))
+          .join(''),
+    )
+    : '';
 
   return {
     ...common,
@@ -113,9 +139,7 @@ function buildValues(input: TopicExportInput): Record<string, string> {
     objectives: objectiveItems
       ? sanitizeHtml(applyHtmlTemplate(templates.objectives, common))
       : '',
-    audio: presentation.audio.enabled && presentation.audio.url
-      ? sanitizeHtml(applyHtmlTemplate(templates.audio, common))
-      : '',
+    audio,
     bibliography: referenceItems
       ? sanitizeHtml(applyHtmlTemplate(templates.bibliography, common))
       : '',
@@ -153,7 +177,8 @@ export function buildTopicStyles(identity?: CorporateIdentity, includeBody = tru
     .tj-topic-objectives{background:${cp}0d;border-left:5px solid ${cp};padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0}
     .tj-topic-objectives h2,.tj-topic-audio h2{margin:0 0 8px}.tj-topic-objectives ul{margin:0;padding-left:22px}
     .tj-topic-audio{background:${ct}1f;border:1px solid ${ct};padding:16px 20px;margin:20px 0;border-radius:8px}
-    .tj-topic-audio audio{display:block;width:100%;margin-top:10px}
+    .tj-topic-audio-track+.tj-topic-audio-track{border-top:1px solid ${ct};margin-top:16px;padding-top:16px}
+    .tj-topic-audio-track p{font-weight:600;text-align:left}.tj-topic-audio audio{display:block;width:100%;margin-top:10px}
     .tj-topic-bibliography{border:1px solid #919BA5;border-radius:8px;overflow:hidden;margin-top:24px}
     .tj-topic-bibliography summary{cursor:pointer;background:${cp};color:#fff;padding:12px 14px;font-weight:600;list-style:none}
     .tj-topic-bibliography>div{padding:14px;background:#f6f7fa}.tj-topic-bibliography ol{margin:0;padding-left:24px}

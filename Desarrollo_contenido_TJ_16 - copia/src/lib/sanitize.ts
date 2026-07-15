@@ -21,6 +21,7 @@ export function sanitizeHtml(dirty: string): string {
     ALLOWED_ATTR,
     ALLOW_DATA_ATTR: true,
     ADD_ATTR: ['target'],
+    ADD_DATA_URI_TAGS: ['audio', 'source'],
   });
 }
 

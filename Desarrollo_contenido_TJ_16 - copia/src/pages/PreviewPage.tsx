@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Download, Edit, Monitor, Smartphone } from 'lucide-react';
 import { useApp } from '../store/context';
@@ -23,6 +23,7 @@ export default function PreviewPage() {
   const [viewMode, setViewMode] = useState<'editor' | 'moodle' | 'movil'>('editor');
   const [embedBundle, setEmbedBundle] = useState<EmbedBundle | null>(null);
   const [embedError, setEmbedError] = useState('');
+  const embedRootRef = useRef<HTMLDivElement>(null);
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const embedMode = search.get('embed') === '1';
   const embedToken = search.get('token') || '';
@@ -46,6 +47,26 @@ export default function PreviewPage() {
     ? identity.fontPrimaryImportUrl
     : '';
 
+  useEffect(() => {
+    if (!embedMode || !topic || !topicId) return;
+    const publishHeight = () => {
+      window.parent.postMessage({
+        type: 'tj-topic-height',
+        topicId,
+        height: Math.ceil(document.documentElement.scrollHeight),
+      }, '*');
+    };
+    const observer = new ResizeObserver(publishHeight);
+    observer.observe(document.documentElement);
+    if (embedRootRef.current) observer.observe(embedRootRef.current);
+    window.addEventListener('load', publishHeight);
+    publishHeight();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('load', publishHeight);
+    };
+  }, [embedMode, topic, topicId]);
+
   if (embedMode) {
     if (embedError) {
       return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-center text-sm text-rose-700">{embedError}</div>;
@@ -59,6 +80,7 @@ export default function PreviewPage() {
         {fontUrl && <link href={fontUrl} rel="stylesheet" />}
         <style>{buildTopicStyles(identity, false)}</style>
         <div
+          ref={embedRootRef}
           className="min-h-screen"
           style={{ background: identity?.colorBackground || '#f5f5f5', padding: 16 }}
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(fragment) }}

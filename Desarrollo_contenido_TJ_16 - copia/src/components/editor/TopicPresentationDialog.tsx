@@ -5,6 +5,7 @@ import Underline from '@tiptap/extension-underline';
 import {
   Bold,
   Clipboard,
+  ExternalLink,
   Image,
   Italic,
   List,
@@ -18,7 +19,7 @@ import {
   Underline as UnderlineIcon,
   X,
 } from 'lucide-react';
-import type { MediaAsset, TopicObjective, TopicPresentation } from '../../types';
+import type { MediaAsset, TopicAudioTrack, TopicObjective, TopicPresentation } from '../../types';
 import { createEmbedToken } from '../../utils/topicPresentation';
 import ModalPortal from '../ui/ModalPortal';
 
@@ -66,6 +67,7 @@ interface TopicPresentationDialogProps {
   topicTitle: string;
   initialValue: TopicPresentation;
   media: MediaAsset[];
+  mode: 'elements' | 'objectives' | 'embed';
   onClose: () => void;
   onSave: (presentation: TopicPresentation) => void;
 }
@@ -77,16 +79,33 @@ export default function TopicPresentationDialog({
   topicTitle,
   initialValue,
   media,
+  mode,
   onClose,
   onSave,
 }: TopicPresentationDialogProps) {
-  const [tab, setTab] = useState<Tab>('objectives');
+  const [tab, setTab] = useState<Tab>(
+    mode === 'objectives' ? 'objectives' : mode === 'embed' ? 'embed' : 'header',
+  );
   const [draft, setDraft] = useState<TopicPresentation>(() => structuredClone(initialValue));
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'url' | 'code' | null>(null);
   const images = useMemo(() => media.filter(asset => asset.type === 'image' && asset.url), [media]);
   const audioFiles = useMemo(() => media.filter(asset => asset.type === 'audio' && asset.url), [media]);
-  const embedUrl = `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/preview/${encodeURIComponent(topicId)}?embed=1&token=${encodeURIComponent(draft.embed.token)}`;
-  const embedCode = `<iframe src="${embedUrl}" title="${topicTitle.replace(/"/g, '&quot;')}" width="100%" height="720" loading="lazy" referrerpolicy="no-referrer" style="border:0"></iframe>`;
+  const configuredBase = import.meta.env.VITE_BASE_PATH || import.meta.env.BASE_URL;
+  const baseSegment = configuredBase.replace(/^\/|\/$/g, '');
+  const basePath = baseSegment ? `/${baseSegment}` : '';
+  const embedUrl = `${window.location.origin}${basePath}/preview/${encodeURIComponent(topicId)}?embed=1&token=${encodeURIComponent(draft.embed.token)}`;
+  const embedId = `tj-topic-${topicId.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+  const embedOrigin = new URL(embedUrl).origin;
+  const embedCode = `<iframe id="${embedId}" src="${embedUrl}" title="${topicTitle.replace(/"/g, '&quot;')}" width="100%" height="900" scrolling="no" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;border:0;overflow:hidden"></iframe>
+<script>
+(function () {
+  var frame = document.getElementById(${JSON.stringify(embedId)});
+  window.addEventListener('message', function (event) {
+    if (event.origin !== ${JSON.stringify(embedOrigin)} || !event.data || event.data.type !== 'tj-topic-height' || event.data.topicId !== ${JSON.stringify(topicId)}) return;
+    frame.style.height = Math.max(400, Number(event.data.height) || 900) + 'px';
+  });
+})();
+</script>`;
 
   const addObjective = () => {
     setDraft(current => ({
@@ -95,18 +114,53 @@ export default function TopicPresentationDialog({
     }));
   };
 
-  const copyEmbed = async () => {
-    await navigator.clipboard.writeText(embedCode);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+  const copyValue = async (value: string, target: 'url' | 'code') => {
+    await navigator.clipboard.writeText(value);
+    setCopied(target);
+    window.setTimeout(() => setCopied(null), 1800);
   };
 
-  const tabs: Array<{ id: Tab; label: string; icon: typeof List }> = [
-    { id: 'objectives', label: 'Objetivos', icon: List },
-    { id: 'header', label: 'Encabezado', icon: Image },
-    { id: 'audio', label: 'Audio', icon: Music2 },
-    { id: 'embed', label: 'Moodle', icon: Share2 },
-  ];
+  const tabs: Array<{ id: Tab; label: string; icon: typeof List }> = mode === 'elements'
+    ? [
+      { id: 'header', label: 'Encabezado', icon: Image },
+      { id: 'audio', label: 'Audio', icon: Music2 },
+    ]
+    : mode === 'objectives'
+      ? [{ id: 'objectives', label: 'Objetivos', icon: List }]
+      : [{ id: 'embed', label: 'Moodle / URL pública', icon: Share2 }];
+  const title = mode === 'elements'
+    ? 'Elementos del tema'
+    : mode === 'objectives'
+      ? 'Objetivos del tema'
+      : 'Publicar e incrustar';
+
+  const newAudioTrack = (): TopicAudioTrack => ({
+    id: `audio-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    title: '',
+    url: '',
+  });
+  const updateAudioTrack = (id: string, updates: Partial<TopicAudioTrack>) => {
+    setDraft(current => ({
+      ...current,
+      audio: {
+        ...current.audio,
+        tracks: current.audio.tracks.map(track => track.id === id ? { ...track, ...updates } : track),
+      },
+    }));
+  };
+  const ensureAudioTracks = (kind: 'music' | 'audiobook') => {
+    setDraft(current => {
+      const tracks = current.audio.tracks.length ? current.audio.tracks : [newAudioTrack()];
+      return {
+        ...current,
+        audio: {
+          ...current.audio,
+          kind,
+          tracks: kind === 'audiobook' ? tracks.slice(0, 1) : tracks,
+        },
+      };
+    });
+  };
 
   return (
     <ModalPortal>
@@ -114,7 +168,7 @@ export default function TopicPresentationDialog({
         <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl" onMouseDown={event => event.stopPropagation()}>
           <div className="flex items-center justify-between border-b px-5 py-4">
             <div>
-              <h2 className="font-bold text-slate-800">Elementos del tema</h2>
+              <h2 className="font-bold text-slate-800">{title}</h2>
               <p className="text-xs text-slate-500">{topicTitle}</p>
             </div>
             <button type="button" className="rounded-lg p-2 hover:bg-slate-100" onClick={onClose}><X size={18} /></button>
@@ -188,24 +242,52 @@ export default function TopicPresentationDialog({
                   <span><strong className="block text-sm text-slate-800">Incluir reproductor</strong><span className="text-xs text-slate-500">No se exporta cuando está desactivado.</span></span>
                 </label>
                 <label className="block text-sm font-semibold text-slate-700">Tipo
-                  <select className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" value={draft.audio.kind} onChange={event => setDraft(current => ({ ...current, audio: { ...current.audio, kind: event.target.value as 'music' | 'audiobook' } }))}>
+                  <select className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" value={draft.audio.kind} onChange={event => ensureAudioTracks(event.target.value as 'music' | 'audiobook')}>
                     <option value="music">Música / audio</option>
                     <option value="audiobook">Audiolibro</option>
                   </select>
                 </label>
-                <label className="block text-sm font-semibold text-slate-700">Archivo del repositorio
-                  <select className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" value={audioFiles.some(audio => audio.url === draft.audio.url) ? draft.audio.url : ''} onChange={event => setDraft(current => ({ ...current, audio: { ...current.audio, url: event.target.value } }))}>
-                    <option value="">Seleccionar audio…</option>
-                    {audioFiles.map(audio => <option key={audio.id} value={audio.url}>{audio.name}</option>)}
-                  </select>
-                </label>
-                <label className="block text-sm font-semibold text-slate-700">O URL pública de MP3/audio
-                  <input className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" type="url" value={draft.audio.url} onChange={event => setDraft(current => ({ ...current, audio: { ...current.audio, url: event.target.value } }))} placeholder="https://…/audio.mp3" />
-                </label>
-                <label className="block text-sm font-semibold text-slate-700">Título
-                  <input className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" value={draft.audio.title} onChange={event => setDraft(current => ({ ...current, audio: { ...current.audio, title: event.target.value } }))} placeholder="Escucha complementaria" />
-                </label>
-                {draft.audio.url && <audio className="w-full" controls preload="metadata" src={draft.audio.url} />}
+                {draft.audio.tracks.length === 0 && (
+                  <button type="button" className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed p-5 text-sm font-semibold text-[#1b4b85]" onClick={() => ensureAudioTracks(draft.audio.kind)}>
+                    <Plus size={15} /> Agregar {draft.audio.kind === 'audiobook' ? 'audiolibro' : 'pista'}
+                  </button>
+                )}
+                {draft.audio.tracks.map((track, index) => (
+                  <div key={track.id} className="space-y-3 rounded-xl border p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <strong className="text-sm text-slate-700">{draft.audio.kind === 'audiobook' ? 'Audiolibro' : `Pista ${index + 1}`}</strong>
+                      {draft.audio.kind === 'music' && (
+                        <button type="button" className="flex items-center gap-1 text-xs text-rose-700" onClick={() => setDraft(current => ({
+                          ...current,
+                          audio: { ...current.audio, tracks: current.audio.tracks.filter(item => item.id !== track.id) },
+                        }))}>
+                          <Trash2 size={13} /> Eliminar
+                        </button>
+                      )}
+                    </div>
+                    <label className="block text-sm font-semibold text-slate-700">Título
+                      <input className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" value={track.title} onChange={event => updateAudioTrack(track.id, { title: event.target.value })} placeholder="Escucha complementaria" />
+                    </label>
+                    <label className="block text-sm font-semibold text-slate-700">Archivo del repositorio
+                      <select className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" value={audioFiles.some(audio => audio.url === track.url) ? track.url : ''} onChange={event => updateAudioTrack(track.id, { url: event.target.value })}>
+                        <option value="">Seleccionar audio…</option>
+                        {audioFiles.map(audio => <option key={audio.id} value={audio.url}>{audio.name}</option>)}
+                      </select>
+                    </label>
+                    <label className="block text-sm font-semibold text-slate-700">O URL pública de MP3/audio
+                      <input className="mt-1 w-full rounded-lg border px-3 py-2.5 font-normal" type="url" value={track.url} onChange={event => updateAudioTrack(track.id, { url: event.target.value })} placeholder="https://…/audio.mp3" />
+                    </label>
+                    {track.url && <audio className="w-full" controls preload="metadata" src={track.url} />}
+                  </div>
+                ))}
+                {draft.audio.kind === 'music' && (
+                  <button type="button" className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-[#1b4b85]" onClick={() => setDraft(current => ({
+                    ...current,
+                    audio: { ...current.audio, tracks: [...current.audio.tracks, newAudioTrack()] },
+                  }))}>
+                    <Plus size={14} /> Agregar otra pista
+                  </button>
+                )}
               </div>
             )}
 
@@ -236,9 +318,23 @@ export default function TopicPresentationDialog({
                     <label className="block text-sm font-semibold text-slate-700">Código para Moodle
                       <textarea className="mt-1 min-h-36 w-full rounded-lg border bg-slate-50 p-3 font-mono text-xs font-normal" readOnly value={embedCode} />
                     </label>
-                    <button type="button" className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-[#1b4b85]" onClick={copyEmbed}>
-                      <Clipboard size={15} /> {copied ? 'Copiado' : 'Copiar código'}
-                    </button>
+                    <div className="rounded-lg border bg-slate-50 p-3">
+                      <p className="mb-2 text-xs font-semibold text-slate-600">URL pública</p>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <input className="min-w-0 flex-1 rounded-md border bg-white px-3 py-2 font-mono text-xs" readOnly value={embedUrl} />
+                        <a className="flex items-center justify-center gap-1 rounded-md border bg-white px-3 py-2 text-xs font-semibold text-[#1b4b85]" href={embedUrl} target="_blank" rel="noreferrer">
+                          <ExternalLink size={13} /> Abrir
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-[#1b4b85]" onClick={() => copyValue(embedUrl, 'url')}>
+                        <Clipboard size={15} /> {copied === 'url' ? 'URL copiada' : 'Copiar URL'}
+                      </button>
+                      <button type="button" className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-[#1b4b85]" onClick={() => copyValue(embedCode, 'code')}>
+                        <Clipboard size={15} /> {copied === 'code' ? 'Código copiado' : 'Copiar código'}
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
@@ -247,7 +343,7 @@ export default function TopicPresentationDialog({
           <div className="flex justify-end gap-2 border-t px-5 py-4">
             <button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={onClose}>Cancelar</button>
             <button type="button" className="flex items-center gap-2 rounded-lg bg-[#1b4b85] px-4 py-2 text-sm font-semibold text-white" onClick={() => onSave(draft)}>
-              <Save size={15} /> Guardar elementos
+              <Save size={15} /> Guardar
             </button>
           </div>
         </div>

@@ -95,6 +95,7 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
     return (props) => {
       const node = props.node;
       const updateAttributes = (props as unknown as { updateAttributes: (attrs: Record<string, unknown>) => void }).updateAttributes;
+      const getPos = props.getPos;
       // --- Container ---
       const container = document.createElement('div');
       container.style.cssText = 'display:inline-block;max-width:100%;position:relative;line-height:0;';
@@ -141,6 +142,19 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
       `;
       frame.appendChild(sizeLabel);
 
+      const replaceButton = document.createElement('button');
+      replaceButton.type = 'button';
+      replaceButton.textContent = 'Reemplazar';
+      replaceButton.title = 'Reemplazar imagen';
+      replaceButton.style.cssText = `
+        position:absolute;top:10px;right:10px;z-index:20;
+        border:0;border-radius:6px;padding:6px 10px;
+        background:${HANDLE_COLOR};color:#fff;cursor:pointer;
+        font:600 11px Montserrat,sans-serif;line-height:1.2;
+        box-shadow:0 2px 8px rgba(0,0,0,.2);pointer-events:auto;
+      `;
+      frame.appendChild(replaceButton);
+
       // Create all 8 handles
       const handlePositions: HandlePosition[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
       handlePositions.forEach(pos => {
@@ -154,12 +168,38 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
 
       const showFrame = () => { frame.style.display = 'block'; selected = true; };
       const hideFrame = () => { frame.style.display = 'none'; selected = false; sizeLabel.style.display = 'none'; };
+      const requestReplacement = () => {
+        const pos = typeof getPos === 'function' ? getPos() : undefined;
+        if (typeof pos !== 'number') return;
+        window.dispatchEvent(new CustomEvent('tj:replace-image', {
+          detail: {
+            pos,
+            src: img.src,
+            alt: img.alt,
+          },
+        }));
+      };
 
       // Click on image => show transform frame
       container.addEventListener('mousedown', (e) => {
         if ((e.target as HTMLElement).dataset.handle) return;
         e.stopPropagation();
         showFrame();
+      });
+      container.addEventListener('dblclick', (e) => {
+        if ((e.target as HTMLElement).dataset.handle) return;
+        e.preventDefault();
+        e.stopPropagation();
+        requestReplacement();
+      });
+      replaceButton.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      replaceButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        requestReplacement();
       });
 
       // Click outside => hide transform frame

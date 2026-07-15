@@ -112,6 +112,12 @@ export interface TopicObjective {
   html: string;
 }
 
+export interface TopicAudioTrack {
+  id: string;
+  title: string;
+  url: string;
+}
+
 export interface TopicPresentation {
   objectives: TopicObjective[];
   header: {
@@ -122,8 +128,9 @@ export interface TopicPresentation {
   audio: {
     enabled: boolean;
     kind: 'music' | 'audiobook';
-    title: string;
-    url: string;
+    tracks: TopicAudioTrack[];
+    title?: string;
+    url?: string;
   };
   embed: {
     enabled: boolean;

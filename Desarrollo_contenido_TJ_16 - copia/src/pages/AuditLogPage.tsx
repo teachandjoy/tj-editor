@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Header from '../components/layout/Header';
 import { useApp } from '../store/context';
-import { apiGet } from '../lib/api';
+import { apiDownload, apiGet } from '../lib/api';
 import { Shield, Download, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { AuditLogEntry } from '../types';
 
@@ -66,8 +66,8 @@ export default function AuditLogPage() {
 
   const totalPages = Math.ceil(total / limit);
 
-  const handleExportCSV = () => {
-    window.open('/api/audit-log/export', '_blank');
+  const handleExportCSV = async () => {
+    await apiDownload('/audit-log/export', `auditoria-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   return (

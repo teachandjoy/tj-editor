@@ -10,7 +10,7 @@ export const TOPIC_PRESENTATION_BLOCK_ID = '__tj-topic-presentation__';
 export const DEFAULT_TOPIC_PRESENTATION: TopicPresentation = {
   objectives: [],
   header: { enabled: false, url: '', alt: '' },
-  audio: { enabled: false, kind: 'music', title: '', url: '' },
+  audio: { enabled: false, kind: 'music', tracks: [] },
   embed: { enabled: false, token: '' },
 };
 
@@ -39,8 +39,7 @@ export const DEFAULT_IDENTITY_HTML_TEMPLATES: Required<IdentityHtmlTemplates> = 
   audio: `
 <section class="tj-topic-audio">
   <h2>{{audioLabel}}</h2>
-  <p>{{audioTitle}}</p>
-  <audio controls preload="metadata" src="{{audioUrl}}"></audio>
+  {{audioItems}}
 </section>`.trim(),
   bibliography: `
 <details class="tj-topic-bibliography">
@@ -51,10 +50,18 @@ export const DEFAULT_IDENTITY_HTML_TEMPLATES: Required<IdentityHtmlTemplates> = 
 
 export function getTopicPresentation(blocks: ContentBlock[]): TopicPresentation {
   const stored = blocks.find(block => block.id === TOPIC_PRESENTATION_BLOCK_ID)?.presentation;
+  const storedAudio = stored?.audio;
+  const legacyTrack = storedAudio?.url
+    ? [{ id: 'audio-legacy', title: storedAudio.title || '', url: storedAudio.url }]
+    : [];
   return {
     objectives: stored?.objectives || [],
     header: { ...DEFAULT_TOPIC_PRESENTATION.header, ...stored?.header },
-    audio: { ...DEFAULT_TOPIC_PRESENTATION.audio, ...stored?.audio },
+    audio: {
+      enabled: storedAudio?.enabled || false,
+      kind: storedAudio?.kind || 'music',
+      tracks: storedAudio?.tracks?.length ? storedAudio.tracks : legacyTrack,
+    },
     embed: { ...DEFAULT_TOPIC_PRESENTATION.embed, ...stored?.embed },
   };
 }

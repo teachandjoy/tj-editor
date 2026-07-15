@@ -23,11 +23,13 @@ import { useApp } from './store/context';
 
 function AppContent() {
   const { isOnline } = useApp();
+  const configuredBase = import.meta.env.VITE_BASE_PATH || import.meta.env.BASE_URL;
+  const routerBase = `/${configuredBase.replace(/^\/|\/$/g, '')}`;
   return (
     <>
       <OfflineBanner isOnline={isOnline} />
       <ToastContainer />
-      <BrowserRouter basename={import.meta.env.VITE_BASE_PATH || '/'}>
+      <BrowserRouter basename={routerBase}>
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route element={<AppLayout />}>
